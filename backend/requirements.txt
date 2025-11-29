@@ -1,0 +1,12 @@
+Django>=5.0,<6.0
+djangorestframework>=3.14
+psycopg2-binary>=2.9
+gunicorn>=21.2
+python-dotenv>=1.0
+django-cors-headers>=4.3
+pytest-django>=4.7
+pytest-cov>=4.1
+model_bakery>=1.17
+celery>=5.3
+redis>=5.0
+django-redis>=5.4
