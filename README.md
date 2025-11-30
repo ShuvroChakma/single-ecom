@@ -315,6 +315,213 @@ test(products): add unit tests for product model
 6. **Reviews**: Require at least 1 approval
 7. **Conflicts**: Resolve before merging
 
+## API Response Format
+
+All API endpoints follow a standardized response format for consistency and ease of frontend integration.
+
+### Standard Response Structure
+
+```json
+{
+  "success": true,
+  "data": {...} or [...] or null,
+  "message": "Human-readable message",
+  "errors": [],
+  "meta": {
+    "timestamp": "2025-11-29T17:46:44.940609Z"
+  }
+}
+```
+
+### Response Types
+
+#### Success Response (200, 201)
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Product Name"
+  },
+  "message": "Product retrieved successfully",
+  "errors": [],
+  "meta": {
+    "timestamp": "2025-11-29T17:46:44.940609Z"
+  }
+}
+```
+
+#### Error Response (400, 404, 500)
+```json
+{
+  "success": false,
+  "data": null,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Invalid email format",
+      "code": "invalid_format"
+    }
+  ],
+  "meta": {
+    "timestamp": "2025-11-29T17:46:44.940609Z"
+  }
+}
+```
+
+#### Paginated Response
+```json
+{
+  "success": true,
+  "data": [...],
+  "message": "Products retrieved successfully",
+  "errors": [],
+  "meta": {
+    "timestamp": "2025-11-29T17:46:44.940609Z",
+    "pagination": {
+      "page": 1,
+      "per_page": 20,
+      "total": 100,
+      "total_pages": 5,
+      "has_next": true,
+      "has_prev": false
+    }
+  }
+}
+```
+
+### Backend Usage
+
+```python
+from config.api_response import APIResponse
+
+# Success
+def get_product(request, pk):
+    product = Product.objects.get(pk=pk)
+    return APIResponse.success(
+        data=ProductSerializer(product).data,
+        message="Product retrieved successfully"
+    )
+
+# Error
+def create_product(request):
+    return APIResponse.error(
+        message="Validation failed",
+        errors=[{"field": "name", "message": "Required"}],
+        status_code=400
+    )
+
+# Paginated
+def list_products(request):
+    return APIResponse.paginated(
+        data=products_data,
+        page=1,
+        per_page=20,
+        total=100
+    )
+```
+
+### Frontend Usage (TypeScript)
+
+```typescript
+interface APIResponse<T = any> {
+  success: boolean;
+  data: T | null;
+  message: string;
+  errors: APIError[];
+  meta: APIMeta;
+}
+
+// Usage
+async function fetchProduct(id: number) {
+  const response = await fetch(`/api/v1/products/${id}/`);
+  const data: APIResponse<Product> = await response.json();
+  
+  if (data.success) {
+    console.log(data.data); // Type-safe product data
+  } else {
+    console.error(data.message, data.errors);
+  }
+}
+```
+
+### Available Endpoints
+
+- **Health Check**: `GET /api/v1/health/` - Service health status
+
+## Error Handling
+
+The backend includes a comprehensive error handling system that automatically catches and formats all errors into the standardized API response format.
+
+### Custom Exceptions
+
+```python
+from config.exceptions import (
+    ValidationError,      # 400 - Validation errors
+    BadRequestError,      # 400 - Bad request
+    UnauthorizedError,    # 401 - Authentication required
+    ForbiddenError,       # 403 - Access forbidden
+    NotFoundError,        # 404 - Resource not found
+    ConflictError,        # 409 - Resource conflict
+    RateLimitError,       # 429 - Rate limit exceeded
+    ServerError,          # 500 - Internal server error
+)
+```
+
+### Usage in Views
+
+```python
+from config.exceptions import ValidationError, NotFoundError
+
+def get_product(request, pk):
+    # Raise not found error
+    try:
+        product = Product.objects.get(pk=pk)
+    except Product.DoesNotExist:
+        raise NotFoundError(f"Product {pk} not found")
+    
+    # Raise validation error with field-specific errors
+    if not product.is_active:
+        raise ValidationError(
+            message="Product is not available",
+            errors=[
+                {"field": "status", "message": "Product is inactive"}
+            ]
+        )
+```
+
+### Error Response Format
+
+```json
+{
+  "success": false,
+  "data": null,
+  "message": "Product 123 not found",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Invalid email format"
+    }
+  ],
+  "meta": {
+    "timestamp": "2025-11-30T04:52:37.123456Z"
+  }
+}
+```
+
+### Automatic Error Handling
+
+The global exception handler middleware automatically catches:
+- Custom API exceptions
+- Django validation errors
+- DRF exceptions
+- Database integrity errors (unique constraints, foreign keys)
+- Permission errors
+- Unexpected exceptions (logged and returned as 500)
+
+All errors are logged and formatted consistently. See `backend/ERROR_HANDLING.md` for detailed documentation.
+
 ## Best Practices & Coding Standards
 
 ### General Principles
