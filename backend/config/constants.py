@@ -9,7 +9,7 @@ DEFAULT_DB_PORT = "5432"
 
 # Security Defaults
 DEFAULT_DEBUG = 1
-DEFAULT_ALLOWED_HOSTS = "localhost 127.0.0.1 [::1]"
+DEFAULT_ALLOWED_HOSTS = "localhost 127.0.0.1 [::1] backend backend:8000"
 
 # URLs
 FRONTEND_URL = "http://localhost:3000"
