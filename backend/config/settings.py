@@ -22,7 +22,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", constants.DEFAULT_SECRET_KEY)
+# SECURITY WARNING: keep the secret key used in production secret!
+try:
+    SECRET_KEY = os.environ["SECRET_KEY"]
+except KeyError:
+    raise ValueError("SECRET_KEY environment variable is required")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = int(os.environ.get("DEBUG", constants.DEFAULT_DEBUG))
@@ -83,7 +87,7 @@ DATABASES = {
         "ENGINE": os.environ.get("DB_ENGINE", constants.DEFAULT_DB_ENGINE),
         "NAME": os.environ.get("DB_NAME", BASE_DIR / constants.DEFAULT_DB_NAME),
         "USER": os.environ.get("DB_USER", constants.DEFAULT_DB_USER),
-        "PASSWORD": os.environ.get("DB_PASSWORD", constants.DEFAULT_DB_PASSWORD),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
         "HOST": os.environ.get("DB_HOST", constants.DEFAULT_DB_HOST),
         "PORT": os.environ.get("DB_PORT", constants.DEFAULT_DB_PORT),
     }
@@ -94,10 +98,13 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Cache Configuration
+# Cache Configuration
+REDIS_URL = os.environ.get("REDIS_URL", constants.DEFAULT_REDIS_URL)
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": constants.REDIS_URL,
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -136,8 +143,8 @@ USE_I18N = True
 USE_TZ = True
 
 # Celery Configuration
-CELERY_BROKER_URL = constants.CELERY_BROKER_URL
-CELERY_RESULT_BACKEND = constants.CELERY_RESULT_BACKEND
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", REDIS_URL)
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", REDIS_URL)
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
