@@ -76,21 +76,54 @@ single-ecom/
 
 ## Environment Variables
 
-### Backend (.env.dev / .env.prod)
+### Setup Instructions
+
+**Backend (Root Level)**:
+```bash
+# Copy the example file
+cp .env.example .env.dev
+
+# Edit .env.dev and update the values
+# IMPORTANT: Change SECRET_KEY to a strong, unique value
+```
+
+**Frontend**:
+```bash
+# Copy the example file
+cp frontend/.env.example frontend/.env.development
+
+# Edit frontend/.env.development if needed
+```
+
+### Backend Environment Variables (.env.dev / .env.prod)
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `DEBUG` | Debug mode (0 or 1) | 1 (dev), 0 (prod) | No |
+| `SECRET_KEY` | Django secret key | - | **Yes** |
+| `DJANGO_ALLOWED_HOSTS` | Allowed hosts (space-separated) | localhost 127.0.0.1 [::1] backend backend:8000 | No |
+| `DB_ENGINE` | Database engine | django.db.backends.postgresql | No |
+| `DB_NAME` | Database name | hello_django_dev | No |
+| `DB_USER` | Database user | hello_django | No |
+| `DB_PASSWORD` | Database password | - | No |
+| `DB_HOST` | Database host | db | No |
+| `DB_PORT` | Database port | 5432 | No |
+| `DATABASE` | Database type | postgres | No |
+| `REDIS_URL` | Redis connection URL | redis://redis:6379/0 | No |
+| `CELERY_BROKER_URL` | Celery broker URL | (uses REDIS_URL) | No |
+| `CELERY_RESULT_BACKEND` | Celery result backend | (uses REDIS_URL) | No |
+
+### Frontend Environment Variables (.env.development / .env.production)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DEBUG` | Debug mode (0 or 1) | 1 (dev), 0 (prod) |
-| `SECRET_KEY` | Django secret key | - |
-| `DJANGO_ALLOWED_HOSTS` | Allowed hosts | localhost 127.0.0.1 |
-| `DB_ENGINE` | Database engine | django.db.backends.postgresql |
-| `DB_NAME` | Database name | hello_django_dev |
-| `DB_USER` | Database user | hello_django |
-| `DB_PASSWORD` | Database password | hello_django |
-| `DB_HOST` | Database host | db |
-| `DB_PORT` | Database port | 5432 |
-| `DATABASE` | Database type | postgres |
-| `REDIS_URL` | Redis connection URL | redis://redis:6379/0 |
+| `VITE_API_URL` | API URL for client-side requests | http://localhost:8000/api |
+| `VITE_SERVER_API_URL` | API URL for SSR requests | http://backend:8000/api |
+| `VITE_API_TIMEOUT` | API request timeout (ms) | 30000 |
+| `VITE_APP_NAME` | Application name | E-commerce Platform |
+| `VITE_APP_ENV` | Application environment | development |
+
+> **Security Note**: Never commit actual `.env.dev`, `.env.prod`, `.env.development`, or `.env.production` files to version control. These files are gitignored.
 
 ## Development Workflow
 
