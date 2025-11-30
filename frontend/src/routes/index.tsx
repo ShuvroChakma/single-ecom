@@ -1,15 +1,23 @@
+import DataDisplay from '@/components/DataDisplay'
 import { Button } from '@/components/ui/button'
+import { apiClient } from '@/utils/api-client'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/')({ component: App, loader: () => {
-  return {
-    "apiUrl": import.meta.env.VITE_API_URL,
-    "apiTimeout": import.meta.env.VITE_API_TIMEOUT
+export const Route = createFileRoute('/')({
+  component: App,
+  loader: async () => {
+    const data = await apiClient.get("/v1/health/")
+
+    return {
+      "apiUrl": import.meta.env.VITE_API_URL,
+      "apiTimeout": import.meta.env.VITE_API_TIMEOUT,
+      "data": data
+    }
   }
-} })
+})
 
 function App() {
-  const { apiUrl, apiTimeout } = Route.useLoaderData()
+  const { apiUrl, apiTimeout, data } = Route.useLoaderData()
 
   return (
     <div>
@@ -17,6 +25,7 @@ function App() {
       <Button>Test Button</Button>
       <p>{apiUrl}</p>
       <p>{apiTimeout}</p>
+      <DataDisplay data={data} />
     </div>
   )
 }

@@ -31,7 +31,7 @@ except KeyError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = int(os.environ.get("DEBUG", constants.DEFAULT_DEBUG))
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", constants.DEFAULT_ALLOWED_HOSTS).split(" ")
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", constants.DEFAULT_ALLOWED_HOSTS).split()
 
 
 # Application definition

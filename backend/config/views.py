@@ -1,3 +1,4 @@
+from time import sleep
 from django.views.decorators.http import require_GET
 from django.db import connection
 from django.core.cache import cache
