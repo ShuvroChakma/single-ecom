@@ -76,3 +76,5 @@ coverage/
 
 # OS
 Thumbs.db
+
+!frontend/src/lib
