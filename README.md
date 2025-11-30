@@ -90,6 +90,7 @@ single-ecom/
 | `DB_HOST` | Database host | db |
 | `DB_PORT` | Database port | 5432 |
 | `DATABASE` | Database type | postgres |
+| `REDIS_URL` | Redis connection URL | redis://redis:6379/0 |
 
 ## Development Workflow
 
