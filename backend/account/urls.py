@@ -10,4 +10,7 @@ urlpatterns = [
     path('token/refresh/', views.TokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', views.TokenVerifyView.as_view(), name='token_verify'),
     path('me/', views.CurrentUserView.as_view(), name='current_user'),
+    
+    # Debug endpoints (only available when DEBUG=True)
+    path('debug/get-otp/', views.DebugGetOTPView.as_view(), name='debug_get_otp'),
 ]

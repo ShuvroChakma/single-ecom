@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
 from config.api_response import APIResponse
-from config.exceptions import ValidationError, UnauthorizedError, BadRequestError
+from config.exceptions import ValidationError, UnauthorizedError, BadRequestError, ForbiddenError, NotFoundError, ServerError
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, VerifyEmailSerializer
 from .utils import RefreshTokenManager, OTPManager
 from .logging_utils import log_user_action
@@ -334,3 +334,45 @@ class ResendOTPView(APIView):
         return APIResponse.success(
             message='OTP sent successfully. Please check your email.'
         )
+
+
+class DebugGetOTPView(APIView):
+    """
+    DEBUG ONLY: Get OTP for email verification testing.
+    This endpoint is only available when DEBUG=True.
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        from django.conf import settings
+        
+        # Only available in debug mode
+        if not settings.DEBUG:
+            raise ForbiddenError(message='This endpoint is only available in debug mode')
+        
+        email = request.query_params.get('email')
+        if not email:
+            raise BadRequestError(message='Email parameter is required')
+        
+        # Get OTP from Redis
+        import json
+        
+        key = f'email_otp:{email}'
+        otp_data_str = cache.get(key)
+        
+        if not otp_data_str:
+            raise NotFoundError(message=f'No OTP found for {email}. Please register or request OTP first.')
+        
+        try:
+            otp_data = json.loads(otp_data_str)
+            return APIResponse.success(
+                data={
+                    'email': email,
+                    'otp': otp_data.get('otp'),
+                    'created_at': otp_data.get('created_at'),
+                    'expires_in_seconds': 600  # 10 minutes
+                },
+                message='OTP retrieved successfully (DEBUG MODE ONLY)'
+            )
+        except json.JSONDecodeError:
+            raise ServerError(message='Invalid OTP data format')

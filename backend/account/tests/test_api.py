@@ -256,3 +256,58 @@ class TestCurrentUserAPI:
         response = api_client.get('/api/v1/auth/me/')
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+class TestDebugGetOTPAPI:
+    """Test debug OTP retrieval endpoint."""
+    
+    @patch('django.core.cache.cache.get')
+    def test_debug_get_otp_success(self, mock_cache_get, api_client, settings):
+        """Test successful OTP retrieval in debug mode."""
+        import json
+        
+        # Enable debug mode
+        settings.DEBUG = True
+        
+        # Mock OTP data in cache
+        otp_data = {
+            'otp': '123456',
+            'user_id': 1,
+            'created_at': '2025-12-06T15:00:00'
+        }
+        mock_cache_get.return_value = json.dumps(otp_data)
+        
+        response = api_client.get('/api/v1/auth/debug/get-otp/?email=test@example.com')
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['success'] is True
+        assert response.data['data']['otp'] == '123456'
+        assert response.data['data']['email'] == 'test@example.com'
+    
+    def test_debug_get_otp_production_mode(self, api_client, settings):
+        """Test that endpoint is forbidden in production."""
+        # Disable debug mode
+        settings.DEBUG = False
+        
+        response = api_client.get('/api/v1/auth/debug/get-otp/?email=test@example.com')
+        
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+    
+    def test_debug_get_otp_missing_email(self, api_client, settings):
+        """Test error when email parameter is missing."""
+        settings.DEBUG = True
+        
+        response = api_client.get('/api/v1/auth/debug/get-otp/')
+        
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+    
+    @patch('django.core.cache.cache.get')
+    def test_debug_get_otp_not_found(self, mock_cache_get, api_client, settings):
+        """Test error when OTP not found."""
+        settings.DEBUG = True
+        mock_cache_get.return_value = None
+        
+        response = api_client.get('/api/v1/auth/debug/get-otp/?email=test@example.com')
+        
+        assert response.status_code == status.HTTP_404_NOT_FOUND
