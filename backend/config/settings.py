@@ -162,11 +162,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
+    # Don't require authentication by default - let views decide
+    'DEFAULT_PERMISSION_CLASSES': [],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'EXCEPTION_HANDLER': 'config.middleware.custom_exception_handler',
+    # Add custom exception handler to format errors properly
+    'EXCEPTION_HANDLER': 'config.drf_exception_handler.custom_exception_handler',
 }
 
 # Simple JWT Configuration

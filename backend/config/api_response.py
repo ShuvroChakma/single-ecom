@@ -139,12 +139,13 @@ class APIResponse:
 
 # Django view helper (for non-DRF views)
 def json_response(
-    success: bool = True,
-    data: Any = None,
-    message: str = "",
+    success: bool,
+    data: Any,
+    message: Optional[str],
     errors: Optional[List] = None,
     status_code: int = 200,
-    meta: Optional[Dict] = None
+    meta: Optional[Dict] = None,
+    error_code: Optional[str] = None
 ) -> JsonResponse:
     """Helper for Django views to return standardized JSON responses."""
     from datetime import datetime
@@ -159,5 +160,9 @@ def json_response(
             **(meta or {})
         }
     }
+    
+    # Add error_code at top level if provided
+    if error_code:
+        response_data["error_code"] = error_code
     
     return JsonResponse(response_data, status=status_code)

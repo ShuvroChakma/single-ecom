@@ -28,16 +28,29 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     """Serializer for user registration."""
     
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
+    email = serializers.EmailField(help_text="User's email address (will be used for login)")
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password],
+        help_text="Password (min 8 characters, must include letters and numbers)"
+    )
+    password2 = serializers.CharField(
+        write_only=True,
+        required=True,
+        help_text="Confirm password (must match password field)"
+    )
+    first_name = serializers.CharField(required=False, help_text="User's first name")
+    last_name = serializers.CharField(required=False, help_text="User's last name")
+    mobile_number = serializers.CharField(required=False, help_text="User's mobile number")
     
     class Meta:
         model = User
-        fields = ('email', 'password', 'password2', 'first_name', 'last_name', 'mobile_number')
+        fields = ['email', 'password', 'password2', 'first_name', 'last_name', 'mobile_number']
         extra_kwargs = {
-            'first_name': {'required': False},
-            'last_name': {'required': False},
-            'mobile_number': {'required': False},
+            # 'first_name': {'required': False}, # Moved to field definition
+            # 'last_name': {'required': False}, # Moved to field definition
+            # 'mobile_number': {'required': False}, # Moved to field definition
         }
     
     def validate(self, attrs):
@@ -60,32 +73,64 @@ class RegisterSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     """Serializer for user login."""
     
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True, write_only=True)
+    email = serializers.EmailField(required=True, help_text="Registered email address")
+    password = serializers.CharField(
+        required=True, 
+        write_only=True,
+        help_text="Account password"
+    )
     
     def validate(self, attrs):
         """Validate credentials."""
+        from django.contrib.auth import authenticate
+        from rest_framework.exceptions import ValidationError as DRFValidationError
+        from config.exceptions import EmailNotVerifiedError
+        from .models import User
+        
         email = attrs.get('email')
         password = attrs.get('password')
         
-        if email and password:
-            user = authenticate(request=self.context.get('request'),
-                                username=email, password=password)
-            if not user:
-                raise serializers.ValidationError('Invalid credentials.')
-            if not user.is_active:
-                raise serializers.ValidationError('Please verify your email before logging in.')
-            if not user.email_verified:
-                raise serializers.ValidationError('Email not verified. Please check your email for verification code.')
-        else:
-            raise serializers.ValidationError('Must include "email" and "password".')
+        if not email or not password:
+            raise DRFValidationError({
+                'non_field_errors': ['Must include "email" and "password".']
+            })
+
+        # Try to get user
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise DRFValidationError({
+                'non_field_errors': ['Invalid credentials.']
+            })
         
-        attrs['user'] = user
+        # Check if email is verified
+        if not user.email_verified:
+            raise EmailNotVerifiedError(email=email)
+        
+        # Authenticate user
+        authenticated_user = authenticate(username=email, password=password)
+        if authenticated_user is None:
+            raise DRFValidationError({
+                'non_field_errors': ['Invalid credentials.']
+            })
+        
+        attrs['user'] = authenticated_user
         return attrs
 
 
 class VerifyEmailSerializer(serializers.Serializer):
-    """Serializer for email verification."""
+    """Serializer for email verification with OTP."""
     
-    email = serializers.EmailField(required=True)
-    otp = serializers.CharField(required=True, max_length=6, min_length=6)
+    email = serializers.EmailField(required=True, help_text="Email address to verify")
+    otp = serializers.CharField(
+        required=True,
+        max_length=6, 
+        min_length=6,
+        help_text="6-digit OTP code sent to email"
+    )
+    
+    class Meta:
+        examples = {
+            'email': 'user@example.com',
+            'otp': '123456'
+        }

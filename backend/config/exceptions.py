@@ -1,24 +1,34 @@
 """
-Custom exceptions for standardized error handling.
+Custom exception classes for standardized error handling.
 """
 from rest_framework import status
 
 
 class APIException(Exception):
-    """Base API exception class."""
-    
+    """Base exception for all API errors."""
     status_code = status.HTTP_400_BAD_REQUEST
-    default_message = "An error occurred"
-    error_code = "api_error"
+    message = 'An error occurred'
+    errors = None
+    error_code = None
     
     def __init__(self, message=None, errors=None, status_code=None, error_code=None):
-        self.message = message or self.default_message
-        self.errors = errors or []
+        self.message = message or self.message
+        self.errors = errors or self.errors
+        self.error_code = error_code or self.error_code
         if status_code:
             self.status_code = status_code
-        if error_code:
-            self.error_code = error_code
         super().__init__(self.message)
+
+
+class EmailNotVerifiedError(APIException):
+    """Exception for when user tries to login with unverified email."""
+    status_code = status.HTTP_401_UNAUTHORIZED
+    message = 'Email not verified. Please check your email for verification code.'
+    error_code = 'EMAIL_NOT_VERIFIED'
+    
+    def __init__(self, email=None):
+        self.email = email
+        super().__init__(self.message, error_code=self.error_code)
 
 
 class ValidationError(APIException):
