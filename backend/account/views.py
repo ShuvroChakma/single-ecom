@@ -7,6 +7,7 @@ from config.api_response import APIResponse
 from config.exceptions import ValidationError, UnauthorizedError, BadRequestError
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, VerifyEmailSerializer
 from .utils import RefreshTokenManager, OTPManager
+from .logging_utils import log_user_action
 
 
 class RegisterView(APIView):
@@ -16,6 +17,13 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
+            log_user_action(
+                action='USER_REGISTERED',
+                email=request.data.get('email', 'unknown'),
+                request=request,
+                details={'errors': serializer.errors},
+                success=False
+            )
             raise ValidationError(
                 message='Registration failed',
                 errors=serializer.errors
@@ -25,6 +33,22 @@ class RegisterView(APIView):
         
         # Generate and send OTP
         OTPManager.create_email_verification_otp(user)
+        
+        # Log successful registration
+        log_user_action(
+            action='USER_REGISTERED',
+            email=user.email,
+            user=user,
+            request=request,
+            details={'user_type': user.user_type}
+        )
+        
+        log_user_action(
+            action='OTP_SENT',
+            email=user.email,
+            user=user,
+            request=request
+        )
         
         user_data = UserSerializer(user).data
         return APIResponse.success(
@@ -41,6 +65,13 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
+            log_user_action(
+                action='LOGIN_FAILED',
+                email=request.data.get('email', 'unknown'),
+                request=request,
+                details={'errors': serializer.errors},
+                success=False
+            )
             raise UnauthorizedError(
                 message='Login failed',
                 errors=serializer.errors
@@ -57,6 +88,15 @@ class LoginView(APIView):
             user_id=user.id,
             jti=str(refresh['jti']),
             metadata={'created_at': str(refresh['iat'])}
+        )
+        
+        # Log successful login
+        log_user_action(
+            action='LOGIN_SUCCESS',
+            email=user.email,
+            user=user,
+            request=request,
+            details={'user_type': user.user_type}
         )
         
         user_data = UserSerializer(user).data
@@ -116,6 +156,14 @@ class TokenRefreshView(APIView):
             
             # Generate new access token
             access = token.access_token
+            
+            # Log token refresh
+            log_user_action(
+                action='TOKEN_REFRESHED',
+                email=request.user.email if request.user.is_authenticated else 'unknown',
+                user=request.user if request.user.is_authenticated else None,
+                request=request
+            )
             
             return APIResponse.success(
                 data={'access': str(access)},
@@ -194,11 +242,30 @@ class VerifyEmailView(APIView):
         otp = serializer.validated_data['otp']
         
         # Verify OTP
-        user = OTPManager.verify_email_otp(email, otp)
-        
-        return APIResponse.success(
-            message='Email verified successfully. You can now login.'
-        )
+        try:
+            user = OTPManager.verify_email_otp(email, otp)
+            
+            # Log successful verification
+            log_user_action(
+                action='EMAIL_VERIFIED',
+                email=email,
+                user=user,
+                request=request
+            )
+            
+            return APIResponse.success(
+                message='Email verified successfully. You can now login.'
+            )
+        except Exception as e:
+            # Log failed verification
+            log_user_action(
+                action='OTP_FAILED',
+                email=email,
+                request=request,
+                details={'error': str(e)},
+                success=False
+            )
+            raise
 
 
 class ResendOTPView(APIView):
@@ -223,6 +290,15 @@ class ResendOTPView(APIView):
         
         # Generate and send new OTP
         OTPManager.create_email_verification_otp(user)
+        
+        # Log OTP resend
+        log_user_action(
+            action='OTP_SENT',
+            email=user.email,
+            user=user,
+            request=request,
+            details={'resend': True}
+        )
         
         return APIResponse.success(
             message='OTP sent successfully. Please check your email.'
