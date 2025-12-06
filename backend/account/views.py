@@ -9,11 +9,37 @@ from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, Ve
 from .utils import RefreshTokenManager, OTPManager
 from .logging_utils import log_user_action
 from .rate_limiter import email_rate_limit, rate_limit
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 
 
 class RegisterView(APIView):
     """Register a new user."""
     permission_classes = [AllowAny]
+    
+    @extend_schema(
+        tags=['Authentication'],
+        summary='Register new user',
+        description='Register a new customer account. Email verification required before login.',
+        request=RegisterSerializer,
+        responses={
+            201: UserSerializer,
+            400: {'description': 'Validation error'},
+            429: {'description': 'Rate limit exceeded'}
+        },
+        examples=[
+            OpenApiExample(
+                'Register Example',
+                value={
+                    'email': 'user@example.com',
+                    'password': 'SecurePass123!',
+                    'password2': 'SecurePass123!',
+                    'first_name': 'John',
+                    'last_name': 'Doe'
+                }
+            )
+        ]
+    )
     
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)

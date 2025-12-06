@@ -363,3 +363,52 @@ For questions or clarifications, refer to:
 - `rate_limiting_documentation.md` - Rate limiting policies
 - Django docs: https://docs.djangoproject.com/
 - DRF docs: https://www.django-rest-framework.org/
+
+## API Documentation (Swagger/OpenAPI)
+
+All API endpoints are automatically documented using drf-spectacular.
+
+### Accessing Documentation
+
+- **Swagger UI**: http://localhost:8000/api/docs/
+- **ReDoc**: http://localhost:8000/api/redoc/
+- **OpenAPI Schema**: http://localhost:8000/api/schema/
+
+### Documenting Endpoints
+
+Use the `@extend_schema` decorator on all API methods:
+
+```python
+from drf_spectacular.utils import extend_schema, OpenApiExample
+
+class MyView(APIView):
+    @extend_schema(
+        tags=['Category Name'],
+        summary='Short description',
+        description='Detailed description of what this endpoint does',
+        request=RequestSerializer,
+        responses={
+            200: ResponseSerializer,
+            400: {'description': 'Bad request'},
+            401: {'description': 'Unauthorized'},
+        },
+        examples=[
+            OpenApiExample(
+                'Example Name',
+                value={'field': 'value'}
+            )
+        ]
+    )
+    def post(self, request):
+        # Implementation
+        pass
+```
+
+### Best Practices
+
+1. **Always add tags** - Group related endpoints
+2. **Include examples** - Help frontend developers understand usage
+3. **Document all responses** - Including error cases
+4. **Use clear descriptions** - Explain what the endpoint does
+5. **Keep schema updated** - Documentation should match implementation
+
