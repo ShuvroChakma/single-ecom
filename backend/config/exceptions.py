@@ -83,3 +83,12 @@ class RateLimitError(APIException):
     status_code = status.HTTP_429_TOO_MANY_REQUESTS
     default_message = "Rate limit exceeded"
     error_code = "rate_limit_exceeded"
+
+
+class TooManyRequestsError(APIException):
+    """Exception for rate limit exceeded (429)."""
+    
+    def __init__(self, message="Too many requests", errors=None, details=None):
+        super().__init__(message, errors)
+        self.status_code = 429
+        self.details = details or {}

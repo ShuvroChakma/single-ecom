@@ -8,6 +8,7 @@ from config.exceptions import ValidationError, UnauthorizedError, BadRequestErro
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, VerifyEmailSerializer
 from .utils import RefreshTokenManager, OTPManager
 from .logging_utils import log_user_action
+from .rate_limiter import email_rate_limit, rate_limit
 
 
 class RegisterView(APIView):
@@ -62,6 +63,7 @@ class LoginView(APIView):
     """Login user and return JWT tokens."""
     permission_classes = [AllowAny]
     
+    @email_rate_limit('login', max_requests=5, window_seconds=300)  # 5 per 5 min per email
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
@@ -140,6 +142,7 @@ class TokenRefreshView(APIView):
     """Refresh access token using refresh token."""
     permission_classes = [AllowAny]
     
+    @rate_limit('token_refresh', max_requests=20, window_seconds=60)  # 20 per min per IP
     def post(self, request):
         refresh_token = request.data.get('refresh')
         if not refresh_token:
@@ -230,6 +233,7 @@ class VerifyEmailView(APIView):
     """Verify user email with OTP."""
     permission_classes = [AllowAny]
     
+    @email_rate_limit('verify_email', max_requests=5, window_seconds=300)  # 5 per 5 min per email
     def post(self, request):
         serializer = VerifyEmailSerializer(data=request.data)
         if not serializer.is_valid():
@@ -272,6 +276,7 @@ class ResendOTPView(APIView):
     """Resend OTP for email verification."""
     permission_classes = [AllowAny]
     
+    @email_rate_limit('resend_otp', max_requests=3, window_seconds=600)  # 3 per 10 min per email
     def post(self, request):
         from .models import User
         from config.exceptions import NotFoundError
