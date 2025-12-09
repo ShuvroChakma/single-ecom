@@ -1,7 +1,8 @@
+import { createFileRoute } from '@tanstack/react-router'
 import DataDisplay from '@/components/DataDisplay'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/utils/api-client'
-import { createFileRoute } from '@tanstack/react-router'
+
 
 export const Route = createFileRoute('/')({
   component: App,
