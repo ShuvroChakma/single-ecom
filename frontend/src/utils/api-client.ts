@@ -9,16 +9,10 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { APIResponse } from '../types/api.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const SERVER_API_URL = import.meta.env.VITE_SERVER_API_URL || 'http://backend:8000/api'; // Docker service name for SSR
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000', 10);
 
-// Determine the correct base URL based on environment (Server vs Client)
+// Determine the correct base URL based on environment
 const getBaseUrl = () => {
-    if (typeof window === 'undefined') {
-        // Server-side (SSR) - use Docker service name
-        return SERVER_API_URL;
-    }
-    // Client-side - use public URL
     return API_BASE_URL;
 };
 
