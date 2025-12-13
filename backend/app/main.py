@@ -32,7 +32,7 @@ from app.core.schemas.response import SuccessResponse
 from app.core.docs import doc_responses
 
 @app.get(
-    "/health",
+    "/api/v1/health",
     response_model=SuccessResponse,
     summary="Health Check",
     responses=doc_responses(
