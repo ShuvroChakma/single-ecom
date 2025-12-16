@@ -1,15 +1,9 @@
-
 import { createFileRoute } from '@tanstack/react-router'
 
-
-export const Route = createFileRoute('/cart')({
+export const Route = createFileRoute('/account/signup')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  return <div>
-    
-    cartPage
-
-    </div>
+  return <div>Hello "/account/signup"!</div>
 }
