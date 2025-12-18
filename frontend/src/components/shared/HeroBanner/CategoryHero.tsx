@@ -90,7 +90,7 @@ const CATEGORIES: Array<Category> = [
 
 export default function CategoryHero() {
   return (
-    <div className="w-full bg-linear-to-b from-gray-50 to-white py-10">
+    <div className="w-full py-10">
       <div className="max-w-7xl mx-auto px-4">
         {/* Category Grid */}
         <div

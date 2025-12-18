@@ -17,8 +17,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsIdRouteImport } from './routes/products/$id'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
-import { Route as AccountSignupRouteImport } from './routes/account/signup'
-import { Route as AccountLoginRouteImport } from './routes/account/login'
 
 const WishlistRouteRoute = WishlistRouteRouteImport.update({
   id: '/wishlist',
@@ -60,16 +58,6 @@ const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
   path: '/categories/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AccountSignupRoute = AccountSignupRouteImport.update({
-  id: '/account/signup',
-  path: '/account/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountLoginRoute = AccountLoginRouteImport.update({
-  id: '/account/login',
-  path: '/account/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -77,8 +65,6 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
-  '/account/login': typeof AccountLoginRoute
-  '/account/signup': typeof AccountSignupRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/products/$id': typeof ProductsIdRoute
   '/products': typeof ProductsIndexRoute
@@ -89,8 +75,6 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
-  '/account/login': typeof AccountLoginRoute
-  '/account/signup': typeof AccountSignupRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/products/$id': typeof ProductsIdRoute
   '/products': typeof ProductsIndexRoute
@@ -102,8 +86,6 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
-  '/account/login': typeof AccountLoginRoute
-  '/account/signup': typeof AccountSignupRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/products/$id': typeof ProductsIdRoute
   '/products/': typeof ProductsIndexRoute
@@ -116,8 +98,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/stores'
     | '/wishlist'
-    | '/account/login'
-    | '/account/signup'
     | '/categories/$slug'
     | '/products/$id'
     | '/products'
@@ -128,8 +108,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/stores'
     | '/wishlist'
-    | '/account/login'
-    | '/account/signup'
     | '/categories/$slug'
     | '/products/$id'
     | '/products'
@@ -140,8 +118,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/stores'
     | '/wishlist'
-    | '/account/login'
-    | '/account/signup'
     | '/categories/$slug'
     | '/products/$id'
     | '/products/'
@@ -153,8 +129,6 @@ export interface RootRouteChildren {
   ProfileRouteRoute: typeof ProfileRouteRoute
   StoresRouteRoute: typeof StoresRouteRoute
   WishlistRouteRoute: typeof WishlistRouteRoute
-  AccountLoginRoute: typeof AccountLoginRoute
-  AccountSignupRoute: typeof AccountSignupRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   ProductsIdRoute: typeof ProductsIdRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
@@ -218,20 +192,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/account/signup': {
-      id: '/account/signup'
-      path: '/account/signup'
-      fullPath: '/account/signup'
-      preLoaderRoute: typeof AccountSignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account/login': {
-      id: '/account/login'
-      path: '/account/login'
-      fullPath: '/account/login'
-      preLoaderRoute: typeof AccountLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -241,8 +201,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRouteRoute: ProfileRouteRoute,
   StoresRouteRoute: StoresRouteRoute,
   WishlistRouteRoute: WishlistRouteRoute,
-  AccountLoginRoute: AccountLoginRoute,
-  AccountSignupRoute: AccountSignupRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   ProductsIdRoute: ProductsIdRoute,
   ProductsIndexRoute: ProductsIndexRoute,

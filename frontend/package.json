@@ -39,6 +39,7 @@
     "nitro": "latest",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0",
     "react-router-dom": "^7.10.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.0.6",

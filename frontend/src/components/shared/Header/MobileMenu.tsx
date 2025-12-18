@@ -96,16 +96,16 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           {/* Auth Buttons */}
           <div className="flex gap-3 mb-5">
             <Link
-              to="/account/login"
+              to="/profile"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-[#C41E8C] text-white rounded-md text-center text-sm font-semibold hover:bg-[#A01873] active:bg-[#8B1464] transition-colors shadow-sm"
+              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-[#A01873] active:bg-[#8B1464] transition-colors shadow-sm"
             >
               Login
             </Link>
             <Link
-              to="/account/signup"
+              to="/profile"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-[#C41E8C] text-white rounded-md text-center text-sm font-semibold hover:bg-[#A01873] active:bg-[#8B1464] transition-colors shadow-sm"
+              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-[#A01873] active:bg-[#8B1464] transition-colors shadow-sm"
             >
               Sign Up
             </Link>

@@ -3,6 +3,7 @@ import Header from '@/components/shared/Header/Header'
 import Carousel from '@/components/shared/HeroBanner/Carousel'
 import CategoryHero from '@/components/shared/HeroBanner/CategoryHero'
 import Footer from '@/components/shared/Footer/Footer'
+import JewelryOffers from '@/components/shared/HeroBanner/JewelryOffers'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -14,7 +15,7 @@ function App() {
       <Header />
       <Carousel />
       <CategoryHero />
-
+      <JewelryOffers />
       <Footer />
     </div>
   )

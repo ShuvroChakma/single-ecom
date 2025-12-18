@@ -7,7 +7,7 @@ const TopBar = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-topbar text-white text-sm">
+    <div className="bg-top_bar text-white text-sm">
       <div className="max-w-[1920px] mx-auto px-4 flex items-center justify-between">
         <div className="flex-1" />
         
