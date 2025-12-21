@@ -46,16 +46,37 @@ async def get_category_tree(
 async def create_category(
     data: CategoryCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["manage_categories"])),
+    current_user: User = Depends(require_permissions(["categories:write"])),
     service: CategoryService = Depends(get_category_service)
 ):
     """
     Create a new category.
     - Max depth: 3 levels (0, 1, 2)
-    - Requires 'manage_categories' permission
+    - Requires 'categories:write' permission
     """
     category = await service.create_category(data, str(current_user.id), request)
     return create_success_response(message="Category created successfully", data=category)
+
+@router.put(
+    "/admin/categories/{category_id}",
+    response_model=SuccessResponse[CategoryResponse],
+    summary="Update category"
+)
+async def update_category(
+    category_id: UUID,
+    data: CategoryUpdate,
+    request: Request,
+    current_user: User = Depends(require_permissions(["categories:write"])),
+    service: CategoryService = Depends(get_category_service)
+):
+    """
+    Update an existing category.
+    - Can change name, slug, icon, banner, is_active, parent
+    - Validates depth constraints when changing parent
+    - Requires 'categories:write' permission
+    """
+    category = await service.update_category(category_id, data, str(current_user.id), request)
+    return create_success_response(message="Category updated successfully", data=category)
 
 @router.delete(
     "/admin/categories/{category_id}",
@@ -65,13 +86,13 @@ async def create_category(
 async def delete_category(
     category_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["manage_categories"])),
+    current_user: User = Depends(require_permissions(["categories:delete"])),
     service: CategoryService = Depends(get_category_service)
 ):
     """
     Delete a category.
     - Strict Check: Fails if category has children
-    - Requires 'manage_categories' permission
+    - Requires 'categories:delete' permission
     """
     await service.delete_category(category_id, str(current_user.id), request)
     return create_success_response(message="Category deleted successfully")

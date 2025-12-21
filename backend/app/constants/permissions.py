@@ -37,6 +37,11 @@ class PermissionEnum(str, Enum):
     PRODUCTS_READ = "products:read"
     PRODUCTS_WRITE = "products:write"
     
+    # Category permissions
+    CATEGORIES_READ = "categories:read"
+    CATEGORIES_WRITE = "categories:write"
+    CATEGORIES_DELETE = "categories:delete"
+    
     # System permissions
     SYSTEM_CONFIG = "system:config"
 
@@ -51,10 +56,13 @@ DEFAULT_ROLE_PERMISSIONS = {
         PermissionEnum.ORDERS_WRITE,
         PermissionEnum.PRODUCTS_READ,
         PermissionEnum.PRODUCTS_WRITE,
+        PermissionEnum.CATEGORIES_READ,
+        PermissionEnum.CATEGORIES_WRITE,
     ],
     "SUPPORT": [
         PermissionEnum.USERS_READ,
         PermissionEnum.ORDERS_READ,
+        PermissionEnum.CATEGORIES_READ,
     ],
     "CUSTOMER": [
         "profile:read",

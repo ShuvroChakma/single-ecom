@@ -9,35 +9,15 @@ from app.constants.enums import UserType
 from app.core.permissions import require_permissions, get_current_active_user
 
 # Mock User
-MOk_USER_ID = str(uuid4())
+MOCK_USER_ID = str(uuid4())
 mock_admin_user = User(
-    id=MOk_USER_ID,
+    id=MOCK_USER_ID,
     email="admin@test.com",
     hashed_password="hashed",
     user_type=UserType.ADMIN,
     is_active=True,
     is_verified=True
 )
-
-@pytest.fixture
-def override_permissions():
-    """Mock permission dependency to allow access."""
-    async def mock_require_permissions():
-        return mock_admin_user
-    
-    # Override all variants used in endpoints
-    app.dependency_overrides[require_permissions(["manage_categories"])] = mock_require_permissions 
-    # Note: Dependency overrides match by function object. 
-    # 'require_permissions' returns a closure 'permission_checker'.
-    # This is tricky to override dynamically.
-    # Pattern: Override the *caller* or use a simpler override mechanism if possible.
-    # Easier approach: Override 'get_current_active_user' and ensure logic passes? 
-    # Or strict override of the exact closure used in endpoint?
-    # In 'endpoints.py': current_user: User = Depends(require_permissions(["manage_categories"]))
-    # We need to override the result of `require_permissions(["manage_categories"])`
-    
-    yield
-    app.dependency_overrides = {}
 
 @pytest.mark.asyncio
 async def test_get_tree(client: AsyncClient, session: AsyncSession):
@@ -49,7 +29,6 @@ async def test_get_tree(client: AsyncClient, session: AsyncSession):
     assert isinstance(data["data"], list)
 
 
-
 @pytest.mark.asyncio
 async def test_api_flow_real_db(client: AsyncClient, session: AsyncSession):
     """
@@ -59,23 +38,24 @@ async def test_api_flow_real_db(client: AsyncClient, session: AsyncSession):
     3. Login / Get Token (Or override get_current_user)
     4. Call Endpoints
     """
-    from app.modules.roles.models import Role, Permission
+    from app.modules.roles.models import Role, Permission, RolePermission
     from app.modules.users.models import Admin
     
-    # 1. Setup Permissions
-    perm = Permission(code="manage_categories", description="Manage Categories")
-    session.add(perm)
+    # 1. Setup Permissions (use new granular permissions)
+    perm_write = Permission(code="categories:write", description="Categories Write", resource="categories", action="write")
+    perm_delete = Permission(code="categories:delete", description="Categories Delete", resource="categories", action="delete")
+    session.add_all([perm_write, perm_delete])
+    await session.flush()
     
     # 2. Setup Role
     role = Role(name="TEST_ADMIN", description="Test")
     session.add(role)
-    await session.commit()
+    await session.flush()
     
-    # Link Perm to Role (Many-to-Many - manual association table usually)
-    from sqlalchemy import text
-    await session.execute(
-        text(f"INSERT INTO role_permissions (role_id, permission_id) VALUES ('{role.id}', '{perm.id}')")
-    )
+    # Link Perms to Role
+    role_perm1 = RolePermission(role_id=role.id, permission_id=perm_write.id)
+    role_perm2 = RolePermission(role_id=role.id, permission_id=perm_delete.id)
+    session.add_all([role_perm1, role_perm2])
     
     # 3. Setup User & Admin
     user = User(
@@ -86,16 +66,13 @@ async def test_api_flow_real_db(client: AsyncClient, session: AsyncSession):
         is_verified=True
     )
     session.add(user)
-    await session.commit()
+    await session.flush()
     
     admin = Admin(user_id=user.id, username="admin_api", role_id=role.id)
     session.add(admin)
     await session.commit()
     
     # 4. Override get_current_active_user to return this user
-    # The endpoint calls `require_permissions` which calls `get_current_verified_user` -> `get_current_active_user`
-    # -> `get_user_permissions` (which hits DB)
-    
     async def mock_get_user():
         return user
         

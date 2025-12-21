@@ -3,8 +3,8 @@ Super Admin Seeder - Creates the default super admin user.
 """
 from sqlmodel import select
 from seeders.base import BaseSeeder
-from app.models.user import User, Admin
-from app.models.role import Role
+from app.modules.users.models import User, Admin
+from app.modules.roles.models import Role
 from app.constants.enums import UserType
 from app.core.security import get_password_hash
 from app.core.config import settings
