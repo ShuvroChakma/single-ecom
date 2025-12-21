@@ -24,9 +24,9 @@ The project follows a modular architecture designed for scalability and maintain
 │   └── main.py              # Application entry point
 ├── alembic                  # Database migrations
 ├── tests                    # Core & Infrastructure tests
-├── docker-compose.yml       # Production Docker composition
-├── docker-compose.dev.yml   # Development Docker composition
-└── requirements.txt         # Project dependencies
+├── docker-compose.prod.yml  # Production Docker composition
+├── docker-compose.yml       # Development Docker composition
+└── pyproject.toml           # Project dependencies
 ```
 
 ## Best Practices

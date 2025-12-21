@@ -20,7 +20,7 @@ cp .env.example .env
 ./manage.py docker up -d
 
 # Or use docker-compose directly
-docker-compose -f docker-compose.dev.yml up --build
+docker-compose -f docker-compose.yml up --build
 ```
 
 ### 3. Run Database Migrations
@@ -262,7 +262,7 @@ Advanced filtering is supported using double underscores `__`:
 ├── tests/                    # Core & Infrastructure tests
 ├── docs/                     # Documentation
 ├── manage.py                 # CLI management script
-└── docker-compose.dev.yml    # Docker development setup
+└── docker-compose.yml        # Docker development setup
 ```
 
 ## Testing
