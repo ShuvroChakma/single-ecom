@@ -3,7 +3,7 @@ Roles Seeder - Seeds default system roles.
 """
 from sqlmodel import select
 from seeders.base import BaseSeeder
-from app.models.role import Role, Permission
+from app.modules.roles.models import Role, Permission, RolePermission
 
 
 class RolesSeeder(BaseSeeder):
@@ -68,19 +68,25 @@ class RolesSeeder(BaseSeeder):
                 description=role_data["description"],
                 is_system=role_data["is_system"]
             )
+            self.session.add(role)
+            await self.session.flush()  # Get role.id
             
-            # Assign permissions
+            # Assign permissions via junction table
             perm_codes = role_data["permissions"]
             if "*" in perm_codes:
                 # All permissions
-                role.permissions = list(all_permissions.values())
+                for permission in all_permissions.values():
+                    role_perm = RolePermission(role_id=role.id, permission_id=permission.id)
+                    self.session.add(role_perm)
             else:
-                role.permissions = [
-                    all_permissions[code] for code in perm_codes 
-                    if code in all_permissions
-                ]
-            
-            self.session.add(role)
+                for code in perm_codes:
+                    if code in all_permissions:
+                        role_perm = RolePermission(
+                            role_id=role.id, 
+                            permission_id=all_permissions[code].id
+                        )
+                        self.session.add(role_perm)
         
         await self.session.commit()
         print(f"  ✅ Seeded {len(self.DEFAULT_ROLES)} roles")
+

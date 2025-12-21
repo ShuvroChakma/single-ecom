@@ -101,6 +101,56 @@ class CategoryService:
         )
         return category
 
+    async def update_category(self, category_id: UUID, data: CategoryUpdate, actor_id: str, request: Optional[Request] = None) -> Category:
+        """Update category with validation."""
+        category = await self.repository.get(category_id)
+        if not category:
+            raise NotFoundError(message="Category not found", error_code="CATALOG_002")
+        
+        # Prepare update data
+        update_data = data.model_dump(exclude_unset=True)
+        
+        # If changing parent, validate depth
+        if "parent_id" in update_data and update_data["parent_id"] != category.parent_id:
+            if update_data["parent_id"] is not None:
+                parent = await self.repository.get(update_data["parent_id"])
+                if not parent:
+                    raise NotFoundError(message="Parent category not found", error_code="CATALOG_002")
+                
+                # Check if new placement would exceed depth
+                if parent.level >= 2:
+                    raise ValidationError(message="Maximum category depth (3 levels) exceeded", error_code="CATALOG_001")
+                
+                # Cannot move to its own child
+                if str(parent.id) == str(category.id):
+                    raise ValidationError(message="Cannot set category as its own parent", error_code="CATALOG_003")
+                
+                # Update level and path
+                update_data["level"] = parent.level + 1
+                update_data["path"] = f"{parent.path}/{category.id}"
+            else:
+                # Moving to root
+                update_data["level"] = 0
+                update_data["path"] = str(category.id)
+        
+        # Update category
+        updated_category = await self.repository.update(category, update_data)
+        
+        # Clear cache
+        await delete_cache(CACHE_KEY_TREE)
+        
+        # Audit
+        await self.audit_service.log_action(
+            action="update_category",
+            actor_id=actor_id,
+            target_id=str(category_id),
+            target_type="category",
+            details={"updates": update_data},
+            request=request
+        )
+        
+        return updated_category
+
     async def delete_category(self, category_id: UUID, actor_id: str, request: Optional[Request] = None) -> None:
         """Delete category with strict child check."""
         # Check Children
