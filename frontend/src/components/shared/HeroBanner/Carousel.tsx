@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Slide {
   id: number
@@ -8,12 +8,48 @@ interface Slide {
 }
 
 const SLIDES: Array<Slide> = [
-  { id: 1, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1920&q=80", alt: "Slide 1" },
-  { id: 2, image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1920&q=80", alt: "Slide 2" },
-  { id: 3, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1920&q=80", alt: "Slide 3" },
-  { id: 4, image: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=1920&q=80", alt: "Slide 4" },
-  { id: 5, image: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=1920&q=80", alt: "Slide 5" },
-  { id: 6, image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1920&q=80", alt: "Slide 6" },
+  {
+    id: 1,
+    image:
+      'https://static.malabargoldanddiamonds.com/media/bsimages/boi-offer-web-final.jpg',
+    alt: 'Slide 1',
+  },
+  {
+    id: 2,
+    image:
+      'https://static.malabargoldanddiamonds.com/media/bsimages/Men-In-Platinum-web.jpg',
+    alt: 'Slide 2',
+  },
+  {
+    id: 3,
+    image:
+      'https://static.malabargoldanddiamonds.com/media/bsimages/vyana-web.jpg',
+    alt: 'Slide 3',
+  },
+  {
+    id: 4,
+    image:
+      'https://static.malabargoldanddiamonds.com/media/bsimages/Nuwa-web-banner.jpg',
+    alt: 'Slide 4',
+  },
+  {
+    id: 5,
+    image:
+      'https://static.malabargoldanddiamonds.com/media/bsimages/Tanvika-Collection-web.jpg',
+    alt: 'Slide 5',
+  },
+  {
+    id: 6,
+    image:
+      'https://static.malabargoldanddiamonds.com/media/bsimages/Diamond-Jewellery-web1.jpg',
+    alt: 'Slide 6',
+  },
+  {
+    id: 7,
+    image:
+      'https://static.malabargoldanddiamonds.com/media/bsimages/Gold-Chain-web-24092024.jpg',
+    alt: 'Slide 7',
+  },
 ]
 
 export default function Carousel() {
@@ -57,19 +93,19 @@ export default function Carousel() {
     if (!isDragging) return
     setCurrentX(x)
     const dragDistance = x - startX
-    
+
     // Prevent dragging right on first slide
     if (isFirstSlide && dragDistance > 0) {
       setOffsetX(0)
       return
     }
-    
+
     // Prevent dragging left on last slide
     if (isLastSlide && dragDistance < 0) {
       setOffsetX(0)
       return
     }
-    
+
     setOffsetX(dragDistance)
   }
 
@@ -107,11 +143,16 @@ export default function Carousel() {
     <div className="w-full">
       {/* SLIDER */}
       <div
-        className="relative group overflow-hidden w-screen bg-gray-100 h-[250px] xs:h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px]"
+      className="relative group overflow-hidden w-screen h-[180px]
+      xs:h-[220px]
+      sm:h-[300px]
+      md:h-[420px]
+      lg:h-[600px]"
+      
         style={{
           cursor: 'default',
           marginLeft: 'calc(-50vw + 50%)',
-          marginRight: 'calc(-50vw + 50%)'
+          marginRight: 'calc(-50vw + 50%)',
         }}
         onMouseDown={(e) => handleStart(e.clientX)}
         onMouseMove={(e) => handleMove(e.clientX)}
@@ -125,23 +166,25 @@ export default function Carousel() {
         <div
           className="flex h-full"
           style={{
-            transform: `translateX(calc(-${index * 100}% + ${isDragging ? offsetX : 0}px))`,
-            transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: `translateX(calc(-${index * 100}vw + ${isDragging ? offsetX : 0}px))`,
+            transition: isDragging
+              ? 'none'
+              : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
             willChange: 'transform',
           }}
         >
           {SLIDES.map((slide) => (
-            <div key={slide.id} className="min-w-full h-full shrink-0">
+            <div key={slide.id} className="w-screen h-full shrink-0">
               <img
                 src={slide.image}
                 alt={slide.alt}
                 draggable={false}
-                className="w-full h-full object-cover select-none"
+                className="w-full h-full object-fill select-none"
                 style={{
                   backfaceVisibility: 'hidden',
                   transform: 'translateZ(0)',
-                  cursor: 'default'
-                } as React.CSSProperties}
+                  cursor: 'default',
+                }}
               />
             </div>
           ))}
@@ -182,7 +225,6 @@ export default function Carousel() {
         >
           <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
         </button>
-
       </div>
 
       {/* PAGINATION DOTS - OUTSIDE BELOW CAROUSEL */}
@@ -194,9 +236,10 @@ export default function Carousel() {
             aria-label={`Go to slide ${i + 1}`}
             className={`
               transition-all duration-300 cursor-pointer rounded-full
-              ${i === index 
-                ? "w-6 h-1.5 bg-header" 
-                : "w-6 h-1.5 bg-gray-300 hover:bg-gray-400"
+              ${
+                i === index
+                  ? 'w-6 h-1.5 bg-header'
+                  : 'w-6 h-1.5 bg-gray-300 hover:bg-gray-400'
               }
             `}
           />

@@ -60,7 +60,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           </button>
           <div className="flex items-center gap-2.5">
             <img
-              src="/logo.jpg"
+              src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
               alt="Malabar Gold & Diamonds"
               className="h-8 w-auto object-contain"
               onError={(e) => {

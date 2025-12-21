@@ -1,100 +1,119 @@
-import {
-  Award,
-  BadgeDollarSign,
-  CircleDollarSign,
-  Coins,
-  Ear,
-  Flower2,
-  Gem,
-  Heart,
-  Link2,
-  Sparkles,
-  Watch,
-} from 'lucide-react'
-
 interface Category {
   id: number
   name: string
-  icon: React.ReactNode
-  bgColor: string
+  image: string
+  mobileOnly?: boolean
 }
 
 const CATEGORIES: Array<Category> = [
+  // Show only on mobile/sm screens
   {
     id: 1,
-    name: 'Best Sellers',
-    icon: <Award className="w-8 h-8" />,
-    bgColor: 'bg-purple-400',
+    name: 'Diamond',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/diamond-offer.jpg',
+    mobileOnly: true,
   },
   {
     id: 2,
-    name: 'New Arrivals',
-    icon: <Sparkles className="w-8 h-8" />,
-    bgColor: 'bg-pink-300',
+    name: 'Gold',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Gold-offer.jpg',
+    mobileOnly: true,
   },
   {
     id: 3,
-    name: 'Coins & Bars',
-    icon: <Coins className="w-8 h-8" />,
-    bgColor: 'bg-amber-900',
+    name: 'Gemstone',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Gemstone-offer.jpg',
+    mobileOnly: true,
   },
+
+  // Main categories
   {
     id: 4,
-    name: 'Coin Pendants',
-    icon: <CircleDollarSign className="w-8 h-8" />,
-    bgColor: 'bg-yellow-600',
+    name: 'Best Sellers',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/05_may/india-homepage/focus-block/best-seller.jpg',
   },
   {
     id: 5,
-    name: 'Silver Coins',
-    icon: <BadgeDollarSign className="w-8 h-8" />,
-    bgColor: 'bg-rose-900',
+    name: 'New Arrivals',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/05_may/india-homepage/focus-block/new-arrivals.jpg',
   },
   {
     id: 6,
-    name: 'Gold Jhumka',
-    icon: <Gem className="w-8 h-8" />,
-    bgColor: 'bg-emerald-700',
+    name: 'Coins & Bars',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/10_oct/diwali24/homepage/gold-bars-coins-focus.jpg',
   },
   {
     id: 7,
-    name: 'Ring',
-    icon: <Heart className="w-8 h-8" />,
-    bgColor: 'bg-stone-200',
+    name: 'Coin Pendants',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/10_oct/diwali24/homepage/gold-coin-pendant-focus.jpg',
   },
   {
     id: 8,
-    name: 'Bangle',
-    icon: <Flower2 className="w-8 h-8" />,
-    bgColor: 'bg-amber-400',
+    name: 'Silver Coins',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/10_oct/diwali24/homepage/silver-bars-coins-focus.jpg',
   },
   {
     id: 9,
-    name: 'Earring',
-    icon: <Ear className="w-8 h-8" />,
-    bgColor: 'bg-sky-200',
+    name: 'Gold Jhumka',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/02_feb/ind-homepage/category-slider/Gold-Jhumka.gif',
   },
   {
     id: 10,
-    name: 'Mangalsutra',
-    icon: <Link2 className="w-8 h-8" />,
-    bgColor: 'bg-pink-200',
+    name: 'Ring',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/02_feb/ind-homepage/category-slider/solitare.jpg',
   },
   {
     id: 11,
+    name: 'Bangle',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Bangle-1.jpg',
+  },
+  {
+    id: 12,
+    name: 'Earring',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Offer.jpg',
+  },
+  {
+    id: 13,
+    name: 'Mangalsutra',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/02_feb/ind-homepage/category-slider/Mangalsutra.jpg',
+  },
+  {
+    id: 14,
     name: 'Gold Chain',
-    icon: <Watch className="w-8 h-8" />,
-    bgColor: 'bg-orange-200',
+    image:
+      'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Chain-1.jpg',
   },
 ]
 
 export default function CategoryHero() {
   return (
-    <div className="w-full py-10">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Category Grid */}
+    <div className="w-full py-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Mobile: scrollable | Desktop: flex-wrap */}
         <div
-          className="flex overflow-x-auto gap-8 pb-4 px-2"
+          className="
+            flex
+            overflow-x-auto
+            md:overflow-visible
+            gap-4 sm:gap-5 md:gap-0
+            pb-3 px-1 sm:px-2
+
+            md:flex-wrap
+            md:justify-between
+          "
           style={
             {
               scrollbarWidth: 'none',
@@ -102,33 +121,51 @@ export default function CategoryHero() {
             } as React.CSSProperties
           }
         >
-          {CATEGORIES.map((category) => (
-            <div
-              key={category.id}
-              className="flex flex-col items-center gap-3 min-w-[110px] cursor-pointer group shrink-0"
-            >
-              {/* Icon Circle */}
-              <div
-                className={`
-                  ${category.bgColor} 
-                  w-24 h-24 rounded-full 
-                  flex items-center justify-center 
-                  text-white
-                  shadow-lg
-                  transition-all duration-300
-                  group-hover:scale-110 group-hover:shadow-2xl
-                  border-4 border-white
-                `}
-              >
-                {category.icon}
-              </div>
+          {CATEGORIES.map((category) => {
+            // On md+, skip mobile-only items
+            if (category.mobileOnly) {
+              return (
+                <div
+                  key={category.id}
+                  className=" md:hidden flex flex-col items-center shrink-0 min-w-20 sm:min-w-[90px]"
+                >
+                  <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden  shadow-md bg-white">
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      className="w-full h-full object-cover"
+                      draggable={false}
+                    />
+                  </div>
+                  <span className="text-xs sm:text-sm font-medium text-center text-gray-800 whitespace-nowrap">
+                    {category.name}
+                  </span>
+                </div>
+              )
+            }
 
-              {/* Category Name */}
-              <span className="text-sm font-semibold text-gray-800 text-center whitespace-nowrap">
-                {category.name}
-              </span>
-            </div>
-          ))}
+            // Default rendering for all main 11 items
+            return (
+              <div
+                key={category.id}
+                className="
+                  flex flex-col items-center shrink-0 min-w-20 sm:min-w-[90px]
+                "
+              >
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden border-4 border-white shadow-md bg-white">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-center text-gray-800 whitespace-nowrap">
+                  {category.name}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

@@ -1,21 +1,21 @@
-import { useState } from "react";
+import { useState } from "react"
 
 // Define types for better type safety
-type CategorySlug = "diamond" | "gold" | "gemstone";
+type CategorySlug = "diamond" | "gold" | "gemstone"
 
 interface CategoryItem {
-  name: string;
-  icon: string;
+  name: string
+  icon: string
 }
 
 interface CategoryColumn {
-  title: string;
-  items: Array<CategoryItem>;
+  title: string
+  items: Array<CategoryItem>
 }
 
 interface CategoryDropdownData {
-  columns: Array<CategoryColumn>;
-  leftMenu: Array<string>;
+  columns: Array<CategoryColumn>
+  leftMenu: Array<string>
 }
 
 // Mock data structure - replace with your backend data later
@@ -107,10 +107,10 @@ const categoryData: Record<CategorySlug, CategoryDropdownData> = {
     ],
     leftMenu: ["Rings", "Earrings", "Pendants", "Necklaces"],
   },
-};
+}
 
 const CategoryNav = () => {
-  const [hoveredCategory, setHoveredCategory] = useState<CategorySlug | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<CategorySlug | null>(null)
 
   const categories = [
     { name: "DIAMOND", slug: "diamond" as CategorySlug, hasDropdown: true },
@@ -125,11 +125,12 @@ const CategoryNav = () => {
     { name: "JEWELLERY", slug: "jewellery", hasDropdown: false },
     { name: "GIFT CARDS", slug: "gift-cards", hasDropdown: false },
     { name: "GOLD RATE", slug: "gold-rate", hasDropdown: false },
-  ];
+  ]
 
   return (
     <div className="relative">
-      <nav className="hidden lg:block bg-white border-b border-gray-200 shadow-sm relative z-40">
+      {/* CATEGORY BAR */}
+      <nav className="hidden lg:block sticky top-0 bg-white border-b border-gray-200 shadow-sm z-50">
         <div className="w-full">
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex items-center justify-start lg:justify-center min-w-max lg:min-w-0 px-4 lg:px-0">
@@ -138,11 +139,13 @@ const CategoryNav = () => {
                   key={category.slug}
                   className="relative shrink-0"
                   onMouseEnter={() =>
-                    category.hasDropdown && category.slug in categoryData && setHoveredCategory(category.slug as CategorySlug)
+                    category.hasDropdown &&
+                    category.slug in categoryData &&
+                    setHoveredCategory(category.slug as CategorySlug)
                   }
                   onMouseLeave={() => setHoveredCategory(null)}
                 >
-                  <span className="px-2 xl:px-3 py-4 text-xs xl:text-sm font-medium text-gray-700 hover:text-[#960365] transition-colors border-b-2 border-transparent hover:border-[#960365] inline-block cursor-pointer whitespace-nowrap">
+                  <span className="px-2 xl:px-3 py-4 text-xs xl:text-sm font-medium text-gray-700 hover:text-header transition-colors border-b-2 border-transparent hover:border-header inline-block cursor-pointer whitespace-nowrap">
                     {category.name}
                   </span>
                 </div>
@@ -152,7 +155,7 @@ const CategoryNav = () => {
         </div>
       </nav>
 
-      {/* Mega Menu Dropdown - Positioned absolutely below nav */}
+      {/* MEGA MENU */}
       {hoveredCategory && hoveredCategory in categoryData && (
         <div
           className="absolute left-0 right-0 top-full bg-white shadow-2xl border-t border-gray-200 z-50"
@@ -161,15 +164,20 @@ const CategoryNav = () => {
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row py-6 lg:py-8 gap-6 lg:gap-0">
-              {/* Left Sidebar Menu */}
+              {/* LEFT MENU */}
               <div className="w-full lg:w-48 lg:pr-8 lg:border-r-2 border-gray-200">
-                <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-0">
+                <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1">
                   {categoryData[hoveredCategory].leftMenu.map((item, index) => (
                     <a
                       key={item}
-                      href={`/${hoveredCategory}/${item.toLowerCase().replace(/\s+/g, '-')}`}
-                      className={`block px-3 py-2.5 text-sm text-gray-700 hover:text-[#960365] hover:bg-[#960365]/5 hover:border-l-4 hover:border-[#960365] transition-all cursor-pointer font-medium ${
-                        index !== categoryData[hoveredCategory].leftMenu.length - 1 ? 'border-b border-gray-100' : ''
+                      href={`/${hoveredCategory}/${item
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")}`}
+                      className={`block px-3 py-2.5 text-sm text-gray-700 hover:text-header hover:bg-header/5 hover:border-l-4 hover:border-header transition-all font-medium ${
+                        index !==
+                        categoryData[hoveredCategory].leftMenu.length - 1
+                          ? "border-b border-gray-100"
+                          : ""
                       }`}
                     >
                       {item}
@@ -178,23 +186,21 @@ const CategoryNav = () => {
                 </nav>
               </div>
 
-              {/* Main Content Grid */}
+              {/* RIGHT CONTENT */}
               <div className="flex-1 lg:pl-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 xl:gap-12">
-                  {categoryData[hoveredCategory].columns.map((column, idx) => (
-                    <div key={idx}>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3 lg:mb-4">
+                  {categoryData[hoveredCategory].columns.map((column) => (
+                    <div key={column.title}>
+                      <h3 className="text-sm font-semibold mb-3">
                         {column.title}
                       </h3>
-                      <div className="space-y-2 lg:space-y-3">
+                      <div className="space-y-2">
                         {column.items.map((item) => (
                           <div
                             key={item.name}
-                            className="flex items-center gap-2 lg:gap-3 text-sm text-gray-600 hover:text-[#960365] transition-colors group cursor-pointer"
+                            className="flex items-center gap-2 text-sm text-gray-600 hover:text-header cursor-pointer"
                           >
-                            <span className="text-lg lg:text-xl group-hover:scale-110 transition-transform shrink-0">
-                              {item.icon}
-                            </span>
+                            <span className="text-lg">{item.icon}</span>
                             <span>{item.name}</span>
                           </div>
                         ))}
@@ -202,37 +208,13 @@ const CategoryNav = () => {
                     </div>
                   ))}
                 </div>
-
-                {/* Additional sections */}
-                {hoveredCategory === "diamond" && (
-                  <div className="mt-6 lg:mt-8 pt-6 lg:pt-8 border-t border-gray-200">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-6">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#960365] transition-colors cursor-pointer">
-                        <span className="text-lg shrink-0">💫</span>
-                        <span>Casual</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#960365] transition-colors cursor-pointer">
-                        <span className="text-lg shrink-0">💎</span>
-                        <span>Solitaire</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#960365] transition-colors cursor-pointer">
-                        <span className="text-lg shrink-0">💍</span>
-                        <span>Broad Rings</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#960365] transition-colors cursor-pointer">
-                        <span className="text-lg shrink-0">👶</span>
-                        <span>For Kids</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default CategoryNav;
+export default CategoryNav

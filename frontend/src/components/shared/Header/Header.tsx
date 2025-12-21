@@ -29,9 +29,9 @@ const Header = () => {
             {/* Logo */}
             <a href="/" className="flex items-center shrink-0">
               <img
-                src="/logo.jpg"
+                src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
                 alt="Malabar Gold & Diamonds"
-                className="h-9 md:h-11 lg:h-12 w-auto object-contain"
+                className="h-full md:h-12 lg:h-15 w-auto object-contain"
               />
             </a>
 
