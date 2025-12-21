@@ -11,6 +11,7 @@ from app.modules.oauth import provider_endpoints as oauth_providers
 from app.modules.users import admin_endpoints as admins
 from app.modules.users import customer_endpoints as customers
 from app.modules.audit import endpoints as audit_logs
+from app.modules.catalog import endpoints as catalog
 
 
 api_router = APIRouter()
@@ -25,3 +26,4 @@ api_router.include_router(admins.router, prefix="/admin/admins")
 api_router.include_router(customers.router, prefix="/admin/customers")
 api_router.include_router(audit_logs.router, prefix="/admin/audit-logs")
 
+api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
