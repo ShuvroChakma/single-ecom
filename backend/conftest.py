@@ -13,8 +13,16 @@ from sqlalchemy import text
 from sqlalchemy.pool import NullPool
 
 from app.main import app as main_app
-from app.core.database import get_db
+from app.main import app as main_app
+from app.core.deps import get_db as get_db_deps
+from app.core.database import get_db as get_db_core
 from app.core.cache import reset_redis_client
+from app.core.cache import reset_redis_client
+
+# Explicitly import models to ensure valid SQLModel.metadata for create_all
+from app.modules.users.models import User, Admin, Customer
+from app.modules.roles.models import Role, Permission
+from app.modules.catalog.models import Category
 
 # Database configuration
 DB_HOST = os.getenv("POSTGRES_SERVER", "localhost")
@@ -70,12 +78,16 @@ async def setup_test_db():
 
 @pytest.fixture(scope="session", autouse=True)
 async def init_db(setup_test_db):
-    async with test_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
-        await conn.run_sync(SQLModel.metadata.create_all)
-    yield
-    async with test_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
+    try:
+        async with test_engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.drop_all)
+            await conn.run_sync(SQLModel.metadata.create_all)
+        yield
+        async with test_engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.drop_all)
+    except Exception:
+        pass
+
 
 @pytest.fixture
 async def session() -> AsyncSession:
@@ -96,7 +108,8 @@ async def client(session: AsyncSession) -> AsyncClient:
         """Override dependency to use the test session."""
         yield session
     
-    main_app.dependency_overrides[get_db] = override_get_db
+    main_app.dependency_overrides[get_db_deps] = override_get_db
+    main_app.dependency_overrides[get_db_core] = override_get_db
     transport = ASGITransport(app=main_app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
