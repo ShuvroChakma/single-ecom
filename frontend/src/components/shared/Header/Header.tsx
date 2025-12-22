@@ -31,7 +31,7 @@ const Header = () => {
               <img
                 src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
                 alt="Malabar Gold & Diamonds"
-                className="h-full md:h-12 lg:h-15 w-auto object-contain"
+                className="h-full md:h-15 lg:h-15 w-auto object-contain"
               />
             </a>
 

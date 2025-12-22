@@ -71,7 +71,7 @@ export const HandPicked: React.FC<HandPickedProps> = ({
   bottomRight = DEFAULT_BOTTOM_RIGHT,
 }) => {
   return (
-    <section className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-8 md:py-12">
+    <section className="mx-auto max-w-7xl px-4 md:px-4 lg:px-2 py-6 md:py-8">
       {/* Header */}
       <div className="text-center mb-5 md:mb-8">
         <h2 className="text-2xl md:text-3xl xl:text-4xl font-serif">

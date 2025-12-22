@@ -81,9 +81,9 @@ export const SilverCollection: React.FC<SilverCollectionProps> = ({
   earringCategories = DEFAULT_EARRINGS,
 }) => {
   return (
-    <section className="mx-auto max-w-7xl px-4 md:px-6 py-10 md:py-14">
+    <section className="mx-auto max-w-7xl px-4 md:px-2 py-10 md:py-8">
   {/* ================= Silver Heading ================= */}
-  <div className="text-center mb-8">
+  <div className="text-center mb-6">
     <h2 className="text-2xl md:text-3xl xl:text-4xl font-serif">
       Silver Collection
     </h2>
@@ -111,7 +111,7 @@ export const SilverCollection: React.FC<SilverCollectionProps> = ({
   </div>
 
   {/* ================= Earring Heading ================= */}
-  <div className="text-center mb-8">
+  <div className="text-center mb-6">
     <h2 className="text-2xl md:text-3xl xl:text-4xl font-serif">
       Earring Collection
     </h2>
