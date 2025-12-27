@@ -17,14 +17,14 @@ export default function MyAccountPage() {
   const wishlistItems = [
     {
       id: 1,
-      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Ccircle cx='150' cy='150' r='80' fill='none' stroke='%23cd7f32' stroke-width='8'/%3E%3Cpath d='M 150 150 L 150 80' stroke='%23cd7f32' stroke-width='6'/%3E%3C/svg%3E",
+      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/small_image/286x200/9df78eab33525d08d6e5fb8d27136e95/f/r/frdzl48052.jpg",
       sku: "FRDZL48052",
       price: 65654,
       originalPrice: 67334
     },
     {
       id: 2,
-      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Ccircle cx='150' cy='150' r='100' fill='none' stroke='%23d4af37' stroke-width='3'/%3E%3Ccircle cx='150' cy='120' r='5' fill='%23d4af37'/%3E%3Ccircle cx='150' cy='180' r='5' fill='%23d4af37'/%3E%3C/svg%3E",
+      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/small_image/286x200/9df78eab33525d08d6e5fb8d27136e95/b/r/brdzl40932.jpg",
       sku: "BRDZL40932",
       price: 20819,
       originalPrice: null
@@ -34,7 +34,7 @@ export default function MyAccountPage() {
   const orderItems = [
     {
       id: 1,
-      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Ccircle cx='150' cy='150' r='80' fill='none' stroke='%23ffd700' stroke-width='8'/%3E%3C/svg%3E",
+      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/small_image/286x200/9df78eab33525d08d6e5fb8d27136e95/f/r/frdzl48052.jpg",
       name: "Gold Ring",
       sku: "GRNG12345",
       price: 45000,
@@ -44,7 +44,7 @@ export default function MyAccountPage() {
     },
     {
       id: 2,
-      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect fill='%23f5f5f5' width='300' height='300'/%3E%3Ccircle cx='150' cy='150' r='100' fill='none' stroke='%23d4af37' stroke-width='3'/%3E%3C/svg%3E",
+      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/small_image/286x200/9df78eab33525d08d6e5fb8d27136e95/b/r/brdzl40932.jpg",
       name: "Gold Bracelet",
       sku: "BRDZL40932",
       price: 20819,
@@ -95,7 +95,7 @@ export default function MyAccountPage() {
               <h2 className="text-xl font-semibold mb-2">My Account</h2>
               <p className="text-gray-600 mb-4">Hi, {userData.name}</p>
               
-              <button className="w-full border border-header text-header px-4 py-2 rounded hover:bg-pink-50 mb-6">
+              <button className="w-full border bg-header text-white px-4 py-2 rounded hover:bg-header/90 hover:text-white mb-6">
                 Logout
               </button>
 
@@ -104,7 +104,7 @@ export default function MyAccountPage() {
                   onClick={() => setActiveSection('orders')}
                   className={`w-full text-left px-4 py-2 rounded transition-colors ${
                     activeSection === 'orders' 
-                      ? 'bg-yellow-50 font-medium' 
+                      ? 'border border-header/90 text-header font-medium' 
                       : 'hover:bg-gray-50'
                   }`}
                 >
@@ -115,7 +115,7 @@ export default function MyAccountPage() {
                   onClick={() => setActiveSection('wishlist')}
                   className={`w-full text-left px-4 py-2 rounded transition-colors ${
                     activeSection === 'wishlist' 
-                      ? 'bg-yellow-50 font-medium' 
+                      ? ' border border-header/90 text-header font-medium' 
                       : 'hover:bg-gray-50'
                   }`}
                 >
@@ -126,7 +126,7 @@ export default function MyAccountPage() {
                   onClick={() => setActiveSection('profile')}
                   className={`w-full text-left px-4 py-2 rounded transition-colors ${
                     activeSection === 'profile' 
-                      ? 'bg-yellow-50 font-medium' 
+                      ? 'border border-header/90 text-header font-medium' 
                       : 'hover:bg-gray-50'
                   }`}
                 >
@@ -194,16 +194,16 @@ export default function MyAccountPage() {
 
             {/* Wishlist Section */}
             {activeSection === 'wishlist' && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-lg shadow-sm p-3">
                 <h2 className="text-2xl font-semibold mb-6">Your Wishlist</h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                   {wishlistItems.map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4 relative">
+                    <div key={item.id} className="border rounded-lg p-2 relative">
                       {/* Share and Remove Icons */}
                       <div className="absolute top-4 left-4 right-4 flex justify-between">
                         <button className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50">
-                          <Share2 className="w-4 h-4" style={{color: '#a61e5a'}} />
+                          <Share2 className="w-4 h-4 text-header"/>
                         </button>
                         <button className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50">
                           <X className="w-4 h-4 text-gray-600" />
@@ -522,11 +522,12 @@ export default function MyAccountPage() {
                 <h2 className="text-2xl font-semibold mb-6">My Orders</h2>
                 
                 {orderItems.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                     {orderItems.map((item) => (
                       <div key={item.id} className="border rounded-lg p-4">
+                        
                         {/* Product Image */}
-                        <div className="mb-4 flex items-center justify-center py-8 bg-gray-50 rounded">
+                        <div className="mb-4 flex items-center justify-center py-8 rounded">
                           <img 
                             src={item.image} 
                             alt={item.name}
@@ -555,7 +556,7 @@ export default function MyAccountPage() {
                         {/* View Details Button */}
                         <button 
                           className="w-full border-2 text-center py-2 rounded font-medium hover:bg-pink-50 transition-colors"
-                          style={{borderColor: '#a61e5a', color: '#a61e5a'}}
+                          style={{borderColor: 'header', color: 'header'}}
                         >
                           VIEW DETAILS
                         </button>

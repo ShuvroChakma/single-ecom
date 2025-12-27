@@ -15,21 +15,57 @@ export default function ShoppingCart() {
     makingCharges: 4170,
     goldPurity: "18 KT (750)",
     dispatchDate: "Monday, Dec 22, 25",
-    productImage: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect fill='%23f5f5f5' width='120' height='120'/%3E%3Ccircle cx='60' cy='60' r='45' fill='none' stroke='%23d4af37' stroke-width='2'/%3E%3C/svg%3E"
+    productImage: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/thumbnail/105x/9df78eab33525d08d6e5fb8d27136e95/b/r/brdzl40932.jpg"
   };
   
   const { price, makingCharges } = cartData;
 
   const promiseFeatures = [
-    { icon: '🌍', title: 'Lifetime', subtitle: 'Maintenance' },
-    { icon: '🛡️', title: 'Your Jewellery', subtitle: 'is Insured' },
-    { icon: '📅', title: '14 Days', subtitle: 'Return Policy' },
-    { icon: '0%', title: 'Zero Deduction', subtitle: 'Gold Exchange' },
-    { icon: 'BIS 916', title: 'BIS 916', subtitle: 'Hallmarked Pure Gold' },
-    { icon: '↻', title: 'Guaranteed', subtitle: 'Buyback' },
-    { icon: '💎', title: 'Certified', subtitle: 'Diamonds' },
-    { icon: '🔍', title: 'Complete', subtitle: 'Transparency' },
-    { icon: '↔️', title: 'Easy', subtitle: 'Exchange' },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Maintenance.png', 
+      title: 'Lifetime', 
+      subtitle: 'Maintenance' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_insurance.png', 
+      title: 'Your Jewellery', 
+      subtitle: 'is Insured' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_14%20days.png', 
+      title: '14 Days', 
+      subtitle: 'Return Policy' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Zero%20Deduction.png', 
+      title: 'Zero Deduction', 
+      subtitle: 'Gold Exchange' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_BIS%20916.png', 
+      title: 'BIS 916', 
+      subtitle: 'Hallmarked Pure Gold' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_buyback.png', 
+      title: 'Guaranteed', 
+      subtitle: 'Buyback' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Diamonds.png', 
+      title: 'Certified', 
+      subtitle: 'Diamonds' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Transparency.png', 
+      title: 'Complete', 
+      subtitle: 'Transparency' 
+    },
+    { 
+      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Exchange.png', 
+      title: 'Easy', 
+      subtitle: 'Exchange' 
+    },
   ];
 
   const paymentLogos = [
@@ -109,8 +145,12 @@ export default function ShoppingCart() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 {promiseFeatures.map((item, idx) => (
                   <div key={idx} className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 rounded-full bg-pink-50 flex items-center justify-center mb-2 text-2xl">
-                      {item.icon}
+                    <div className="w-16 h-16 rounded-full bg-pink-50 flex items-center justify-center mb-2 p-2">
+                      <img 
+                        src={item.icon} 
+                        alt={item.title}
+                        className="w-full h-full object-contain"
+                      />
                     </div>
                     <p className="font-medium text-sm">{item.title}</p>
                     <p className="text-xs text-gray-600">{item.subtitle}</p>
@@ -295,8 +335,12 @@ export default function ShoppingCart() {
           <div className="grid grid-cols-3 gap-4">
             {promiseFeatures.slice(0, 3).map((item, idx) => (
               <div key={idx} className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center mb-2 text-xl">
-                  {item.icon}
+                <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center mb-2 p-1.5">
+                  <img 
+                    src={item.icon} 
+                    alt={item.title}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <p className="text-xs font-medium leading-tight">{item.title}</p>
               </div>
