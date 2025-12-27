@@ -24,7 +24,7 @@ export const Route = createFileRoute('/')({
 
 function App() {
   return (
-    <div className="min-h-screen">
+    <div>
       <Header />
       <Carousel />
       <CategoryHero />
