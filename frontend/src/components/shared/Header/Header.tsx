@@ -31,7 +31,7 @@ const Header = () => {
               <img
                 src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
                 alt="Malabar Gold & Diamonds"
-                className="h-full md:h-15 lg:h-15 w-auto object-contain"
+                className="h-full md:h-13 lg:h-15 w-auto object-contain"
               />
             </a>
 
@@ -43,10 +43,10 @@ const Header = () => {
             {/* Mobile Search */}
             <button
               onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-              className="md:hidden flex flex-col items-center gap-1 text-primary-foreground hover:opacity-80"
+              className="md:hidden flex flex-col items-center gap-1 text-primary-foreground hover:opacity-90"
             >
               <svg
-                className="w-5 h-5"
+                className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

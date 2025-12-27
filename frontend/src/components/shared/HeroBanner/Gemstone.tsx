@@ -104,7 +104,7 @@ const Gemstone = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-serif text-gray-800 mb-4">
+          <h1 className="text-4xl font-serif text-gray-800 mb-4">
             Gemstone Jewellery
           </h1>
           <p className="text-lg text-gray-600 font-light">

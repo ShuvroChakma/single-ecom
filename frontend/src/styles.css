@@ -66,6 +66,7 @@ code {
   --header: #9A0056;
   --top_bar: #830047;
   --footer: #F4F1E6;
+  --footer_dark: #A38842;
 }
 
 .dark {
@@ -145,6 +146,7 @@ code {
   --color-header: var(--header);
   --color-top_bar: var(--top_bar);
   --color-footer: var(--footer);
+  --color-footer_dark: var(--footer_dark);
 }
 
 @layer base {
