@@ -26,7 +26,7 @@ const OurCollection: React.FC = () => {
   ];
 
   return (
-    <div className="w-full px-4 py-8 md:py-12 bg-white">
+    <div className="w-full px-2 py-8 md:py-12 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 md:mb-8">
@@ -37,7 +37,7 @@ const OurCollection: React.FC = () => {
         </div>
 
         {/* Desktop/Tablet Layout (md and up) */}
-        <div className="hidden md:grid md:grid-cols-3 gap-4 lg:gap-6">
+        <div className="hidden md:grid md:grid-cols-3 gap-2 lg:gap-4">
           {collections.map((item) => (
             <div
               key={item.id}

@@ -79,8 +79,8 @@ export default function Footer() {
   return (
     <footer className="bg-footer">
       {/* TOP FOOTER */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
+      <div className="max-w-7xl mx-auto px-2 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-1">
           {FOOTER_SECTIONS.map((section, idx) => {
             const isOpen = openSection === idx
 
@@ -96,7 +96,7 @@ export default function Footer() {
                   </h3>
 
                   {/* + / - ONLY BELOW LG */}
-                  <span className="lg:hidden text-pink-700 mb-4">
+                  <span className="lg:hidden text-header mb-4">
                     {isOpen ? (
                       <Minus className="w-4 h-4" />
                     ) : (
@@ -115,7 +115,7 @@ export default function Footer() {
                 >
                   {/* LINKS */}
                   {section.links && (
-                    <ul className="space-y-2 text-sm text-pink-700 pt-3">
+                    <ul className="space-y-2 text-sm text-header pt-3">
                       {section.links.map((link, i) => (
                         <li key={i}>
                           <a href={link.href} className="hover:underline">
@@ -128,16 +128,17 @@ export default function Footer() {
 
                   {/* CUSTOMER SERVICE */}
                   {section.isCustomerService && (
-                    <div className="space-y-3 text-sm text-pink-700 pt-3">
-                      <div className="flex gap-2">
-                        <Phone className="w-4 h-4 mt-0.5" />
+                    <div className="space-y-2 text-sm text-header pt-3">
+                      <div className="flex gap-0">
+                        <Phone className="w-3 h-4 mt-0.5" />
                         <span>
-                          +91 22 62300916{' '}
+                          +912262300916{' '}
                           <span className="text-gray-600">
-                            (10.00am – 7.00pm)
+                            (10.00am–7.00pm)
                           </span>
                         </span>
                       </div>
+                      
 
                       <div className="flex gap-2 text-green-600">
                         <FaWhatsapp className="w-4 h-4 mt-0.5" />
@@ -149,7 +150,7 @@ export default function Footer() {
                         </span>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-0">
                         <Mail className="w-4 h-4 mt-0.5" />
                         <span>care.in@malabargoldanddiamonds.com</span>
                       </div>
@@ -201,7 +202,7 @@ export default function Footer() {
 
       {/* COPYRIGHT */}
       <div className="py-8 text-center text-xs text-gray-600 border-t border-gray-300">
-        © 2025 Malabar Gold And Diamonds Limited. All Rights Reserved.
+        © 2025 Nazu Meah Jewellers. All Rights Reserved.
       </div>
 
       {/* FLOATING WHATSAPP */}

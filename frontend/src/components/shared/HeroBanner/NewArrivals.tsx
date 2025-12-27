@@ -154,7 +154,7 @@ const NewArrivals: React.FC = () => {
   };
 
   return (
-    <div className="w-full px-2 py-8 md:py-12 bg-footer/80">
+    <div className="w-full px-0 py-8 md:py-12 bg-footer/80">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 md:mb-10">

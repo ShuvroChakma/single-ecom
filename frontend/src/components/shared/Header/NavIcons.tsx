@@ -16,18 +16,18 @@ const NavIcon = ({ to, icon, label }: NavIconProps) => (
     <div className="relative">
       {icon}
     </div>
-    <span className="text-xs font-medium">{label}</span>
+    <span className="text-sm font-medium">{label}</span>
   </Link>
 );
 
 const countries = [
-  { code: "BD", name: "Bangladesh", flag: "🇧🇩", currency: "BDT" },
-  { code: "IN", name: "India", flag: "🇮🇳", currency: "INR" },
-  { code: "US", name: "United States", flag: "🇺🇸", currency: "USD" },
-  { code: "GB", name: "United Kingdom", flag: "🇬🇧", currency: "GBP" },
-  { code: "AE", name: "UAE", flag: "🇦🇪", currency: "AED" },
-  { code: "CA", name: "Canada", flag: "🇨🇦", currency: "CAD" },
-  { code: "AU", name: "Australia", flag: "🇦🇺", currency: "AUD" },
+  { code: "BD", name: "Bangladesh", flag: "https://flagcdn.com/w40/bd.png", currency: "BDT" },
+  { code: "IN", name: "India", flag: "https://flagcdn.com/w40/in.png", currency: "INR" },
+  { code: "US", name: "United States", flag: "https://flagcdn.com/w40/us.png", currency: "USD" },
+  { code: "GB", name: "United Kingdom", flag: "https://flagcdn.com/w40/gb.png", currency: "GBP" },
+  { code: "AE", name: "UAE", flag: "https://flagcdn.com/w40/ae.png", currency: "AED" },
+  { code: "CA", name: "Canada", flag: "https://flagcdn.com/w40/ca.png", currency: "CAD" },
+  { code: "AU", name: "Australia", flag: "https://flagcdn.com/w40/au.png", currency: "AUD" },
 ];
 
 const currencies = [
@@ -61,7 +61,7 @@ const NavIcons = () => {
 
   return (
     <>
-      <div className="flex items-center gap-8 md:gap-10 lg:gap-12">
+      <div className="flex items-center gap-3 md:gap-10 lg:gap-12">
 
         {/* === LG+ ONLY ICONS === */}
         <div className="hidden lg:flex items-center gap-12">
@@ -74,14 +74,16 @@ const NavIcons = () => {
           {/* Country Selector */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex flex-col items-center gap-1 text-primary-foreground hover:opacity-80 transition-all"
+            className="flex flex-col items-center gap-0 text-primary-foreground hover:opacity-80 transition-all"
           >
-            <div className="w-5 h-5 flex items-center justify-center">
-              <span className="text-lg leading-none">
-                {selectedCountry.flag}
-              </span>
+            <div className="w-6 h-6 flex items-center justify-center">
+              <img 
+                src={selectedCountry.flag} 
+                alt={selectedCountry.name}
+                className="w-6 h-4 object-cover rounded-sm"
+              />
             </div>
-            <span className="text-xs font-medium">Country</span>
+            <span className="text-sm font-medium">Country</span>
           </button>
 
           <NavIcon
@@ -116,7 +118,7 @@ const NavIcons = () => {
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-header/80 hover:text-header"
             >
               <X className="w-5 h-5" />
             </button>
@@ -131,31 +133,35 @@ const NavIcons = () => {
                   onClick={() => handleCountrySelect(countries[0])}
                   className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 ${
                     selectedCountry.code === "BD"
-                      ? "border-primary bg-primary/5"
-                      : "border-gray-200"
+                      ? "border-header bg-footer"
+                      : "border-header"
                   }`}
                 >
-                  <span className="text-4xl">🇧🇩</span>
-                  <span className="text-sm font-medium">BANGLADESH</span>
+                  <img 
+                    src="https://flagcdn.com/w80/bd.png" 
+                    alt="Bangladesh"
+                    className="w-16 h-12 object-cover rounded"
+                  />
+                  <span className="text-sm font-medium text-black">BANGLADESH</span>
                 </button>
 
                 <button
-                  className="flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200"
+                  className="flex-1 flex flex-col items-center bg-white gap-2 p-4 rounded-lg border-2 border-header"
                 >
-                  <span className="text-2xl">🌍</span>
-                  <span className="text-sm font-medium">OTHER COUNTRIES</span>
+                  <span className="text-4xl">🌍</span>
+                  <span className="text-sm text-black font-medium">OTHER COUNTRIES</span>
                 </button>
               </div>
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-header mb-2">
                 Select Currency
               </label>
               <select
                 value={selectedCurrency}
                 onChange={(e) => setSelectedCurrency(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg text-black border-header/50"
               >
                 {currencies.map((currency) => (
                   <option key={currency.code} value={currency.code}>
@@ -167,7 +173,7 @@ const NavIcons = () => {
 
             <button
               onClick={handleApply}
-              className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-semibold"
+              className="w-full py-3 bg-header text-primary-foreground rounded-lg font-semibold"
             >
               Apply
             </button>

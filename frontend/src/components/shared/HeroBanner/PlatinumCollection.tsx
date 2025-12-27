@@ -26,7 +26,7 @@ const PLATINUM_BANNERS: Array<PlatinumBanner> = [
 
 const PlatinumCollection: React.FC = () => {
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-2 lg:px-2 py-8">
+    <section className="max-w-7xl mx-auto px-2 sm:px-2 lg:px-2 py-8">
       {/* Heading */}
       <div className="text-center mb-8">
         <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900">

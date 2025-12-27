@@ -47,7 +47,7 @@ const GOLD_CATEGORIES: Array<GoldCategory> = [
 
 const GoldJewellery: React.FC = () => {
   return (
-    <section className="w-full py-12 px-4 sm:px-6 lg:px-10">
+    <section className="w-full py-12 px-2 sm:px-2 lg:px-2">
       <div className="max-w-7xl mx-auto">
         {/* Heading */}
         <div className="text-center mb-10">
@@ -60,7 +60,7 @@ const GoldJewellery: React.FC = () => {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
           {GOLD_CATEGORIES.map((item) => (
             <div key={item.id} className="w-full">
               <div

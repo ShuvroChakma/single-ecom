@@ -41,7 +41,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 transition-opacity animate-in fade-in duration-200"
+        className="absolute inset-0 bg-black/60 transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -50,19 +50,19 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       <div className="absolute left-0 top-0 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
         
         {/* Header */}
-        <div className="bg-header text-white px-4 py-3.5 flex items-center gap-3 shrink-0 shadow-sm">
+        <div className="bg-header text-white px-2 py-4 flex items-center gap-3 shrink-0 shadow-sm">
           <button 
             onClick={onClose}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+            className=" hover:bg-white/10 rounded-lg transition-colors"
             aria-label="Close menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-8 h-8" />
           </button>
           <div className="flex items-center gap-2.5">
             <img
               src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
               alt="Malabar Gold & Diamonds"
-              className="h-8 w-auto object-contain"
+              className="h-10 w-auto object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
@@ -92,7 +92,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         </div>
 
         {/* Bottom Section */}
-        <div className="bg-[#F5F5DC] px-4 py-5 shrink-0 border-t border-gray-200">
+        <div className="bg-footer px-4 py-5 shrink-0 border-t border-gray-200">
           {/* Auth Buttons */}
           <div className="flex gap-3 mb-5">
             <Link

@@ -1,8 +1,10 @@
+import React from 'react';
+
 interface Category {
-  id: number
-  name: string
-  image: string
-  mobileOnly?: boolean
+  id: number;
+  name: string;
+  image: string;
+  mobileOnly?: boolean;
 }
 
 const CATEGORIES: Array<Category> = [
@@ -96,23 +98,23 @@ const CATEGORIES: Array<Category> = [
     image:
       'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Chain-1.jpg',
   },
-]
+];
 
 export default function CategoryHero() {
   return (
     <div className="w-full py-4">
       <div className="max-w-7xl mx-auto">
-        {/* Mobile: scrollable | Desktop: flex-wrap */}
+        {/* Mobile to md: scrollable | lg+: flex-wrap */}
         <div
           className="
             flex
             overflow-x-auto
-            md:overflow-visible
-            gap-4 sm:gap-5 md:gap-0
+            lg:overflow-visible
+            gap-3 sm:gap-2.5 lg:gap-0
             pb-3 px-1 sm:px-2
 
-            md:flex-wrap
-            md:justify-between
+            lg:flex-wrap
+            lg:justify-between
           "
           style={
             {
@@ -122,14 +124,14 @@ export default function CategoryHero() {
           }
         >
           {CATEGORIES.map((category) => {
-            // On md+, skip mobile-only items
+            // On lg+, skip mobile-only items
             if (category.mobileOnly) {
               return (
                 <div
                   key={category.id}
-                  className=" md:hidden flex flex-col items-center shrink-0 min-w-20 sm:min-w-[90px]"
+                  className="lg:hidden flex flex-col items-center shrink-0 min-w-20 sm:min-w-[90px]"
                 >
-                  <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden  shadow-md bg-white">
+                  <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md bg-white">
                     <img
                       src={category.image}
                       alt={category.name}
@@ -137,11 +139,11 @@ export default function CategoryHero() {
                       draggable={false}
                     />
                   </div>
-                  <span className="text-xs sm:text-sm font-medium text-center text-gray-800 whitespace-nowrap">
+                  <span className="text-xs sm:text-sm font-medium text-center text-gray-800 whitespace-nowrap mt-1">
                     {category.name}
                   </span>
                 </div>
-              )
+              );
             }
 
             // Default rendering for all main 11 items
@@ -160,14 +162,20 @@ export default function CategoryHero() {
                     draggable={false}
                   />
                 </div>
-                <span className="text-xs sm:text-sm font-medium text-center text-gray-800 whitespace-nowrap">
+                <span className="text-xs sm:text-sm font-medium text-center text-gray-800 whitespace-nowrap mt-1">
                   {category.name}
                 </span>
               </div>
-            )
+            );
           })}
         </div>
       </div>
+
+      <style>{`
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
-  )
+  );
 }

@@ -196,8 +196,8 @@ export default function Carousel() {
           aria-label="Previous slide"
           className="
             absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20
-            bg-white/90 hover:bg-white text-gray-800
-            w-8 h-8 md:w-10 md:h-10 rounded-full
+           text-white
+            w-9 h-9 md:w-15 md:h-15 rounded-full
             flex items-center justify-center
             shadow-lg
             opacity-100 md:opacity-0 md:group-hover:opacity-100
@@ -214,13 +214,13 @@ export default function Carousel() {
           aria-label="Next slide"
           className="
             absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20
-            bg-white/90 hover:bg-white text-gray-800
-            w-8 h-8 md:w-10 md:h-10 rounded-full
+              text-white
+            w-9 h-9 md:w-15 md:h-15 rounded-full
             flex items-center justify-center
             shadow-lg
             opacity-100 md:opacity-0 md:group-hover:opacity-100
             transition-all duration-300
-            hover:scale-110 cursor-pointer
+            hover:scale-102 cursor-pointer
           "
         >
           <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />

@@ -104,7 +104,7 @@ const Gemstone = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-serif text-gray-800 mb-4">
+          <h1 className="text-3xl font-serif text-gray-800 mb-4">
             Gemstone Jewellery
           </h1>
           <p className="text-lg text-gray-600 font-light">
@@ -115,7 +115,7 @@ const Gemstone = () => {
         {/* Mobile Slider (below md) */}
         <div className="md:hidden">
           <div 
-            className="relative overflow-hidden cursor-grab active:cursor-grabbing"
+            className="relative overflow-hidden cursor-pointer active:cursor-pointer"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -131,7 +131,7 @@ const Gemstone = () => {
               {categories.map((category) => (
                 <div
                   key={category.id}
-                  className="w-full shrink-0 px-4"
+                  className="w-full shrink-0 px-0.5"
                 >
                   <div className="group relative overflow-hidden rounded-2xl shadow-lg">
                     {/* Image */}
@@ -155,9 +155,9 @@ const Gemstone = () => {
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`transition-all duration-300 rounded-full ${
+                className={`transition-all duration-300 rounded-md ${
                   currentSlide === index
-                    ? 'w-8 h-2 bg-gray-800'
+                    ? 'w-8 h-2 bg-header'
                     : 'w-2 h-2 bg-gray-400'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
