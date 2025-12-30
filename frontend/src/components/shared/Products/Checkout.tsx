@@ -1,581 +1,363 @@
 import React, { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 
+/* =======================
+   COUNTRY CODES (REAL FLAGS)
+======================= */
+const COUNTRY_CODES = [
+  { code: '+880', country: 'Bangladesh', flag: 'https://flagcdn.com/w20/bd.png' },
+  { code: '+91', country: 'India', flag: 'https://flagcdn.com/w20/in.png' },
+  { code: '+1', country: 'USA', flag: 'https://flagcdn.com/w20/us.png' },
+  { code: '+44', country: 'UK', flag: 'https://flagcdn.com/w20/gb.png' },
+]
+
+/* =======================
+   COUNTRY CODE SELECT
+======================= */
+const CountryCodeSelect = ({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (val: string) => void
+}) => {
+  const selected = COUNTRY_CODES.find((c) => c.code === value)
+
+  return (
+    <div className="relative w-[90px] shrink-0">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="appearance-none border border-gray-300 rounded pl-8 pr-2 py-2 bg-white w-full"
+      >
+        {COUNTRY_CODES.map((c) => (
+          <option key={c.code} value={c.code}>
+            {c.code}
+          </option>
+        ))}
+      </select>
+
+      {selected && (
+        <img
+          src={selected.flag}
+          alt={selected.country}
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-4 rounded-sm pointer-events-none"
+        />
+      )}
+
+      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+        ▾
+      </span>
+    </div>
+  )
+}
+
+/* =======================
+   PAYMENT OPTION
+======================= */
+const PaymentOption = ({
+  title,
+  active,
+  onClick,
+  children,
+}: {
+  title: string
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) => (
+  <div
+    className={`border rounded mb-4 cursor-pointer ${
+      active ? 'border-header' : 'border-gray-300'
+    }`}
+    onClick={onClick}
+  >
+    <div className="p-4 font-semibold">{title}</div>
+    {active && <div className="p-4 border-t space-y-3">{children}</div>}
+  </div>
+)
+
 const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(1)
-  const [isGiftMessageOpen, setIsGiftMessageOpen] = useState(false)
-  const [shippingOption, setShippingOption] = useState('same')
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState('bank')
-  const [mobileNumber, setMobileNumber] = useState('')
+  const [isGiftOpen, setIsGiftOpen] = useState(false)
+  const [countryCode, setCountryCode] = useState('+880')
+  const [activePayment, setActivePayment] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     title: 'Mr',
-    firstName: 'Shuvro',
-    lastName: 'Chakma',
+    firstName: '',
+    lastName: '',
     address: '',
     landmark: '',
     telephone: '',
     altTelephone: '',
-    country: 'India',
-    state: '',
     city: '',
     zipCode: '',
-    recipientName: 'Shuvro Chakma',
+    recipientName: '',
     giftMessage: '',
   })
 
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+  /* =======================
+     HANDLERS
+  ======================= */
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((p) => ({ ...p, [name]: value }))
   }
 
-  const handleContinue = () => {
-    if (termsAccepted) {
-      setCurrentStep(2)
-    }
+  const handleNewAddress = () => {
+    setFormData({
+      title: 'Mr',
+      firstName: '',
+      lastName: '',
+      address: '',
+      landmark: '',
+      telephone: '',
+      altTelephone: '',
+      city: '',
+      zipCode: '',
+      recipientName: '',
+      giftMessage: '',
+    })
+    setCountryCode('+880')
+    setIsGiftOpen(false)
   }
 
-  const handleSendOTP = () => {
-    // Backend will handle OTP sending
-    console.log('Sending OTP to:', mobileNumber)
+  const placeOrder = () => {
+    alert('✅ Your order has been placed successfully!')
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="bg-gray-50 py-6">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Progress Steps */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center flex-1">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
-                ✓
-              </div>
-              <span className="ml-2 text-green-600 font-semibold">
-                Login & Register
-              </span>
-            </div>
-          </div>
 
-          <div className="flex-1 h-1 bg-green-600 mx-4"></div>
-
-          <div className="flex items-center flex-1 justify-center">
-            <div className="flex items-center">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold ${currentStep >= 1 ? 'bg-pink-700' : 'bg-gray-300'}`}
-              >
-                {currentStep > 1 ? '✓' : '2'}
-              </div>
-              <span
-                className={`ml-2 font-semibold ${currentStep >= 1 ? 'text-pink-700' : 'text-gray-400'}`}
-              >
-                Shipping
-              </span>
-            </div>
-          </div>
-
-          <div
-            className={`flex-1 h-1 mx-4 ${currentStep >= 2 ? 'bg-pink-700' : 'bg-gray-300'}`}
-          ></div>
-
-          <div className="flex items-center flex-1 justify-end">
-            <div className="flex items-center">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold ${currentStep >= 2 ? 'bg-pink-700' : 'bg-gray-300'}`}
-              >
-                3
-              </div>
-              <span
-                className={`ml-2 font-semibold ${currentStep >= 2 ? 'text-pink-700' : 'text-gray-400'}`}
-              >
-                Payment Selection
-              </span>
-            </div>
-          </div>
+        {/* =======================
+            PROGRESS
+        ======================= */}
+        <div className="flex justify-between mb-8">
+          <span className="font-semibold text-header">1. Shipping</span>
+          <span
+            className={`font-semibold ${
+              currentStep === 2 ? 'text-header' : 'text-gray-400'
+            }`}
+          >
+            2. Payment
+          </span>
         </div>
 
-        {/* Step 1: Shipping Information */}
+        {/* =======================
+            SHIPPING
+        ======================= */}
         {currentStep === 1 && (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <h2 className="text-2xl font-bold mb-6">Billing Information</h2>
+          <div className="bg-white rounded-lg shadow p-6 md:p-8">
+            <h2 className="text-xl font-bold mb-6">Billing Information</h2>
 
-            <div className="mb-6">
-              <span className="text-sm text-gray-700">
-                Select a billing address from your address book or{' '}
-              </span>
-              <button className="text-pink-700 border border-pink-700 px-4 py-1 rounded text-sm font-semibold hover:bg-pink-50">
-                enter a new address +
-              </button>
-            </div>
+            <button
+              onClick={handleNewAddress}
+              className="mb-6 text-sm font-semibold text-header border border-header px-4 py-1 rounded hover:bg-header hover:text-white"
+            >
+              Enter a new address +
+            </button>
 
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  First Name*
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded px-3 py-2 w-24"
-                  >
-                    <option>Mr</option>
-                    <option>Ms</option>
-                    <option>Mrs</option>
-                  </select>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded px-3 py-2 flex-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Last Name*
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded px-3 py-2 w-full"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Address*
-                </label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded px-3 py-2 w-full h-24 resize-none"
-                ></textarea>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Landmark*
-                </label>
-                <input
-                  type="text"
-                  name="landmark"
-                  value={formData.landmark}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded px-3 py-2 w-full"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Telephone*
-                </label>
-                <div className="flex gap-2">
-                  <div className="flex items-center border border-gray-300 rounded px-3 py-2">
-                    <span className="text-2xl">🇮🇳</span>
-                    <span className="ml-2">+91</span>
-                  </div>
-                  <input
-                    type="text"
-                    name="telephone"
-                    value={formData.telephone}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded px-3 py-2 flex-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Alternative Telephone
-                </label>
-                <div className="flex gap-2">
-                  <div className="flex items-center border border-gray-300 rounded px-3 py-2">
-                    <span className="text-2xl">🇮🇳</span>
-                    <span className="ml-2">+91</span>
-                  </div>
-                  <input
-                    type="text"
-                    name="altTelephone"
-                    value={formData.altTelephone}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded px-3 py-2 flex-1"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Country*
-                </label>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="flex gap-2">
                 <select
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded px-3 py-2 w-full"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className="border rounded px-3 py-2 w-24"
                 >
-                  <option>India</option>
-                  <option>USA</option>
-                  <option>UK</option>
+                  <option>Mr</option>
+                  <option>Ms</option>
+                  <option>Mrs</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  State*
-                </label>
-                <select
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded px-3 py-2 w-full text-gray-400"
-                >
-                  <option value="">
-                    Please select region, state or province
-                  </option>
-                  <option>Maharashtra</option>
-                  <option>Delhi</option>
-                  <option>Karnataka</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  City*
-                </label>
                 <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded px-3 py-2 w-full"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="First Name*"
+                  className="border rounded px-3 py-2 flex-1"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Zip/Postal Code*
-                </label>
+              <input
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                placeholder="Last Name*"
+                className="border rounded px-3 py-2"
+              />
+            </div>
+
+            <textarea
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="Address*"
+              className="border rounded px-3 py-2 w-full h-24 mb-6"
+            />
+
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="flex gap-2">
+                <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
                 <input
-                  type="text"
-                  name="zipCode"
-                  value={formData.zipCode}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded px-3 py-2 w-full"
+                  name="telephone"
+                  value={formData.telephone}
+                  onChange={handleChange}
+                  placeholder="Mobile Number*"
+                  className="border rounded px-3 py-2 flex-1"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
+                <input
+                  name="altTelephone"
+                  value={formData.altTelephone}
+                  onChange={handleChange}
+                  placeholder="Alternate Mobile Number"
+                  className="border rounded px-3 py-2 flex-1"
                 />
               </div>
             </div>
 
-            <div className="mb-6">
-              <div className="flex items-center gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    value="same"
-                    checked={shippingOption === 'same'}
-                    onChange={(e) => setShippingOption(e.target.value)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">Ship to this address</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    value="different"
-                    checked={shippingOption === 'different'}
-                    onChange={(e) => setShippingOption(e.target.value)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">Ship to different address</span>
-                </label>
-              </div>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <input
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                placeholder="City*"
+                className="border rounded px-3 py-2"
+              />
+              <input
+                name="zipCode"
+                value={formData.zipCode}
+                onChange={handleChange}
+                placeholder="Zip Code*"
+                className="border rounded px-3 py-2"
+              />
             </div>
 
-            <div className="mb-6">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
-                  className="mr-2"
-                />
-                <span className="text-sm text-red-600">
-                  I have read and agree to{' '}
-                  <a href="#" className="underline">
-                    terms of service
-                  </a>{' '}
-                  *
-                </span>
-              </label>
-            </div>
-
-            {/* Gift Message Section */}
-            <div className="border border-gray-300 rounded-lg mb-6">
+            {/* Gift */}
+            <div className="border rounded mb-6">
               <button
-                onClick={() => setIsGiftMessageOpen(!isGiftMessageOpen)}
-                className="w-full flex items-center justify-between p-4 text-left"
+                onClick={() => setIsGiftOpen(!isGiftOpen)}
+                className="w-full flex justify-between p-4 font-semibold"
               >
-                <span className="flex items-center gap-2 text-pink-700 font-semibold">
-                  🎁 Gift Message
-                </span>
-                <ChevronDown
-                  className={`transform transition-transform ${isGiftMessageOpen ? 'rotate-180' : ''}`}
-                />
+                🎁 Gift Message
+                <ChevronDown className={isGiftOpen ? 'rotate-180' : ''} />
               </button>
 
-              {isGiftMessageOpen && (
-                <div className="p-4 border-t border-gray-300">
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold mb-2">
-                      Recipient's Name
-                    </label>
-                    <input
-                      type="text"
-                      name="recipientName"
-                      value={formData.recipientName}
-                      onChange={handleInputChange}
-                      className="border border-gray-300 rounded px-3 py-2 w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Gift Message
-                    </label>
-                    <textarea
-                      name="giftMessage"
-                      value={formData.giftMessage}
-                      onChange={handleInputChange}
-                      className="border border-gray-300 rounded px-3 py-2 w-full h-32 resize-none"
-                      placeholder="Enter your gift message here..."
-                    ></textarea>
-                  </div>
+              {isGiftOpen && (
+                <div className="p-4 border-t">
+                  <input
+                    name="recipientName"
+                    value={formData.recipientName}
+                    onChange={handleChange}
+                    placeholder="Recipient Name"
+                    className="border rounded px-3 py-2 w-full mb-3"
+                  />
+                  <textarea
+                    name="giftMessage"
+                    value={formData.giftMessage}
+                    onChange={handleChange}
+                    placeholder="Gift Message"
+                    className="border rounded px-3 py-2 w-full h-24"
+                  />
                 </div>
               )}
             </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">* Required Fields</span>
-              <button
-                onClick={handleContinue}
-                disabled={!termsAccepted}
-                className={`px-8 py-3 rounded font-semibold text-white ${
-                  termsAccepted
-                    ? 'bg-pink-700 hover:bg-pink-800'
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Continue Checkout
-              </button>
-            </div>
+            <label className="flex gap-2 mb-6">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <span className="text-sm text-red-600">
+                I agree to the terms & conditions *
+              </span>
+            </label>
+
+            <button
+              disabled={!termsAccepted}
+              onClick={() => setCurrentStep(2)}
+              className={`px-8 py-3 rounded text-white font-semibold ${
+                termsAccepted ? 'bg-header' : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Continue to Payment
+            </button>
           </div>
         )}
 
-        {/* Step 2: Payment Selection */}
+        {/* =======================
+            PAYMENT
+        ======================= */}
         {currentStep === 2 && (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <h2 className="text-2xl font-bold mb-6">Payment Method</h2>
+          <div className="bg-white rounded-lg shadow p-6 md:p-8">
+            <h2 className="text-xl font-bold mb-6">Payment Method</h2>
 
-            {/* Online Payment Option */}
-            <div className="border border-gray-300 rounded-lg mb-4">
-              <button
-                onClick={() => setPaymentMethod('online')}
-                className="w-full flex items-center justify-between p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="online"
-                    checked={paymentMethod === 'online'}
-                    onChange={() => setPaymentMethod('online')}
-                  />
-                  <span className="font-semibold">
-                    Online Payment (Credit / Debit / Net Banking / UPI /
-                    Wallets)
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <img
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='25' viewBox='0 0 40 25'%3E%3Crect width='40' height='25' rx='3' fill='%231434CB'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='10' font-weight='bold'%3EVISA%3C/text%3E%3C/svg%3E"
-                    alt="Visa"
-                    className="h-6"
-                  />
-                  <img
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='25' viewBox='0 0 40 25'%3E%3Crect width='40' height='25' rx='3' fill='%23EB001B'/%3E%3Ccircle cx='15' cy='12.5' r='7' fill='%23EB001B'/%3E%3Ccircle cx='25' cy='12.5' r='7' fill='%23FF5F00'/%3E%3C/svg%3E"
-                    alt="Mastercard"
-                    className="h-6"
-                  />
-                  <img
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='25' viewBox='0 0 40 25'%3E%3Crect width='40' height='25' rx='3' fill='%23016FD0'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='8' font-weight='bold'%3ERUBY%3C/text%3E%3C/svg%3E"
-                    alt="RuPay"
-                    className="h-6"
-                  />
-                  <img
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='25' viewBox='0 0 40 25'%3E%3Crect width='40' height='25' rx='3' fill='%23002970'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='7' font-weight='bold'%3EMAESTRO%3C/text%3E%3C/svg%3E"
-                    alt="Maestro"
-                    className="h-6"
-                  />
-                  <img
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='25' viewBox='0 0 40 25'%3E%3Crect width='40' height='25' rx='3' fill='%23006FCF'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='7' font-weight='bold'%3EAMEX%3C/text%3E%3C/svg%3E"
-                    alt="Amex"
-                    className="h-6"
-                  />
-                  <img
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='25' viewBox='0 0 40 25'%3E%3Crect width='40' height='25' rx='3' fill='%2300457C'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='8' font-weight='bold'%3EDIN%3C/text%3E%3C/svg%3E"
-                    alt="Diners"
-                    className="h-6"
-                  />
-                </div>
-              </button>
-            </div>
+            <PaymentOption
+              title="bKash"
+              active={activePayment === 'bkash'}
+              onClick={() => setActivePayment('bkash')}
+            >
+              <input className="border rounded px-3 py-2 w-full" placeholder="bKash Number" />
+            </PaymentOption>
 
-            {/* Bank Transfer Option */}
-            <div className="border-2 border-pink-700 rounded-lg mb-4">
-              <button
-                onClick={() => setPaymentMethod('bank')}
-                className="w-full p-4"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="bank"
-                    checked={paymentMethod === 'bank'}
-                    onChange={() => setPaymentMethod('bank')}
-                  />
-                  <span className="font-semibold">Bank Transfer</span>
-                </div>
-                <p className="text-sm text-gray-600 mb-4 text-left">
-                  Pay manually using this method on the below bank details
-                </p>
+            <PaymentOption
+              title="Nagad"
+              active={activePayment === 'nagad'}
+              onClick={() => setActivePayment('nagad')}
+            >
+              <input className="border rounded px-3 py-2 w-full" placeholder="Nagad Number" />
+            </PaymentOption>
 
-                {paymentMethod === 'bank' && (
-                  <div className="bg-gray-50 p-4 rounded">
-                    <div className="mb-4">
-                      <label className="block text-sm font-semibold mb-2">
-                        Verification:
-                      </label>
-                      <p className="text-sm text-gray-600 mb-3">
-                        Verify your mobile number to place your order
-                      </p>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={mobileNumber}
-                          onChange={(e) => setMobileNumber(e.target.value)}
-                          placeholder="+8801794213957"
-                          className="border border-gray-300 rounded px-3 py-2 flex-1"
-                        />
-                        <button
-                          onClick={handleSendOTP}
-                          className="bg-pink-700 text-white px-6 py-2 rounded font-semibold hover:bg-pink-800"
-                        >
-                          SEND OTP
-                        </button>
-                      </div>
-                    </div>
+            <PaymentOption
+              title="Rocket"
+              active={activePayment === 'rocket'}
+              onClick={() => setActivePayment('rocket')}
+            >
+              <input className="border rounded px-3 py-2 w-full" placeholder="Rocket Number" />
+            </PaymentOption>
 
-                    <div className="border-t border-gray-300 pt-4">
-                      <img
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='30' viewBox='0 0 120 30'%3E%3Crect width='120' height='30' fill='%23ED232A'/%3E%3Ctext x='10' y='20' fill='white' font-size='14' font-weight='bold'%3EHDFC BANK%3C/text%3E%3C/svg%3E"
-                        alt="HDFC Bank"
-                        className="h-8 mb-4"
-                      />
+            <PaymentOption
+              title="Bank Payment"
+              active={activePayment === 'bank'}
+              onClick={() => setActivePayment('bank')}
+            >
+              <p className="text-sm text-gray-600">
+                Bank details will be shown after confirmation.
+              </p>
+            </PaymentOption>
 
-                      <div className="grid grid-cols-3 gap-6 text-sm">
-                        <div>
-                          <p className="font-semibold mb-1">Beneficiary Name</p>
-                          <p className="text-gray-700">
-                            MALABAR GOLD PVT LTD E-COMMERCE
-                          </p>
-                        </div>
-                        <div>
-                          <p className="font-semibold mb-1">Bank Name</p>
-                          <p className="text-gray-700">HDFC</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold mb-1">Account No</p>
-                          <p className="text-gray-700">50200023423071</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold mb-1">IFSC Code</p>
-                          <p className="text-gray-700">HDFC0001357</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold mb-1">Branch</p>
-                          <p className="text-gray-700">INDRALOK-LOKHANDWALA</p>
-                        </div>
-                      </div>
+            <PaymentOption
+              title="International Card"
+              active={activePayment === 'card'}
+              onClick={() => setActivePayment('card')}
+            >
+              <input className="border rounded px-3 py-2 w-full" placeholder="Card Number" />
+              <div className="grid grid-cols-2 gap-4">
+                <input className="border rounded px-3 py-2" placeholder="MM / YY" />
+                <input className="border rounded px-3 py-2" placeholder="CVV" />
+              </div>
+            </PaymentOption>
 
-                      <p className="text-xs text-gray-600 mt-4">
-                        After Bank transfer please email us transaction ID to
-                        confirm your payment. Email ID{' '}
-                        <a
-                          href="mailto:care.in@malabargoldanddiamonds.com"
-                          className="text-blue-600 underline"
-                        >
-                          care.in@malabargoldanddiamonds.com
-                        </a>
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </button>
-            </div>
-
-            {/* Gift Card Option */}
-            <div className="border border-gray-300 rounded-lg mb-6">
-              <button
-                onClick={() => setPaymentMethod('gift')}
-                className="w-full flex items-center justify-between p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="gift"
-                    checked={paymentMethod === 'gift'}
-                    onChange={() => setPaymentMethod('gift')}
-                  />
-                  <span className="flex items-center gap-2">
-                    <span>🎁</span>
-                    <span className="font-semibold">Gift Card</span>
-                  </span>
-                </div>
-                <span className="text-sm text-gray-600">
-                  Redeem Malabar gift card
-                </span>
-              </button>
-            </div>
-
-            <div className="flex justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 justify-between mt-8">
               <button
                 onClick={() => setCurrentStep(1)}
-                className="px-8 py-3 rounded font-semibold border-2 border-gray-300 hover:bg-gray-50"
+                className="px-8 py-3 border rounded"
               >
                 Back
               </button>
-              <button className="px-8 py-3 rounded font-semibold bg-pink-700 text-white hover:bg-pink-800">
+              <button
+                onClick={placeOrder}
+                className="px-8 py-3 bg-header text-white rounded"
+              >
                 Place Order
               </button>
             </div>
