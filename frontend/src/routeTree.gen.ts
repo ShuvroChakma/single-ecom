@@ -12,11 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WishlistRouteRouteImport } from './routes/wishlist/route'
 import { Route as StoresRouteRouteImport } from './routes/stores/route'
 import { Route as ProfileRouteRouteImport } from './routes/profile/route'
+import { Route as ProductsRouteRouteImport } from './routes/products/route'
+import { Route as CheckoutRouteRouteImport } from './routes/checkout/route'
 import { Route as CartRouteRouteImport } from './routes/cart/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProductsIndexRouteImport } from './routes/products/index'
-import { Route as ProductsIdRouteImport } from './routes/products/$id'
-import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
+import { Route as CategoriesDiamondRouteImport } from './routes/categories/Diamond'
 
 const WishlistRouteRoute = WishlistRouteRouteImport.update({
   id: '/wishlist',
@@ -33,6 +33,16 @@ const ProfileRouteRoute = ProfileRouteRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductsRouteRoute = ProductsRouteRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRouteRoute = CheckoutRouteRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRouteRoute = CartRouteRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -43,95 +53,85 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductsIndexRoute = ProductsIndexRouteImport.update({
-  id: '/products/',
-  path: '/products/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductsIdRoute = ProductsIdRouteImport.update({
-  id: '/products/$id',
-  path: '/products/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
-  id: '/categories/$slug',
-  path: '/categories/$slug',
+const CategoriesDiamondRoute = CategoriesDiamondRouteImport.update({
+  id: '/categories/Diamond',
+  path: '/categories/Diamond',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cart': typeof CartRouteRoute
+  '/checkout': typeof CheckoutRouteRoute
+  '/products': typeof ProductsRouteRoute
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
-  '/categories/$slug': typeof CategoriesSlugRoute
-  '/products/$id': typeof ProductsIdRoute
-  '/products': typeof ProductsIndexRoute
+  '/categories/Diamond': typeof CategoriesDiamondRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRouteRoute
+  '/checkout': typeof CheckoutRouteRoute
+  '/products': typeof ProductsRouteRoute
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
-  '/categories/$slug': typeof CategoriesSlugRoute
-  '/products/$id': typeof ProductsIdRoute
-  '/products': typeof ProductsIndexRoute
+  '/categories/Diamond': typeof CategoriesDiamondRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cart': typeof CartRouteRoute
+  '/checkout': typeof CheckoutRouteRoute
+  '/products': typeof ProductsRouteRoute
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
-  '/categories/$slug': typeof CategoriesSlugRoute
-  '/products/$id': typeof ProductsIdRoute
-  '/products/': typeof ProductsIndexRoute
+  '/categories/Diamond': typeof CategoriesDiamondRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/cart'
+    | '/checkout'
+    | '/products'
     | '/profile'
     | '/stores'
     | '/wishlist'
-    | '/categories/$slug'
-    | '/products/$id'
-    | '/products'
+    | '/categories/Diamond'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cart'
+    | '/checkout'
+    | '/products'
     | '/profile'
     | '/stores'
     | '/wishlist'
-    | '/categories/$slug'
-    | '/products/$id'
-    | '/products'
+    | '/categories/Diamond'
   id:
     | '__root__'
     | '/'
     | '/cart'
+    | '/checkout'
+    | '/products'
     | '/profile'
     | '/stores'
     | '/wishlist'
-    | '/categories/$slug'
-    | '/products/$id'
-    | '/products/'
+    | '/categories/Diamond'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CartRouteRoute: typeof CartRouteRoute
+  CheckoutRouteRoute: typeof CheckoutRouteRoute
+  ProductsRouteRoute: typeof ProductsRouteRoute
   ProfileRouteRoute: typeof ProfileRouteRoute
   StoresRouteRoute: typeof StoresRouteRoute
   WishlistRouteRoute: typeof WishlistRouteRoute
-  CategoriesSlugRoute: typeof CategoriesSlugRoute
-  ProductsIdRoute: typeof ProductsIdRoute
-  ProductsIndexRoute: typeof ProductsIndexRoute
+  CategoriesDiamondRoute: typeof CategoriesDiamondRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -157,6 +157,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -171,25 +185,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/products/': {
-      id: '/products/'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProductsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/products/$id': {
-      id: '/products/$id'
-      path: '/products/$id'
-      fullPath: '/products/$id'
-      preLoaderRoute: typeof ProductsIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/categories/$slug': {
-      id: '/categories/$slug'
-      path: '/categories/$slug'
-      fullPath: '/categories/$slug'
-      preLoaderRoute: typeof CategoriesSlugRouteImport
+    '/categories/Diamond': {
+      id: '/categories/Diamond'
+      path: '/categories/Diamond'
+      fullPath: '/categories/Diamond'
+      preLoaderRoute: typeof CategoriesDiamondRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -198,12 +198,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CartRouteRoute: CartRouteRoute,
+  CheckoutRouteRoute: CheckoutRouteRoute,
+  ProductsRouteRoute: ProductsRouteRoute,
   ProfileRouteRoute: ProfileRouteRoute,
   StoresRouteRoute: StoresRouteRoute,
   WishlistRouteRoute: WishlistRouteRoute,
-  CategoriesSlugRoute: CategoriesSlugRoute,
-  ProductsIdRoute: ProductsIdRoute,
-  ProductsIndexRoute: ProductsIndexRoute,
+  CategoriesDiamondRoute: CategoriesDiamondRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

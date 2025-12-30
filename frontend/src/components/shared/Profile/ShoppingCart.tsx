@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Phone, Tag, X } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 
 export default function ShoppingCart() {
   const [showProductDetails, setShowProductDetails] = useState(false);
-  
+  const navigate = useNavigate();
+
   // These values will come from backend/props
   const cartData = {
     productName: "Malabar Gold Bracelet BRDZL40932",
@@ -75,8 +77,13 @@ export default function ShoppingCart() {
     { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/512px-UPI-Logo-vector.svg.png", alt: "UPI", height: "h-6" }
   ];
 
+  const handlePlaceOrder = () => {
+    // Navigate to cart page
+    navigate({ to: '/checkout' });
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="w-full bg-gray-50">
       {/* Desktop Layout */}
       <div className="hidden md:block max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -203,7 +210,7 @@ export default function ShoppingCart() {
                 </div>
               </div>
 
-              <button className="w-full bg-header text-white py-3 rounded font-semibold hover:opacity-90">
+              <button onClick={handlePlaceOrder} className="w-full bg-header text-white py-3 rounded font-semibold hover:opacity-90">
                 PLACE ORDER
               </button>
             </div>
@@ -357,7 +364,7 @@ export default function ShoppingCart() {
 
         {/* Mobile Place Order Button */}
         <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-lg">
-          <button className="w-full bg-header text-white py-3 rounded-lg font-semibold text-lg">
+          <button onClick={handlePlaceOrder} className="w-full bg-header text-white py-3 rounded-lg font-semibold text-lg">
             PLACE ORDER
           </button>
         </div>

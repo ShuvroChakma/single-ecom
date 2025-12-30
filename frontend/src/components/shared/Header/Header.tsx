@@ -4,7 +4,7 @@ import MobileMenu from './MobileMenu';
 import SearchBar from './SearchBar';
 import TopBar from './TopBar';
 import NavIcons from './NavIcons';
-import CategoryNav from './CategoryNav';
+
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -22,7 +22,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="w-full relative z-40">
+      <header className="w-full  z-50">
         {/* TopBar - only visible when not scrolled on md+ */}
         <div className={`${isScrolled ? 'hidden md:hidden' : 'block'}`}>
           <TopBar />
@@ -31,7 +31,7 @@ const Header = () => {
         {/* Sticky wrapper for Main Header + CategoryNav */}
         <div className={`
           bg-white
-          ${isMobileMenuOpen ? 'sticky top-0 z-100 lg:relative' : ''}
+          ${isMobileMenuOpen ? 'top-0 z-100 lg:relative' : ''}
           ${isScrolled && !isMobileMenuOpen ? 'md:sticky md:top-0 md:z-100' : ''}
         `}>
           {/* Main Header */}
@@ -49,9 +49,10 @@ const Header = () => {
                 {/* Logo */}
                 <a href="/" className="flex items-center shrink-0">
                   <img
-                    src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
+                    // src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
+                    src="/NazuMeah.svg"
                     alt="Malabar Gold & Diamonds"
-                    className="h-full md:h-13 lg:h-15 w-auto object-contain"
+                    className="h-11 md:h-13 lg:h-15 w-auto object-contain"
                   />
                 </a>
 
@@ -92,9 +93,6 @@ const Header = () => {
               )}
             </div>
           </div>
-
-          {/* CategoryNav - part of sticky wrapper on md+ */}
-          <CategoryNav />
         </div>
       </header>
 

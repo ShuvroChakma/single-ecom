@@ -15,6 +15,8 @@ import ShopByGender from '@/components/shared/HeroBanner/ShopByGender'
 import NewArrivals from '@/components/shared/HeroBanner/NewArrivals'
 import GiftingPage from '@/components/shared/HeroBanner/GiftingPage'
 import AboutPage from '@/components/shared/HeroBanner/AboutPage'
+import CategoryNav from '@/components/shared/Header/CategoryNav'
+
 
 
 
@@ -26,6 +28,7 @@ function App() {
   return (
     <div>
       <Header />
+      <CategoryNav />
       <Carousel />
       <CategoryHero />
       <JewelryOffers />
@@ -40,6 +43,7 @@ function App() {
       <NewArrivals />
       <GiftingPage />
       <AboutPage />
+      
       <Footer />
     </div>
   )

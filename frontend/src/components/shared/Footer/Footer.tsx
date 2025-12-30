@@ -193,7 +193,7 @@ export default function Footer() {
             hover:scale-102
           "
               >
-                <Icon size={14} />
+                <Icon size={20} />
               </a>
             ),
           )}
@@ -210,7 +210,7 @@ export default function Footer() {
         href="https://wa.me/919167780916"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-2 right-2 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg z-50"
+        className="fixed bottom-1 right-0.5 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg z-50"
       >
         <FaWhatsapp className="w-6 h-6 text-white" />
       </a>

@@ -67,7 +67,7 @@ const NavIcons = () => {
         <div className="hidden lg:flex items-center gap-12">
           <NavIcon
             to="/stores"
-            icon={<MapPin className="w-5 h-5" />}
+            icon={<MapPin className="w-7 h-7" />}
             label="Stores"
           />
 
@@ -76,7 +76,7 @@ const NavIcons = () => {
             onClick={() => setIsModalOpen(true)}
             className="flex flex-col items-center gap-0 text-primary-foreground hover:opacity-80 transition-all"
           >
-            <div className="w-6 h-6 flex items-center justify-center">
+            <div className="w-7 h-8 flex items-center justify-center">
               <img 
                 src={selectedCountry.flag} 
                 alt={selectedCountry.name}
@@ -88,7 +88,7 @@ const NavIcons = () => {
 
           <NavIcon
             to="/profile"
-            icon={<User className="w-5 h-5" />}
+            icon={<User className="w-7 h-7" />}
             label="Profile"
           />
         </div>
@@ -96,13 +96,13 @@ const NavIcons = () => {
         {/* === ALWAYS VISIBLE (SM → LG+) === */}
         <NavIcon
           to="/wishlist"
-          icon={<Heart className="w-5 h-5" />}
+          icon={<Heart className="w-7 h-7" />}
           label="Wishlist"
         />
 
         <NavIcon
           to="/cart"
-          icon={<ShoppingCart className="w-5 h-5" />}
+          icon={<ShoppingCart className="w-7 h-7" />}
           label="Cart"
         />
       </div>
@@ -142,14 +142,14 @@ const NavIcons = () => {
                     alt="Bangladesh"
                     className="w-16 h-12 object-cover rounded"
                   />
-                  <span className="text-sm font-medium text-black">BANGLADESH</span>
+                  <span className="text-sm font-medium hover:cursor-pointer text-black">BANGLADESH</span>
                 </button>
 
                 <button
                   className="flex-1 flex flex-col items-center bg-white gap-2 p-4 rounded-lg border-2 border-header"
                 >
                   <span className="text-4xl">🌍</span>
-                  <span className="text-sm text-black font-medium">OTHER COUNTRIES</span>
+                  <span className="text-sm text-black font-medium hover:cursor-pointer">OTHER COUNTRIES</span>
                 </button>
               </div>
             </div>
@@ -173,7 +173,7 @@ const NavIcons = () => {
 
             <button
               onClick={handleApply}
-              className="w-full py-3 bg-header text-primary-foreground rounded-lg font-semibold"
+              className="w-full py-3 bg-header text-white rounded-lg font-semibold"
             >
               Apply
             </button>

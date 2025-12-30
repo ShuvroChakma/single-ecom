@@ -41,7 +41,7 @@ const SearchBar = () => {
             placeholder:text-white/90
             focus:outline-none 
             focus:bg-white/10 
-            focus:border-white/40
+            focus:border-white/50
             transition-all duration-200
             
           `}
@@ -73,8 +73,8 @@ const SearchBar = () => {
 
       {/* Optional: Search suggestions dropdown */}
       {isFocused && searchValue && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded shadow-lg border border-gray-200 overflow-hidden z-50">
-          <div className="p-2 text-sm text-gray-500">
+        <div className="absolute top-full left-0 right-0 mt-0.5 bg-white rounded shadow-lg border border-gray-200 overflow-hidden z-100">
+          <div className="p-1 text-sm text-gray-500">
             Search suggestions will appear here...
           </div>
           {/* Add your suggestions here */}
