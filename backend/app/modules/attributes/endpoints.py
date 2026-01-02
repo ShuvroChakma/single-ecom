@@ -11,10 +11,10 @@ from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
-from app.modules.catalog.attribute_service import (
+from app.modules.attributes.service import (
     AttributeGroupService, AttributeService, ProductAttributeService
 )
-from app.modules.catalog.attribute_schemas import (
+from app.modules.attributes.schemas import (
     AttributeGroupCreate, AttributeGroupUpdate, AttributeGroupWithAttributesResponse,
     AttributeCreate, AttributeUpdate, AttributeResponse,
     ProductAttributeValueCreate, ProductAttributeValueResponse

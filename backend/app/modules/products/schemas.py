@@ -7,7 +7,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-from app.modules.catalog.product_models import Gender, MakingChargeType, MetalType
+from app.modules.products.models import Gender, MakingChargeType, MetalType
 
 
 # ============ PRODUCT VARIANT SCHEMAS ============

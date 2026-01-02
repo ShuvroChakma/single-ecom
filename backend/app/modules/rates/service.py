@@ -11,10 +11,10 @@ from datetime import datetime
 from app.core.exceptions import NotFoundError
 from app.constants.error_codes import ErrorCode
 from app.modules.audit.service import AuditService
-from app.modules.catalog.rate_models import DailyRate
-from app.modules.catalog.rate_schemas import DailyRateCreate, PriceBreakdown
-from app.modules.catalog.rate_repository import DailyRateRepository
-from app.modules.catalog.product_models import Product, ProductVariant, MakingChargeType
+from app.modules.rates.models import DailyRate
+from app.modules.rates.schemas import DailyRateCreate, PriceBreakdown
+from app.modules.rates.repository import DailyRateRepository
+from app.modules.products.models import Product, ProductVariant, MakingChargeType
 
 
 # Default tax rate for jewelry in Bangladesh (3% for gold)

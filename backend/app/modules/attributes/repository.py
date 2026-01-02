@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from datetime import datetime
 
-from app.modules.catalog.attribute_models import AttributeGroup, Attribute, ProductAttributeValue
+from app.modules.attributes.models import AttributeGroup, Attribute, ProductAttributeValue
 
 
 class AttributeGroupRepository:

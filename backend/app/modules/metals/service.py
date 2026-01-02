@@ -10,9 +10,9 @@ from sqlalchemy.exc import IntegrityError
 from app.core.exceptions import ValidationError, NotFoundError
 from app.constants.error_codes import ErrorCode
 from app.modules.audit.service import AuditService
-from app.modules.catalog.metal_models import Metal, Purity
-from app.modules.catalog.metal_schemas import MetalCreate, MetalUpdate, PurityCreate, PurityUpdate
-from app.modules.catalog.metal_repository import MetalRepository, PurityRepository
+from app.modules.metals.models import Metal, Purity
+from app.modules.metals.schemas import MetalCreate, MetalUpdate, PurityCreate, PurityUpdate
+from app.modules.metals.repository import MetalRepository, PurityRepository
 
 
 class MetalService:

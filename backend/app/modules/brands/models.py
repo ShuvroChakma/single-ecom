@@ -1,5 +1,5 @@
 """
-Brand and Collection models for Catalog module.
+Brand and Collection models for jewelry e-commerce.
 """
 from typing import Optional
 from uuid import UUID, uuid4
@@ -11,7 +11,7 @@ class BrandBase(SQLModel):
     """Base Brand schema."""
     name: str = Field(index=True)
     slug: str = Field(unique=True, index=True)
-    logo: Optional[str] = Field(default=None, description="Logo image URL")
+    logo: Optional[str] = Field(default=None)
     is_active: bool = Field(default=True)
 
 
@@ -29,7 +29,7 @@ class CollectionBase(SQLModel):
     name: str = Field(index=True)
     slug: str = Field(unique=True, index=True)
     description: Optional[str] = Field(default=None)
-    banner_image: Optional[str] = Field(default=None, description="Banner image URL")
+    banner_image: Optional[str] = Field(default=None)
     is_active: bool = Field(default=True)
 
 

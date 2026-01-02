@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from datetime import datetime
 
-from app.modules.catalog.product_models import Product, ProductVariant, MetalType
+from app.modules.products.models import Product, ProductVariant, MetalType
 
 
 class ProductRepository:

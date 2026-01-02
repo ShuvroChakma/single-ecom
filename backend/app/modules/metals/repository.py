@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from datetime import datetime
 
-from app.modules.catalog.metal_models import Metal, Purity
+from app.modules.metals.models import Metal, Purity
 
 
 class MetalRepository:

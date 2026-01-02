@@ -1,5 +1,5 @@
 """
-Repository for Brand and Collection CRUD operations.
+Repository for Brand and Collection database operations.
 """
 from typing import Optional, List
 from uuid import UUID
@@ -7,7 +7,7 @@ from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
-from app.modules.catalog.brand_collection_models import Brand, Collection
+from app.modules.brands.models import Brand, Collection
 
 
 class BrandRepository:

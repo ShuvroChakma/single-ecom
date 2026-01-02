@@ -12,9 +12,9 @@ from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
-from app.modules.catalog.rate_service import DailyRateService, PriceCalculationService
-from app.modules.catalog.rate_schemas import DailyRateCreate, DailyRateResponse, CurrentRatesResponse
-from app.modules.catalog.product_service import ProductService
+from app.modules.rates.service import DailyRateService, PriceCalculationService
+from app.modules.rates.schemas import DailyRateCreate, DailyRateResponse, CurrentRatesResponse
+from app.modules.products.service import ProductService
 
 router = APIRouter(prefix="/catalog", tags=["Daily Rates"])
 

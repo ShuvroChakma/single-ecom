@@ -10,12 +10,12 @@ from sqlalchemy.exc import IntegrityError
 from app.core.exceptions import ValidationError, NotFoundError
 from app.constants.error_codes import ErrorCode
 from app.modules.audit.service import AuditService
-from app.modules.catalog.product_models import Product, ProductVariant, MetalType
-from app.modules.catalog.product_schemas import (
+from app.modules.products.models import Product, ProductVariant, MetalType
+from app.modules.products.schemas import (
     ProductCreate, ProductUpdate, ProductListParams,
     ProductVariantCreate, ProductVariantUpdate
 )
-from app.modules.catalog.product_repository import ProductRepository, ProductVariantRepository
+from app.modules.products.repository import ProductRepository, ProductVariantRepository
 from app.modules.catalog.repository import CategoryRepository
 
 
