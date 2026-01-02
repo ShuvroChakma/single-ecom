@@ -53,7 +53,8 @@ class TestChangePasswordValidation:
         )
         assert res_current.status_code == 422
         data_current = res_current.json()
-        assert data_current["error"]["field"] == "current_password"
+        assert "errors" in data_current
+        assert data_current["errors"][0]["field"] == "current_password"
         
         # 3. Test Invalid New Password
         res_new = await client.post(

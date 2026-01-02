@@ -50,6 +50,8 @@ class TestOTPValidation:
         
         # We are looking for "field": "otp_code"
         # The ValidationError raised by OTPService.verify_otp is caught.
-        assert data["error"]["code"] == ErrorCode.OTP_EXPIRED
-        assert data["error"]["field"] == "otp_code"
+        assert "errors" in data
+        assert len(data["errors"]) > 0
+        assert data["errors"][0]["code"] == ErrorCode.OTP_EXPIRED
+        assert data["errors"][0]["field"] == "otp_code"
 
