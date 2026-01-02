@@ -36,6 +36,7 @@ class PermissionEnum(str, Enum):
     # Product permissions
     PRODUCTS_READ = "products:read"
     PRODUCTS_WRITE = "products:write"
+    PRODUCTS_DELETE = "products:delete"
     
     # Category permissions
     CATEGORIES_READ = "categories:read"
