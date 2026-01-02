@@ -114,8 +114,8 @@ class ConflictError(AppException):
         )
 
 
-class ValidationError(AppException):
-    """Validation error (422)."""
+class ValidationError(HTTPException):
+    """Validation error (422) with errors array format."""
     
     def __init__(
         self,
@@ -124,12 +124,28 @@ class ValidationError(AppException):
         field: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None
     ):
+        # Store for attribute access (backward compatibility)
+        self.error_code = error_code
+        self.field = field
+        self.details = details
+        
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            error_code=error_code,
-            message=message,
-            field=field,
-            details=details
+            detail={
+                "success": False,
+                "error": {
+                    "code": ErrorCode.VALIDATION_ERROR,
+                    "message": "Request validation failed",
+                    "field": None
+                },
+                "errors": [
+                    {
+                        "code": error_code,
+                        "message": message,
+                        "field": field
+                    }
+                ]
+            }
         )
 
 

@@ -55,8 +55,16 @@ class ErrorCode:
     # Rate limiting (RATE_xxx)
     RATE_LIMIT_EXCEEDED = "RATE_001"
     
+    # Catalog errors (CAT_xxx)
+    CATEGORY_NOT_FOUND = "CAT_001"
+    CATEGORY_MAX_DEPTH = "CAT_002"
+    CATEGORY_DUPLICATE_SLUG = "CAT_003"
+    CATEGORY_HAS_CHILDREN = "CAT_004"
+    CATEGORY_INVALID_PARENT = "CAT_005"
+    
     # Server errors (SRV_xxx)
     INTERNAL_ERROR = "SRV_001"
     DATABASE_ERROR = "SRV_002"
     EXTERNAL_SERVICE_ERROR = "SRV_003"
     RESOURCE_NOT_FOUND = "SRV_004"
+

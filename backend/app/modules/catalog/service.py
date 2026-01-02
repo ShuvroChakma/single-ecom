@@ -1,8 +1,10 @@
 from uuid import UUID
 from typing import Optional, List, Dict, Any
 from fastapi import Request
+from sqlalchemy.exc import IntegrityError
 
 from app.core.exceptions import ValidationError, NotFoundError, ConflictError
+from app.constants.error_codes import ErrorCode
 from app.core.cache import get_cache, set_cache, delete_cache
 from app.modules.audit.service import AuditService
 from app.modules.catalog.models import Category
@@ -61,7 +63,11 @@ class CategoryService:
                 raise NotFoundError(message="Parent category not found", code="CATALOG_002")
             
             if parent.level >= 2:
-                raise ValidationError(message="Maximum category depth (3 levels) exceeded", error_code="CATALOG_001")
+                raise ValidationError(
+                    error_code=ErrorCode.CATEGORY_MAX_DEPTH,
+                    message="Maximum category depth (3 levels) exceeded",
+                    field="parent_id"
+                )
             
             level = parent.level + 1
             # Simple path logic for now
@@ -71,7 +77,16 @@ class CategoryService:
         obj_data = data.model_dump()
         obj_data.update({"level": level, "path": path}) 
         
-        category = await self.repository.create(Category(**obj_data))
+        try:
+            category = await self.repository.create(Category(**obj_data))
+        except IntegrityError as e:
+            if "ix_categories_slug" in str(e.orig):
+                raise ValidationError(
+                    error_code=ErrorCode.CATEGORY_DUPLICATE_SLUG,
+                    message=f"Slug '{data.slug}' already exists. Please use a unique slug.",
+                    field="slug"
+                )
+            raise
         
         # Update Path if needed (now that we have ID)
         if not data.parent_id:
@@ -119,11 +134,19 @@ class CategoryService:
                 
                 # Check if new placement would exceed depth
                 if parent.level >= 2:
-                    raise ValidationError(message="Maximum category depth (3 levels) exceeded", error_code="CATALOG_001")
+                    raise ValidationError(
+                        error_code=ErrorCode.CATEGORY_MAX_DEPTH,
+                        message="Maximum category depth (3 levels) exceeded",
+                        field="parent_id"
+                    )
                 
                 # Cannot move to its own child
                 if str(parent.id) == str(category.id):
-                    raise ValidationError(message="Cannot set category as its own parent", error_code="CATALOG_003")
+                    raise ValidationError(
+                        error_code=ErrorCode.CATEGORY_INVALID_PARENT,
+                        message="Cannot set category as its own parent",
+                        field="parent_id"
+                    )
                 
                 # Update level and path
                 update_data["level"] = parent.level + 1
@@ -134,7 +157,16 @@ class CategoryService:
                 update_data["path"] = str(category.id)
         
         # Update category
-        updated_category = await self.repository.update(category, update_data)
+        try:
+            updated_category = await self.repository.update(category, update_data)
+        except IntegrityError as e:
+            if "ix_categories_slug" in str(e.orig):
+                raise ValidationError(
+                    error_code=ErrorCode.CATEGORY_DUPLICATE_SLUG,
+                    message=f"Slug '{update_data.get('slug')}' already exists. Please use a unique slug.",
+                    field="slug"
+                )
+            raise
         
         # Clear cache
         await delete_cache(CACHE_KEY_TREE)
