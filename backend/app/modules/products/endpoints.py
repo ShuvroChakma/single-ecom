@@ -11,12 +11,12 @@ from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
-from app.modules.catalog.product_service import ProductService, ProductVariantService
-from app.modules.catalog.product_schemas import (
+from app.modules.products.service import ProductService, ProductVariantService
+from app.modules.products.schemas import (
     ProductCreate, ProductUpdate, ProductResponse, ProductWithVariantsResponse,
     ProductListParams, ProductVariantCreate, ProductVariantUpdate, ProductVariantResponse
 )
-from app.modules.catalog.product_models import Gender, MetalType
+from app.modules.products.models import Gender, MetalType
 
 router = APIRouter(prefix="/catalog", tags=["Products"])
 

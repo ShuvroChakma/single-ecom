@@ -8,7 +8,7 @@ from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
-from app.modules.catalog.rate_models import DailyRate
+from app.modules.rates.models import DailyRate
 
 
 class DailyRateRepository:

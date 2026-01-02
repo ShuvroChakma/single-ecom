@@ -11,8 +11,8 @@ from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
-from app.modules.catalog.brand_collection_service import BrandService, CollectionService
-from app.modules.catalog.brand_collection_schemas import (
+from app.modules.brands.service import BrandService, CollectionService
+from app.modules.brands.schemas import (
     BrandCreate, BrandUpdate, BrandResponse,
     CollectionCreate, CollectionUpdate, CollectionResponse
 )

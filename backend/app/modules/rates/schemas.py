@@ -7,7 +7,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-from app.modules.catalog.rate_models import RateSource
+from app.modules.rates.models import RateSource
 
 
 # ============ DAILY RATE SCHEMAS ============

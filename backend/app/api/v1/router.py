@@ -1,5 +1,5 @@
 """
-API v1 router.
+Main API Router for v1 endpoints.
 """
 from fastapi import APIRouter
 
@@ -12,11 +12,11 @@ from app.modules.users import admin_endpoints as admins
 from app.modules.users import customer_endpoints as customers
 from app.modules.audit import endpoints as audit_logs
 from app.modules.catalog import endpoints as catalog
-from app.modules.catalog import brand_collection_endpoints as brand_collection
-from app.modules.catalog import metal_endpoints as metal
-from app.modules.catalog import product_endpoints as products
-from app.modules.catalog import attribute_endpoints as attributes
-from app.modules.catalog import rate_endpoints as rates
+from app.modules.brands import endpoints as brands
+from app.modules.metals import endpoints as metals
+from app.modules.products import endpoints as products
+from app.modules.attributes import endpoints as attributes
+from app.modules.rates import endpoints as rates
 
 
 api_router = APIRouter()
@@ -32,8 +32,8 @@ api_router.include_router(customers.router, prefix="/admin/customers")
 api_router.include_router(audit_logs.router, prefix="/admin/audit-logs")
 
 api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
-api_router.include_router(brand_collection.router, tags=["Brands & Collections"])
-api_router.include_router(metal.router, tags=["Metals & Purities"])
+api_router.include_router(brands.router, tags=["Brands & Collections"])
+api_router.include_router(metals.router, tags=["Metals & Purities"])
 api_router.include_router(products.router, tags=["Products"])
 api_router.include_router(attributes.router, tags=["Attributes"])
 api_router.include_router(rates.router, tags=["Daily Rates"])

@@ -10,13 +10,13 @@ from sqlalchemy.exc import IntegrityError
 from app.core.exceptions import ValidationError, NotFoundError
 from app.constants.error_codes import ErrorCode
 from app.modules.audit.service import AuditService
-from app.modules.catalog.attribute_models import AttributeGroup, Attribute, ProductAttributeValue
-from app.modules.catalog.attribute_schemas import (
+from app.modules.attributes.models import AttributeGroup, Attribute, ProductAttributeValue
+from app.modules.attributes.schemas import (
     AttributeGroupCreate, AttributeGroupUpdate,
     AttributeCreate, AttributeUpdate,
     ProductAttributeValueCreate, ProductAttributeValueUpdate
 )
-from app.modules.catalog.attribute_repository import (
+from app.modules.attributes.repository import (
     AttributeGroupRepository, AttributeRepository, ProductAttributeValueRepository
 )
 

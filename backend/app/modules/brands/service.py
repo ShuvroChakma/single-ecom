@@ -1,5 +1,5 @@
 """
-Service layer for Brand and Collection business logic.
+Service layer for Brand and Collection.
 """
 from typing import Optional, List
 from uuid import UUID
@@ -10,11 +10,9 @@ from sqlalchemy.exc import IntegrityError
 from app.core.exceptions import ValidationError, NotFoundError
 from app.constants.error_codes import ErrorCode
 from app.modules.audit.service import AuditService
-from app.modules.catalog.brand_collection_models import Brand, Collection
-from app.modules.catalog.brand_collection_schemas import (
-    BrandCreate, BrandUpdate, CollectionCreate, CollectionUpdate
-)
-from app.modules.catalog.brand_collection_repository import BrandRepository, CollectionRepository
+from app.modules.brands.models import Brand, Collection
+from app.modules.brands.schemas import BrandCreate, BrandUpdate, CollectionCreate, CollectionUpdate
+from app.modules.brands.repository import BrandRepository, CollectionRepository
 
 
 class BrandService:

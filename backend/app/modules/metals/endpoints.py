@@ -11,8 +11,8 @@ from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
-from app.modules.catalog.metal_service import MetalService, PurityService
-from app.modules.catalog.metal_schemas import (
+from app.modules.metals.service import MetalService, PurityService
+from app.modules.metals.schemas import (
     MetalCreate, MetalUpdate, MetalResponse, MetalWithPuritiesResponse,
     PurityCreate, PurityUpdate, PurityResponse, PurityFullResponse
 )

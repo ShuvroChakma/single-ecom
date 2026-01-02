@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-from app.modules.catalog.attribute_models import AttributeType
+from app.modules.attributes.models import AttributeType
 
 
 # ============ ATTRIBUTE GROUP SCHEMAS ============

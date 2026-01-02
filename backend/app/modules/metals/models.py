@@ -8,7 +8,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from datetime import datetime
 
 if TYPE_CHECKING:
-    from app.modules.catalog.metal_models import Purity
+    from app.modules.metals.models import Purity
 
 
 class MetalBase(SQLModel):
