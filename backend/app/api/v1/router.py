@@ -13,6 +13,7 @@ from app.modules.users import customer_endpoints as customers
 from app.modules.audit import endpoints as audit_logs
 from app.modules.catalog import endpoints as catalog
 from app.modules.catalog import brand_collection_endpoints as brand_collection
+from app.modules.catalog import metal_endpoints as metal
 
 
 api_router = APIRouter()
@@ -29,3 +30,4 @@ api_router.include_router(audit_logs.router, prefix="/admin/audit-logs")
 
 api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
 api_router.include_router(brand_collection.router, tags=["Brands & Collections"])
+api_router.include_router(metal.router, tags=["Metals & Purities"])
