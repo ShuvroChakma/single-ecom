@@ -16,6 +16,7 @@ from app.modules.catalog import brand_collection_endpoints as brand_collection
 from app.modules.catalog import metal_endpoints as metal
 from app.modules.catalog import product_endpoints as products
 from app.modules.catalog import attribute_endpoints as attributes
+from app.modules.catalog import rate_endpoints as rates
 
 
 api_router = APIRouter()
@@ -35,3 +36,4 @@ api_router.include_router(brand_collection.router, tags=["Brands & Collections"]
 api_router.include_router(metal.router, tags=["Metals & Purities"])
 api_router.include_router(products.router, tags=["Products"])
 api_router.include_router(attributes.router, tags=["Attributes"])
+api_router.include_router(rates.router, tags=["Daily Rates"])
