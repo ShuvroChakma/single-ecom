@@ -1,5 +1,7 @@
 """Tests for Attributes module (EAV)."""
 import pytest
+import random
+import string
 from uuid import uuid4
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +15,11 @@ from app.constants.enums import UserType
 from app.modules.attributes.models import AttributeGroup, Attribute, ProductAttributeValue, AttributeType
 from app.modules.catalog.models import Category
 from app.modules.products.models import Product
+
+
+def random_lowercase(length: int = 6) -> str:
+    """Generate random lowercase letters only for attribute codes."""
+    return ''.join(random.choices(string.ascii_lowercase, k=length))
 
 
 async def get_or_create_permission(session: AsyncSession, code: str, description: str, resource: str, action: str) -> Permission:
@@ -97,9 +104,10 @@ async def test_list_filterable_attributes(client: AsyncClient, session: AsyncSes
     session.add(group)
     await session.flush()
     
+    # Use lowercase letters only for attribute code
     attr = Attribute(
         group_id=group.id,
-        code=f"product_type_{uuid4().hex[:6]}",
+        code=f"product_type_{random_lowercase(6)}",
         name="Product Type",
         type=AttributeType.SELECT,
         options=["ring", "necklace", "earring"],
@@ -135,17 +143,17 @@ async def test_attribute_group_crud(client: AsyncClient, session: AsyncSession, 
         assert response.status_code == 201
         group_id = response.json()["data"]["id"]
         
-        # CREATE Attribute
+        # CREATE Attribute (use lowercase letters only for code)
         attr_payload = {
             "group_id": group_id,
-            "code": f"metal_finish_{uuid4().hex[:6]}",
+            "code": f"metal_finish_{random_lowercase(6)}",
             "name": "Metal Finish",
             "type": "SELECT",
             "options": ["polished", "matte", "brushed"],
             "is_filterable": True
         }
         response = await client.post("/api/v1/products/admin/attributes", json=attr_payload)
-        assert response.status_code == 201
+        assert response.status_code == 201, response.text
         attr_id = response.json()["data"]["id"]
         
         # DELETE Attribute
@@ -172,14 +180,14 @@ async def test_product_attribute_values(
     user = setup_attr_admin
     product = setup_product
     
-    # Create attribute
+    # Create attribute (lowercase code)
     group = AttributeGroup(name=f"Product Attr Group {uuid4().hex[:6]}", is_active=True)
     session.add(group)
     await session.flush()
     
     attr = Attribute(
         group_id=group.id,
-        code=f"test_attr_{uuid4().hex[:6]}",
+        code=f"test_attr_{random_lowercase(6)}",
         name="Test Attribute",
         type=AttributeType.TEXT,
         is_active=True
@@ -200,10 +208,10 @@ async def test_product_attribute_values(
             f"/api/v1/products/admin/products/{product.id}/attributes", 
             json=payload
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, response.text
         
-        # GET product attributes
-        response = await client.get(f"/api/v1/products/{product.id}/attributes")
+        # GET product attributes (correct path)
+        response = await client.get(f"/api/v1/products/products/{product.id}/attributes")
         assert response.status_code == 200
         data = response.json()["data"]
         assert len(data) >= 1

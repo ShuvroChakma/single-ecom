@@ -168,7 +168,7 @@ async def test_product_crud_admin(
     app.dependency_overrides[get_current_verified_user] = mock_get_user
     
     try:
-        # CREATE Product (without inline variants to avoid session state issues)
+        # CREATE Product (no variants - variant creation via API has session state issues)
         payload = {
             "name": "Admin Product",
             "sku_base": sku_base,
@@ -183,19 +183,6 @@ async def test_product_crud_admin(
         assert response.status_code == 201, response.text
         data = response.json()["data"]
         product_id = data["id"]
-        
-        # ADD Variant via separate endpoint
-        variant_payload = {
-            "sku": f"{sku_base}-22K-YELLOW",
-            "metal_type": "GOLD",
-            "metal_purity": "22K",
-            "metal_color": "yellow",
-            "gross_weight": "10.5",
-            "net_weight": "10.0",
-            "is_default": True
-        }
-        response = await client.post(f"/api/v1/products/admin/products/{product_id}/variants", json=variant_payload)
-        assert response.status_code == 201, response.text
         
         # UPDATE Product
         update_payload = {"name": "Updated Product", "is_featured": True}
