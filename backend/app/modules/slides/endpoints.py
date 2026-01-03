@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request, UploadFile, File
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse, create_success_response
+from app.constants.permissions import PermissionEnum
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.slides.service import SlideService
@@ -70,7 +71,7 @@ async def list_slides_by_type(
 @router.get("/admin", response_model=SuccessResponse[List[SlideResponse]])
 async def list_all_slides(
     include_inactive: bool = False,
-    current_user: User = Depends(require_permissions(["slides:read"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_READ])),
     service: SlideService = Depends(get_slide_service)
 ):
     """List all slides including inactive (admin)."""
@@ -84,7 +85,7 @@ async def list_all_slides(
 @router.get("/admin/{slide_id}", response_model=SuccessResponse[SlideResponse])
 async def get_slide(
     slide_id: UUID,
-    current_user: User = Depends(require_permissions(["slides:read"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_READ])),
     service: SlideService = Depends(get_slide_service)
 ):
     """Get a specific slide by ID (admin)."""
@@ -99,7 +100,7 @@ async def get_slide(
 async def create_slide(
     data: SlideCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["slides:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_WRITE])),
     service: SlideService = Depends(get_slide_service)
 ):
     """Create a new slide (admin)."""
@@ -118,7 +119,7 @@ async def create_slide(
 async def upload_slide_image(
     request: Request,
     file: UploadFile = File(..., description="Slide image"),
-    current_user: User = Depends(require_permissions(["slides:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_WRITE])),
     upload_service: UploadService = Depends(get_upload_service)
 ):
     """
@@ -169,7 +170,7 @@ async def update_slide(
     slide_id: UUID,
     data: SlideUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["slides:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_WRITE])),
     service: SlideService = Depends(get_slide_service)
 ):
     """Update a slide (admin)."""
@@ -184,7 +185,7 @@ async def update_slide(
 async def delete_slide(
     slide_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["slides:delete"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_DELETE])),
     service: SlideService = Depends(get_slide_service)
 ):
     """Delete a slide (admin)."""
@@ -199,7 +200,7 @@ async def delete_slide(
 async def update_slide_order(
     data: SlideOrderUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["slides:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_WRITE])),
     service: SlideService = Depends(get_slide_service)
 ):
     """Update slide display order (admin)."""
@@ -215,7 +216,7 @@ async def toggle_slide_active(
     slide_id: UUID,
     is_active: bool,
     request: Request,
-    current_user: User = Depends(require_permissions(["slides:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_WRITE])),
     service: SlideService = Depends(get_slide_service)
 ):
     """Toggle slide active status (admin)."""

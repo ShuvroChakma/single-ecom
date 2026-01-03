@@ -43,6 +43,11 @@ class PermissionEnum(str, Enum):
     CATEGORIES_WRITE = "categories:write"
     CATEGORIES_DELETE = "categories:delete"
     
+    # Slides permissions (homepage banners)
+    SLIDES_READ = "slides:read"
+    SLIDES_WRITE = "slides:write"
+    SLIDES_DELETE = "slides:delete"
+    
     # System permissions
     SYSTEM_CONFIG = "system:config"
 
