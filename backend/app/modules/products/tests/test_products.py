@@ -93,7 +93,7 @@ async def test_list_products_public(client: AsyncClient, session: AsyncSession, 
     session.add(product)
     await session.commit()
     
-    response = await client.get("/api/v1/products/products")
+    response = await client.get("/api/v1/products/")
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
@@ -131,7 +131,7 @@ async def test_get_product_by_slug(client: AsyncClient, session: AsyncSession, s
     session.add(variant)
     await session.commit()
     
-    response = await client.get(f"/api/v1/products/products/{slug}")
+    response = await client.get(f"/api/v1/products/{slug}")
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["name"] == "Diamond Ring"
@@ -140,7 +140,7 @@ async def test_get_product_by_slug(client: AsyncClient, session: AsyncSession, s
 @pytest.mark.asyncio
 async def test_product_not_found(client: AsyncClient, session: AsyncSession):
     """Test 404 for non-existent product."""
-    response = await client.get("/api/v1/products/products/nonexistent-product")
+    response = await client.get("/api/v1/products/nonexistent-product")
     assert response.status_code == 404
 
 
@@ -168,7 +168,7 @@ async def test_product_crud_admin(
     app.dependency_overrides[get_current_verified_user] = mock_get_user
     
     try:
-        # CREATE Product with variant
+        # CREATE Product (without inline variants to avoid session state issues)
         payload = {
             "name": "Admin Product",
             "sku_base": sku_base,
@@ -177,23 +177,25 @@ async def test_product_crud_admin(
             "brand_id": str(brand.id),
             "gender": "WOMEN",
             "base_making_charge_type": "FIXED_PER_GRAM",
-            "base_making_charge_value": "500",
-            "variants": [
-                {
-                    "sku": f"{sku_base}-22K-YELLOW",
-                    "metal_type": "GOLD",
-                    "metal_purity": "22K",
-                    "metal_color": "yellow",
-                    "gross_weight": "10.5",
-                    "net_weight": "10.0",
-                    "is_default": True
-                }
-            ]
+            "base_making_charge_value": "500"
         }
         response = await client.post("/api/v1/products/admin/products", json=payload)
         assert response.status_code == 201, response.text
         data = response.json()["data"]
         product_id = data["id"]
+        
+        # ADD Variant via separate endpoint
+        variant_payload = {
+            "sku": f"{sku_base}-22K-YELLOW",
+            "metal_type": "GOLD",
+            "metal_purity": "22K",
+            "metal_color": "yellow",
+            "gross_weight": "10.5",
+            "net_weight": "10.0",
+            "is_default": True
+        }
+        response = await client.post(f"/api/v1/products/admin/products/{product_id}/variants", json=variant_payload)
+        assert response.status_code == 201, response.text
         
         # UPDATE Product
         update_payload = {"name": "Updated Product", "is_featured": True}
@@ -225,9 +227,9 @@ async def test_product_filtering(client: AsyncClient, session: AsyncSession, set
     await session.commit()
     
     # Filter by gender
-    response = await client.get("/api/v1/products/products?gender=WOMEN")
+    response = await client.get("/api/v1/products/?gender=WOMEN")
     assert response.status_code == 200
     
     # Filter by category
-    response = await client.get(f"/api/v1/products/products?category_id={category.id}")
+    response = await client.get(f"/api/v1/products/?category_id={category.id}")
     assert response.status_code == 200

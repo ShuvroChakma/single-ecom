@@ -34,6 +34,8 @@ api_router.include_router(audit_logs.router, prefix="/admin/audit-logs")
 api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
 api_router.include_router(brands.router, tags=["Brands & Collections"])
 api_router.include_router(metals.router, tags=["Metals & Purities"])
-api_router.include_router(products.router, tags=["Products"])
+# IMPORTANT: Include attributes and rates BEFORE products 
+# because products has a /{slug} catch-all route
 api_router.include_router(attributes.router, tags=["Attributes"])
 api_router.include_router(rates.router, tags=["Daily Rates"])
+api_router.include_router(products.router, tags=["Products"])

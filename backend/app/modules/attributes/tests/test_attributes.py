@@ -203,7 +203,7 @@ async def test_product_attribute_values(
         assert response.status_code == 201
         
         # GET product attributes
-        response = await client.get(f"/api/v1/products/products/{product.id}/attributes")
+        response = await client.get(f"/api/v1/products/{product.id}/attributes")
         assert response.status_code == 200
         data = response.json()["data"]
         assert len(data) >= 1
