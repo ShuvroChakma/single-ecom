@@ -28,6 +28,7 @@ class RolesSeeder(BaseSeeder):
                 "permissions:read",
                 "audit_logs:read",
                 "oauth_providers:read",
+                "slides:read", "slides:write", "slides:delete",
             ]
         },
         {
