@@ -18,6 +18,7 @@ from app.modules.products import endpoints as products
 from app.modules.attributes import endpoints as attributes
 from app.modules.rates import endpoints as rates
 from app.modules.uploads import endpoints as uploads
+from app.modules.slides import endpoints as slides
 
 
 api_router = APIRouter()
@@ -35,9 +36,10 @@ api_router.include_router(audit_logs.router, prefix="/admin/audit-logs")
 api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
 api_router.include_router(brands.router, tags=["Brands & Collections"])
 api_router.include_router(metals.router, tags=["Metals & Purities"])
-# IMPORTANT: Include attributes, rates, and uploads BEFORE products 
+# IMPORTANT: Include attributes, rates, uploads, and slides BEFORE products 
 # because products has a /{slug} catch-all route
 api_router.include_router(attributes.router, tags=["Attributes"])
 api_router.include_router(rates.router, tags=["Daily Rates"])
 api_router.include_router(uploads.router, tags=["Product Images"])
+api_router.include_router(slides.router, tags=["Homepage Slides"])
 api_router.include_router(products.router, tags=["Products"])
