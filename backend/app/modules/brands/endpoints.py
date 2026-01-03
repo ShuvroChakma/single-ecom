@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
-from app.core.schemas.response import SuccessResponse
+from app.core.schemas.response import SuccessResponse, create_success_response
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.brands.service import BrandService, CollectionService
@@ -17,30 +17,48 @@ from app.modules.brands.schemas import (
     CollectionCreate, CollectionUpdate, CollectionResponse
 )
 
-router = APIRouter(prefix="/catalog", tags=["Brands & Collections"])
+router = APIRouter(prefix="/products")
+
+
+async def get_brand_service(
+    session: AsyncSession = Depends(get_db),
+    audit_service: AuditService = Depends(AuditService)
+) -> BrandService:
+    return BrandService(session, audit_service)
+
+
+async def get_collection_service(
+    session: AsyncSession = Depends(get_db),
+    audit_service: AuditService = Depends(AuditService)
+) -> CollectionService:
+    return CollectionService(session, audit_service)
 
 
 # ============ BRAND ENDPOINTS ============
 
 @router.get("/brands", response_model=SuccessResponse[List[BrandResponse]])
 async def list_brands(
-    session: AsyncSession = Depends(get_db)
+    service: BrandService = Depends(get_brand_service)
 ):
     """List all active brands (public)."""
-    service = BrandService(session, AuditService(session))
     brands = await service.list_brands(include_inactive=False)
-    return SuccessResponse(data=[BrandResponse.model_validate(b) for b in brands])
+    return create_success_response(
+        message="Brands retrieved successfully",
+        data=[BrandResponse.model_validate(b) for b in brands]
+    )
 
 
 @router.get("/brands/{slug}", response_model=SuccessResponse[BrandResponse])
 async def get_brand_by_slug(
     slug: str,
-    session: AsyncSession = Depends(get_db)
+    service: BrandService = Depends(get_brand_service)
 ):
     """Get brand by slug (public)."""
-    service = BrandService(session, AuditService(session))
     brand = await service.get_brand_by_slug(slug)
-    return SuccessResponse(data=BrandResponse.model_validate(brand))
+    return create_success_response(
+        message="Brand retrieved successfully",
+        data=BrandResponse.model_validate(brand)
+    )
 
 
 @router.post(
@@ -51,13 +69,15 @@ async def get_brand_by_slug(
 async def create_brand(
     data: BrandCreate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: BrandService = Depends(get_brand_service)
 ):
     """Create a new brand (admin)."""
-    service = BrandService(session, AuditService(session))
     brand = await service.create_brand(data, str(current_user.id), request)
-    return SuccessResponse(data=BrandResponse.model_validate(brand))
+    return create_success_response(
+        message="Brand created successfully",
+        data=BrandResponse.model_validate(brand)
+    )
 
 
 @router.put(
@@ -68,13 +88,15 @@ async def update_brand(
     brand_id: UUID,
     data: BrandUpdate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: BrandService = Depends(get_brand_service)
 ):
     """Update a brand (admin)."""
-    service = BrandService(session, AuditService(session))
     brand = await service.update_brand(brand_id, data, str(current_user.id), request)
-    return SuccessResponse(data=BrandResponse.model_validate(brand))
+    return create_success_response(
+        message="Brand updated successfully",
+        data=BrandResponse.model_validate(brand)
+    )
 
 
 @router.delete(
@@ -84,36 +106,42 @@ async def update_brand(
 async def delete_brand(
     brand_id: UUID,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:delete"]))
+    current_user: User = Depends(require_permissions(["products:delete"])),
+    service: BrandService = Depends(get_brand_service)
 ):
     """Delete a brand (admin)."""
-    service = BrandService(session, AuditService(session))
     await service.delete_brand(brand_id, str(current_user.id), request)
-    return SuccessResponse(data={"message": "Brand deleted successfully"})
+    return create_success_response(
+        message="Brand deleted successfully",
+        data={"deleted": True}
+    )
 
 
 # ============ COLLECTION ENDPOINTS ============
 
 @router.get("/collections", response_model=SuccessResponse[List[CollectionResponse]])
 async def list_collections(
-    session: AsyncSession = Depends(get_db)
+    service: CollectionService = Depends(get_collection_service)
 ):
     """List all active collections (public)."""
-    service = CollectionService(session, AuditService(session))
     collections = await service.list_collections(include_inactive=False)
-    return SuccessResponse(data=[CollectionResponse.model_validate(c) for c in collections])
+    return create_success_response(
+        message="Collections retrieved successfully",
+        data=[CollectionResponse.model_validate(c) for c in collections]
+    )
 
 
 @router.get("/collections/{slug}", response_model=SuccessResponse[CollectionResponse])
 async def get_collection_by_slug(
     slug: str,
-    session: AsyncSession = Depends(get_db)
+    service: CollectionService = Depends(get_collection_service)
 ):
     """Get collection by slug (public)."""
-    service = CollectionService(session, AuditService(session))
     collection = await service.get_collection_by_slug(slug)
-    return SuccessResponse(data=CollectionResponse.model_validate(collection))
+    return create_success_response(
+        message="Collection retrieved successfully",
+        data=CollectionResponse.model_validate(collection)
+    )
 
 
 @router.post(
@@ -124,13 +152,15 @@ async def get_collection_by_slug(
 async def create_collection(
     data: CollectionCreate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: CollectionService = Depends(get_collection_service)
 ):
     """Create a new collection (admin)."""
-    service = CollectionService(session, AuditService(session))
     collection = await service.create_collection(data, str(current_user.id), request)
-    return SuccessResponse(data=CollectionResponse.model_validate(collection))
+    return create_success_response(
+        message="Collection created successfully",
+        data=CollectionResponse.model_validate(collection)
+    )
 
 
 @router.put(
@@ -141,13 +171,15 @@ async def update_collection(
     collection_id: UUID,
     data: CollectionUpdate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: CollectionService = Depends(get_collection_service)
 ):
     """Update a collection (admin)."""
-    service = CollectionService(session, AuditService(session))
     collection = await service.update_collection(collection_id, data, str(current_user.id), request)
-    return SuccessResponse(data=CollectionResponse.model_validate(collection))
+    return create_success_response(
+        message="Collection updated successfully",
+        data=CollectionResponse.model_validate(collection)
+    )
 
 
 @router.delete(
@@ -157,10 +189,12 @@ async def update_collection(
 async def delete_collection(
     collection_id: UUID,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:delete"]))
+    current_user: User = Depends(require_permissions(["products:delete"])),
+    service: CollectionService = Depends(get_collection_service)
 ):
     """Delete a collection (admin)."""
-    service = CollectionService(session, AuditService(session))
     await service.delete_collection(collection_id, str(current_user.id), request)
-    return SuccessResponse(data={"message": "Collection deleted successfully"})
+    return create_success_response(
+        message="Collection deleted successfully",
+        data={"deleted": True}
+    )
