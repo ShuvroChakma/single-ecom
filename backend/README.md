@@ -41,6 +41,8 @@ docker-compose -f docker-compose.yml up --build
 
 # Run a specific seeder
 ./manage.py db:seed permissions
+./manage.py db:seed metals
+./manage.py db:seed slides
 
 # Force run even if already seeded
 ./manage.py db:seed --force
@@ -101,7 +103,7 @@ Use the `make:module` command to quickly generate standard module structures:
 | Command | Description |
 |---------|-------------|
 | `./manage.py db:seed` | Run all seeders |
-| `./manage.py db:seed <name>` | Run a specific seeder |
+| `./manage.py db:seed <name>` | Run specific (e.g., `metals`, `slides`, `roles`) |
 | `./manage.py db:seed --force` | Force run even if already seeded |
 | `./manage.py db:seed:list` | List available seeders |
 | `./manage.py make:seeder <name>` | Create a new seeder file |
