@@ -1,5 +1,7 @@
 """Tests for Metals module."""
 import pytest
+import random
+import string
 from uuid import uuid4
 from decimal import Decimal
 from httpx import AsyncClient
@@ -12,6 +14,11 @@ from app.modules.roles.models import Role, Permission, RolePermission
 from app.modules.users.models import Admin
 from app.constants.enums import UserType
 from app.modules.metals.models import Metal, Purity
+
+
+def random_letters(length: int = 6) -> str:
+    """Generate random uppercase letters only."""
+    return ''.join(random.choices(string.ascii_uppercase, k=length))
 
 
 async def get_or_create_permission(session: AsyncSession, code: str, description: str, resource: str, action: str) -> Permission:
@@ -60,7 +67,7 @@ async def setup_metal_admin(session: AsyncSession):
 @pytest.mark.asyncio
 async def test_list_metals_public(client: AsyncClient, session: AsyncSession):
     """Test public metals listing endpoint."""
-    code = f"GOLD_{uuid4().hex[:6].upper()}"
+    code = f"GOLD_{random_letters(6)}"
     metal = Metal(name="Gold", code=code, is_active=True)
     session.add(metal)
     await session.commit()
@@ -75,12 +82,12 @@ async def test_list_metals_public(client: AsyncClient, session: AsyncSession):
 @pytest.mark.asyncio
 async def test_metal_with_purities(client: AsyncClient, session: AsyncSession):
     """Test metal with nested purities."""
-    code = f"GOLD_TEST_{uuid4().hex[:6].upper()}"
+    code = f"GOLD_TEST_{random_letters(4)}"
     metal = Metal(name="Gold Test", code=code, is_active=True)
     session.add(metal)
     await session.flush()
     
-    purity_code = f"K22TEST{uuid4().hex[:4].upper()}"
+    purity_code = f"K22{random_letters(3)}"
     purity22k = Purity(
         name="22 Karat", 
         code=purity_code, 
@@ -104,7 +111,7 @@ async def test_metal_crud_admin(client: AsyncClient, session: AsyncSession, setu
     from app.core.permissions import get_current_active_user, get_current_verified_user
     
     user = setup_metal_admin
-    code = f"SILVER_{uuid4().hex[:6].upper()}"
+    code = f"SILVER_{random_letters(4)}"
     
     async def mock_get_user():
         return user
@@ -119,8 +126,8 @@ async def test_metal_crud_admin(client: AsyncClient, session: AsyncSession, setu
         assert response.status_code == 201, response.text
         metal_id = response.json()["data"]["id"]
         
-        # CREATE Purity
-        purity_code = f"S925{uuid4().hex[:4].upper()}"
+        # CREATE Purity (purity allows A-Z0-9)
+        purity_code = f"S925{random_letters(2)}"
         purity_payload = {
             "metal_id": metal_id,
             "name": "Sterling Silver",
@@ -153,7 +160,7 @@ async def test_duplicate_metal_code(client: AsyncClient, session: AsyncSession, 
     from app.core.permissions import get_current_active_user, get_current_verified_user
     
     user = setup_metal_admin
-    code = f"PLAT_{uuid4().hex[:6].upper()}"
+    code = f"PLAT_{random_letters(4)}"
     
     async def mock_get_user():
         return user

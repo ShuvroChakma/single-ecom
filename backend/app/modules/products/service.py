@@ -111,9 +111,9 @@ class ProductService:
                 variant = ProductVariant(**v_data.model_dump(), product_id=product.id)
                 variants.append(variant)
             await self.variant_repository.create_many(variants)
-            
-            # Reload product with variants
-            product = await self.repository.get_with_variants(product.id)
+        
+        # Always reload product with variants to avoid lazy loading issues
+        product = await self.repository.get_with_variants(product.id)
         
         await self.audit_service.log_action(
             action="create_product",
