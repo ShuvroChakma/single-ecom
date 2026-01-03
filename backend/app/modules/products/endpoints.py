@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
-from app.core.schemas.response import SuccessResponse
+from app.core.schemas.response import SuccessResponse, create_success_response
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.products.service import ProductService, ProductVariantService
@@ -18,14 +18,28 @@ from app.modules.products.schemas import (
 )
 from app.modules.products.models import Gender, MetalType
 
-router = APIRouter(prefix="/catalog", tags=["Products"])
+router = APIRouter(prefix="/products", tags=["Products"])
+
+
+async def get_product_service(
+    session: AsyncSession = Depends(get_db),
+    audit_service: AuditService = Depends(AuditService)
+) -> ProductService:
+    return ProductService(session, audit_service)
+
+
+async def get_variant_service(
+    session: AsyncSession = Depends(get_db),
+    audit_service: AuditService = Depends(AuditService)
+) -> ProductVariantService:
+    return ProductVariantService(session, audit_service)
 
 
 # ============ PRODUCT ENDPOINTS ============
 
-@router.get("/products", response_model=SuccessResponse[dict])
+@router.get("/", response_model=SuccessResponse[dict])
 async def list_products(
-    session: AsyncSession = Depends(get_db),
+    service: ProductService = Depends(get_product_service),
     category_id: Optional[UUID] = None,
     brand_id: Optional[UUID] = None,
     collection_id: Optional[UUID] = None,
@@ -50,27 +64,31 @@ async def list_products(
         per_page=per_page
     )
     
-    service = ProductService(session, AuditService(session))
     products, total = await service.list_products(params)
     
-    return SuccessResponse(data={
-        "items": [ProductWithVariantsResponse.model_validate(p) for p in products],
-        "total": total,
-        "page": page,
-        "per_page": per_page,
-        "pages": (total + per_page - 1) // per_page
-    })
+    return create_success_response(
+        message="Products retrieved successfully",
+        data={
+            "items": [ProductWithVariantsResponse.model_validate(p) for p in products],
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "pages": (total + per_page - 1) // per_page
+        }
+    )
 
 
-@router.get("/products/{slug}", response_model=SuccessResponse[ProductWithVariantsResponse])
+@router.get("/{slug}", response_model=SuccessResponse[ProductWithVariantsResponse])
 async def get_product_by_slug(
     slug: str,
-    session: AsyncSession = Depends(get_db)
+    service: ProductService = Depends(get_product_service)
 ):
     """Get product by slug with variants (public)."""
-    service = ProductService(session, AuditService(session))
     product = await service.get_product_by_slug(slug)
-    return SuccessResponse(data=ProductWithVariantsResponse.model_validate(product))
+    return create_success_response(
+        message="Product retrieved successfully",
+        data=ProductWithVariantsResponse.model_validate(product)
+    )
 
 
 @router.post(
@@ -81,13 +99,15 @@ async def get_product_by_slug(
 async def create_product(
     data: ProductCreate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: ProductService = Depends(get_product_service)
 ):
     """Create a new product (admin)."""
-    service = ProductService(session, AuditService(session))
     product = await service.create_product(data, str(current_user.id), request)
-    return SuccessResponse(data=ProductWithVariantsResponse.model_validate(product))
+    return create_success_response(
+        message="Product created successfully",
+        data=ProductWithVariantsResponse.model_validate(product)
+    )
 
 
 @router.put(
@@ -98,13 +118,15 @@ async def update_product(
     product_id: UUID,
     data: ProductUpdate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: ProductService = Depends(get_product_service)
 ):
     """Update a product (admin)."""
-    service = ProductService(session, AuditService(session))
     product = await service.update_product(product_id, data, str(current_user.id), request)
-    return SuccessResponse(data=ProductWithVariantsResponse.model_validate(product))
+    return create_success_response(
+        message="Product updated successfully",
+        data=ProductWithVariantsResponse.model_validate(product)
+    )
 
 
 @router.delete(
@@ -114,13 +136,15 @@ async def update_product(
 async def delete_product(
     product_id: UUID,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:delete"]))
+    current_user: User = Depends(require_permissions(["products:delete"])),
+    service: ProductService = Depends(get_product_service)
 ):
     """Delete a product and its variants (admin)."""
-    service = ProductService(session, AuditService(session))
     await service.delete_product(product_id, str(current_user.id), request)
-    return SuccessResponse(data={"message": "Product deleted successfully"})
+    return create_success_response(
+        message="Product deleted successfully",
+        data={"deleted": True}
+    )
 
 
 # ============ PRODUCT VARIANT ENDPOINTS ============
@@ -134,13 +158,15 @@ async def create_variant(
     product_id: UUID,
     data: ProductVariantCreate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: ProductVariantService = Depends(get_variant_service)
 ):
     """Create a new product variant (admin)."""
-    service = ProductVariantService(session, AuditService(session))
     variant = await service.create_variant(product_id, data, str(current_user.id), request)
-    return SuccessResponse(data=ProductVariantResponse.model_validate(variant))
+    return create_success_response(
+        message="Variant created successfully",
+        data=ProductVariantResponse.model_validate(variant)
+    )
 
 
 @router.put(
@@ -151,13 +177,15 @@ async def update_variant(
     variant_id: UUID,
     data: ProductVariantUpdate,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:write"]))
+    current_user: User = Depends(require_permissions(["products:write"])),
+    service: ProductVariantService = Depends(get_variant_service)
 ):
     """Update a product variant (admin)."""
-    service = ProductVariantService(session, AuditService(session))
     variant = await service.update_variant(variant_id, data, str(current_user.id), request)
-    return SuccessResponse(data=ProductVariantResponse.model_validate(variant))
+    return create_success_response(
+        message="Variant updated successfully",
+        data=ProductVariantResponse.model_validate(variant)
+    )
 
 
 @router.delete(
@@ -167,10 +195,12 @@ async def update_variant(
 async def delete_variant(
     variant_id: UUID,
     request: Request,
-    session: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permissions(["products:delete"]))
+    current_user: User = Depends(require_permissions(["products:delete"])),
+    service: ProductVariantService = Depends(get_variant_service)
 ):
     """Delete a product variant (admin)."""
-    service = ProductVariantService(session, AuditService(session))
     await service.delete_variant(variant_id, str(current_user.id), request)
-    return SuccessResponse(data={"message": "Variant deleted successfully"})
+    return create_success_response(
+        message="Variant deleted successfully",
+        data={"deleted": True}
+    )

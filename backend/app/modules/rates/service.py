@@ -52,8 +52,9 @@ class DailyRateService:
         request: Optional[Request] = None
     ) -> DailyRate:
         """Add a new daily rate."""
+        rate_data = data.model_dump(exclude={"effective_date"})
         rate = DailyRate(
-            **data.model_dump(),
+            **rate_data,
             created_by=actor_id,
             effective_date=data.effective_date or datetime.utcnow()
         )
@@ -82,8 +83,9 @@ class DailyRateService:
         """Add multiple daily rates at once (e.g., from BAJUS scrape)."""
         rates = []
         for data in rates_data:
+            rate_data = data.model_dump(exclude={"effective_date"})
             rate = DailyRate(
-                **data.model_dump(),
+                **rate_data,
                 created_by=actor_id,
                 effective_date=data.effective_date or datetime.utcnow()
             )
