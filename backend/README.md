@@ -168,8 +168,39 @@ Use the `make:module` command to quickly generate standard module structures:
 | DELETE | `/api/v1/admin/oauth-providers/{id}` | Delete OAuth provider |
 | PATCH | `/api/v1/admin/oauth-providers/{id}/status` | Activate/deactivate |
 
-### Audit Logs
+### Admin - Product Catalog
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/catalog/products` | List products |
+| POST | `/api/v1/catalog/products` | Create product (full) |
+| GET | `/api/v1/brands` | List brands |
+| GET | `/api/v1/metals` | List metals |
 
+### Admin - Product Images
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/products/admin/products/{id}/image` | Upload single image |
+| POST | `/api/v1/products/admin/products/{id}/images` | Upload multiple images |
+| DELETE | `/api/v1/products/admin/products/{id}/images` | Delete specific image |
+| PUT | `/api/v1/products/admin/products/{id}/images/order` | Reorder images |
+
+### Admin - Daily Rates
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/rates/daily` | List daily rates |
+| POST | `/api/v1/rates/daily` | Set daily rates (batch) |
+| POST | `/api/v1/rates/calculate` | Calculate product price |
+
+### CMS - Homepage Slides
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/slides` | List active slides (Public) |
+| GET | `/api/v1/slides/admin` | List all slides (Admin) |
+| POST | `/api/v1/slides/admin` | Create slide |
+| POST | `/api/v1/slides/admin/upload` | Upload slide image |
+| PATCH | `/api/v1/slides/admin/{id}/toggle` | Toggle active status |
+
+### Audit Logs
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/admin/audit-logs` | List audit logs (MongoDB) |
