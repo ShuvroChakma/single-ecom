@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse, create_success_response
+from app.constants.permissions import PermissionEnum
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.brands.service import BrandService, CollectionService
@@ -69,7 +70,7 @@ async def get_brand_by_slug(
 async def create_brand(
     data: BrandCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.BRANDS_WRITE])),
     service: BrandService = Depends(get_brand_service)
 ):
     """Create a new brand (admin)."""
@@ -88,7 +89,7 @@ async def update_brand(
     brand_id: UUID,
     data: BrandUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.BRANDS_WRITE])),
     service: BrandService = Depends(get_brand_service)
 ):
     """Update a brand (admin)."""
@@ -106,7 +107,7 @@ async def update_brand(
 async def delete_brand(
     brand_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:delete"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.BRANDS_DELETE])),
     service: BrandService = Depends(get_brand_service)
 ):
     """Delete a brand (admin)."""
@@ -152,7 +153,7 @@ async def get_collection_by_slug(
 async def create_collection(
     data: CollectionCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.COLLECTIONS_WRITE])),
     service: CollectionService = Depends(get_collection_service)
 ):
     """Create a new collection (admin)."""
@@ -171,7 +172,7 @@ async def update_collection(
     collection_id: UUID,
     data: CollectionUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.COLLECTIONS_WRITE])),
     service: CollectionService = Depends(get_collection_service)
 ):
     """Update a collection (admin)."""
@@ -189,7 +190,7 @@ async def update_collection(
 async def delete_collection(
     collection_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:delete"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.COLLECTIONS_DELETE])),
     service: CollectionService = Depends(get_collection_service)
 ):
     """Delete a collection (admin)."""

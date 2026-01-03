@@ -27,17 +27,21 @@ async def get_or_create_permission(session: AsyncSession, code: str, description
 
 @pytest.fixture
 async def setup_admin_user(session: AsyncSession):
-    """Setup admin user with product permissions."""
-    perm_write = await get_or_create_permission(session, "products:write", "Products Write", "products", "write")
-    perm_delete = await get_or_create_permission(session, "products:delete", "Products Delete", "products", "delete")
+    """Setup admin user with brands/collections permissions."""
+    perm_write_brands = await get_or_create_permission(session, "brands:write", "Brands Write", "brands", "write")
+    perm_delete_brands = await get_or_create_permission(session, "brands:delete", "Brands Delete", "brands", "delete")
+    perm_write_col = await get_or_create_permission(session, "collections:write", "Collections Write", "collections", "write")
+    perm_delete_col = await get_or_create_permission(session, "collections:delete", "Collections Delete", "collections", "delete")
     
     role = Role(name=f"TEST_BRAND_ADMIN_{uuid4().hex[:6]}", description="Test")
     session.add(role)
     await session.flush()
     
-    role_perm1 = RolePermission(role_id=role.id, permission_id=perm_write.id)
-    role_perm2 = RolePermission(role_id=role.id, permission_id=perm_delete.id)
-    session.add_all([role_perm1, role_perm2])
+    role_perms = [
+        RolePermission(role_id=role.id, permission_id=p.id) 
+        for p in [perm_write_brands, perm_delete_brands, perm_write_col, perm_delete_col]
+    ]
+    session.add_all(role_perms)
     
     user = User(
         email=f"brand_admin_{uuid4().hex[:6]}@test.com",

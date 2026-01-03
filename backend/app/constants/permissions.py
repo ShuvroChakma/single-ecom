@@ -47,6 +47,29 @@ class PermissionEnum(str, Enum):
     SLIDES_READ = "slides:read"
     SLIDES_WRITE = "slides:write"
     SLIDES_DELETE = "slides:delete"
+
+    # Brand & Collection permissions
+    BRANDS_READ = "brands:read"
+    BRANDS_WRITE = "brands:write"
+    BRANDS_DELETE = "brands:delete"
+    
+    COLLECTIONS_READ = "collections:read"
+    COLLECTIONS_WRITE = "collections:write"
+    COLLECTIONS_DELETE = "collections:delete"
+    
+    # Metal & Purity permissions
+    METALS_READ = "metals:read"
+    METALS_WRITE = "metals:write"
+    METALS_DELETE = "metals:delete"
+    
+    # Attribute permissions
+    ATTRIBUTES_READ = "attributes:read"
+    ATTRIBUTES_WRITE = "attributes:write"
+    ATTRIBUTES_DELETE = "attributes:delete"
+    
+    # Rate permissions
+    RATES_READ = "rates:read"
+    RATES_WRITE = "rates:write"
     
     # System permissions
     SYSTEM_CONFIG = "system:config"

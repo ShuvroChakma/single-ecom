@@ -10,6 +10,7 @@ from datetime import datetime
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse, create_success_response
+from app.constants.permissions import PermissionEnum
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.rates.service import DailyRateService, PriceCalculationService
@@ -78,7 +79,7 @@ async def get_rate_history(
 async def add_rate(
     data: DailyRateCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.RATES_WRITE])),
     service: DailyRateService = Depends(get_rate_service)
 ):
     """Add a new daily rate (admin)."""
@@ -97,7 +98,7 @@ async def add_rate(
 async def add_rates_batch(
     data: List[DailyRateCreate],
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.RATES_WRITE])),
     service: DailyRateService = Depends(get_rate_service)
 ):
     """Add multiple daily rates at once (admin, for BAJUS import)."""
