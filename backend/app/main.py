@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from app.core.config import settings
 from app.core.exceptions import add_exception_handlers
 from app.core.docs import create_error_responses
@@ -11,6 +13,11 @@ app = FastAPI(
     responses=create_error_responses(400, 401, 403, 404, 422, 429, 500),
     lifespan=lifespan  # Auto-initialize database on startup
 )
+
+# Mount static files for uploads
+static_dir = Path("static/uploads")
+static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static/uploads", StaticFiles(directory="static/uploads"), name="uploads")
 
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:
