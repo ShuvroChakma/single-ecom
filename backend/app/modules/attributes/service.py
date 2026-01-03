@@ -60,7 +60,8 @@ class AttributeGroupService:
             details={"name": group.name},
             request=request
         )
-        return group
+        # Reload with relationships to avoid lazy loading issues
+        return await self.repository.get_with_attributes(group.id)
     
     async def update_group(
         self,
@@ -82,7 +83,8 @@ class AttributeGroupService:
             details=update_data,
             request=request
         )
-        return group
+        # Reload with relationships to avoid lazy loading issues
+        return await self.repository.get_with_attributes(group.id)
     
     async def delete_group(
         self,
