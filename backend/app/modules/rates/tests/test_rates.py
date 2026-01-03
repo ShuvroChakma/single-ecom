@@ -31,8 +31,9 @@ async def get_or_create_permission(session: AsyncSession, code: str, description
 
 @pytest.fixture
 async def setup_rate_admin(session: AsyncSession):
-    """Setup admin user with product permissions."""
-    perm_write = await get_or_create_permission(session, "products:write", "Products Write", "products", "write")
+    """Setup admin user with rates permissions."""
+    perm_write = await get_or_create_permission(session, "rates:write", "Rates Write", "rates", "write")
+    # Rates typically don't have delete endpoint in current implementation, but adding for completeness if needed
     
     role = Role(name=f"TEST_RATE_ADMIN_{uuid4().hex[:6]}", description="Test")
     session.add(role)

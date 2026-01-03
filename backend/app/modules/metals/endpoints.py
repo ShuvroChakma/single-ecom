@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse, create_success_response
+from app.constants.permissions import PermissionEnum
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.metals.service import MetalService, PurityService
@@ -69,7 +70,7 @@ async def get_metal(
 async def create_metal(
     data: MetalCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.METALS_WRITE])),
     service: MetalService = Depends(get_metal_service)
 ):
     """Create a new metal (admin)."""
@@ -88,7 +89,7 @@ async def update_metal(
     metal_id: UUID,
     data: MetalUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.METALS_WRITE])),
     service: MetalService = Depends(get_metal_service)
 ):
     """Update a metal (admin)."""
@@ -106,7 +107,7 @@ async def update_metal(
 async def delete_metal(
     metal_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:delete"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.METALS_DELETE])),
     service: MetalService = Depends(get_metal_service)
 ):
     """Delete a metal (admin)."""
@@ -140,7 +141,7 @@ async def list_purities(
 async def create_purity(
     data: PurityCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.METALS_WRITE])),
     service: PurityService = Depends(get_purity_service)
 ):
     """Create a new purity (admin)."""
@@ -159,7 +160,7 @@ async def update_purity(
     purity_id: UUID,
     data: PurityUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.METALS_WRITE])),
     service: PurityService = Depends(get_purity_service)
 ):
     """Update a purity (admin)."""
@@ -177,7 +178,7 @@ async def update_purity(
 async def delete_purity(
     purity_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:delete"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.METALS_DELETE])),
     service: PurityService = Depends(get_purity_service)
 ):
     """Delete a purity (admin)."""

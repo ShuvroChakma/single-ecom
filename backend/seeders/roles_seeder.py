@@ -29,6 +29,11 @@ class RolesSeeder(BaseSeeder):
                 "audit_logs:read",
                 "oauth_providers:read",
                 "slides:read", "slides:write", "slides:delete",
+                "brands:read", "brands:write", "brands:delete",
+                "collections:read", "collections:write", "collections:delete",
+                "metals:read", "metals:write", "metals:delete",
+                "attributes:read", "attributes:write", "attributes:delete",
+                "rates:read", "rates:write",
             ]
         },
         {

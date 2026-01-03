@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse, create_success_response
+from app.constants.permissions import PermissionEnum
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.attributes.service import (
@@ -66,7 +67,7 @@ async def list_attribute_groups(
 async def create_attribute_group(
     data: AttributeGroupCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_WRITE])),
     service: AttributeGroupService = Depends(get_group_service)
 ):
     """Create a new attribute group (admin)."""
@@ -85,7 +86,7 @@ async def update_attribute_group(
     group_id: UUID,
     data: AttributeGroupUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_WRITE])),
     service: AttributeGroupService = Depends(get_group_service)
 ):
     """Update an attribute group (admin)."""
@@ -103,7 +104,7 @@ async def update_attribute_group(
 async def delete_attribute_group(
     group_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:delete"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_DELETE])),
     service: AttributeGroupService = Depends(get_group_service)
 ):
     """Delete an attribute group (admin)."""
@@ -136,7 +137,7 @@ async def list_filterable_attributes(
 async def create_attribute(
     data: AttributeCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_WRITE])),
     service: AttributeService = Depends(get_attribute_service)
 ):
     """Create a new attribute (admin)."""
@@ -155,7 +156,7 @@ async def update_attribute(
     attribute_id: UUID,
     data: AttributeUpdate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_WRITE])),
     service: AttributeService = Depends(get_attribute_service)
 ):
     """Update an attribute (admin)."""
@@ -173,7 +174,7 @@ async def update_attribute(
 async def delete_attribute(
     attribute_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:delete"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_DELETE])),
     service: AttributeService = Depends(get_attribute_service)
 ):
     """Delete an attribute (admin)."""
@@ -208,7 +209,7 @@ async def set_product_attribute(
     product_id: UUID,
     data: ProductAttributeValueCreate,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_WRITE])),
     service: ProductAttributeService = Depends(get_product_attr_service)
 ):
     """Set or update a product attribute value (admin)."""
@@ -227,7 +228,7 @@ async def delete_product_attribute(
     product_id: UUID,
     attribute_id: UUID,
     request: Request,
-    current_user: User = Depends(require_permissions(["products:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.ATTRIBUTES_WRITE])),
     service: ProductAttributeService = Depends(get_product_attr_service)
 ):
     """Delete a product attribute value (admin)."""

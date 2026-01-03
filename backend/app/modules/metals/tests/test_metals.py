@@ -35,9 +35,9 @@ async def get_or_create_permission(session: AsyncSession, code: str, description
 
 @pytest.fixture
 async def setup_metal_admin(session: AsyncSession):
-    """Setup admin user with product permissions."""
-    perm_write = await get_or_create_permission(session, "products:write", "Products Write", "products", "write")
-    perm_delete = await get_or_create_permission(session, "products:delete", "Products Delete", "products", "delete")
+    """Setup admin user with metals permissions."""
+    perm_write = await get_or_create_permission(session, "metals:write", "Metals Write", "metals", "write")
+    perm_delete = await get_or_create_permission(session, "metals:delete", "Metals Delete", "metals", "delete")
     
     role = Role(name=f"TEST_METAL_ADMIN_{uuid4().hex[:6]}", description="Test")
     session.add(role)
