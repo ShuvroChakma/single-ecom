@@ -19,6 +19,7 @@ from app.modules.attributes import endpoints as attributes
 from app.modules.rates import endpoints as rates
 from app.modules.uploads import endpoints as uploads
 from app.modules.slides import endpoints as slides
+from app.modules.cart import endpoints as cart
 
 
 api_router = APIRouter()
@@ -42,4 +43,5 @@ api_router.include_router(attributes.router, tags=["Attributes"])
 api_router.include_router(rates.router, tags=["Daily Rates"])
 api_router.include_router(uploads.router, tags=["Product Images"])
 api_router.include_router(slides.router, tags=["Homepage Slides"])
+api_router.include_router(cart.router, prefix="/cart", tags=["Cart"])
 api_router.include_router(products.router, tags=["Products"])
