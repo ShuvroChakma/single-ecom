@@ -77,7 +77,7 @@ class PromoCodeUse(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     promo_code_id: UUID = Field(foreign_key="promo_codes.id", index=True)
     customer_id: UUID = Field(foreign_key="customers.id", index=True)
-    order_id: UUID = Field(foreign_key="orders.id", index=True)
+    order_id: Optional[UUID] = Field(default=None, index=True)  # FK added after orders table
     
     discount_applied: Decimal = Field(description="Actual discount amount")
     used_at: datetime = Field(default_factory=datetime.utcnow)

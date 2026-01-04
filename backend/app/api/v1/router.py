@@ -22,6 +22,7 @@ from app.modules.slides import endpoints as slides
 from app.modules.cart import endpoints as cart
 from app.modules.addresses import endpoints as addresses
 from app.modules.delivery import endpoints as delivery
+from app.modules.promo_codes import endpoints as promo_codes
 
 
 api_router = APIRouter()
@@ -48,4 +49,5 @@ api_router.include_router(slides.router, tags=["Homepage Slides"])
 api_router.include_router(cart.router, prefix="/cart", tags=["Cart"])
 api_router.include_router(addresses.router, prefix="/addresses", tags=["Addresses"])
 api_router.include_router(delivery.router, prefix="/delivery", tags=["Delivery"])
+api_router.include_router(promo_codes.router, prefix="/promo", tags=["Promo Codes"])
 api_router.include_router(products.router, tags=["Products"])
