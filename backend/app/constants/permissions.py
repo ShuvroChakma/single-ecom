@@ -71,6 +71,10 @@ class PermissionEnum(str, Enum):
     RATES_READ = "rates:read"
     RATES_WRITE = "rates:write"
     
+    # Cart permissions
+    CART_READ = "cart:read"
+    CART_WRITE = "cart:write"
+    
     # System permissions
     SYSTEM_CONFIG = "system:config"
 
@@ -97,5 +101,7 @@ DEFAULT_ROLE_PERMISSIONS = {
         "profile:read",
         "profile:write",
         PermissionEnum.ORDERS_READ,
+        PermissionEnum.CART_READ,
+        PermissionEnum.CART_WRITE,
     ],
 }
