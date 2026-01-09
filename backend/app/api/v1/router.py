@@ -24,6 +24,7 @@ from app.modules.addresses import endpoints as addresses
 from app.modules.delivery import endpoints as delivery
 from app.modules.promo_codes import endpoints as promo_codes
 from app.modules.payments import endpoints as payments
+from app.modules.orders import endpoints as orders
 
 
 api_router = APIRouter()
@@ -52,4 +53,5 @@ api_router.include_router(addresses.router, prefix="/addresses", tags=["Addresse
 api_router.include_router(delivery.router, prefix="/delivery", tags=["Delivery"])
 api_router.include_router(promo_codes.router, prefix="/promo", tags=["Promo Codes"])
 api_router.include_router(payments.router, prefix="/payments", tags=["Payments"])
+api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
 api_router.include_router(products.router, tags=["Products"])
