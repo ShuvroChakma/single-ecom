@@ -75,6 +75,10 @@ class PermissionEnum(str, Enum):
     CART_READ = "cart:read"
     CART_WRITE = "cart:write"
     
+    # Settings permissions
+    SETTINGS_READ = "settings:read"
+    SETTINGS_WRITE = "settings:write"
+    
     # System permissions
     SYSTEM_CONFIG = "system:config"
 
