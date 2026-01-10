@@ -57,8 +57,15 @@ function SlidesPage() {
   })
 
   const { data, isLoading } = useQuery({
-    queryKey: ['slides', pagination.pageIndex, pagination.pageSize, search],
-    queryFn: () => getSlides({ data: { include_inactive: true } }),
+    queryKey: ['slides', pagination.pageIndex, pagination.pageSize, search, sort_by, sort_order],
+    queryFn: () => getSlides({
+      data: {
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        search,
+        include_inactive: true
+      }
+    }),
   })
 
   const deleteMutation = useMutation({
@@ -221,9 +228,6 @@ function SlidesPage() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
 
-  // For client-side data, we use all slides
-  const slides = data?.success ? data.data : []
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -236,10 +240,14 @@ function SlidesPage() {
 
       <DataTable
         columns={columns}
-        data={slides}
+        data={data?.success ? data.data.items : []}
+        pageCount={data?.success ? data.data.pages : -1}
+        rowCount={data?.success ? data.data.total : 0}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
-        manualPagination={false}
+        onSortingChange={handleSortingChange}
+        onGlobalFilterChange={handleSearchChange}
+        globalFilter={search}
         isLoading={isLoading}
       />
 

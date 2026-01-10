@@ -40,6 +40,22 @@ class SlideService:
     async def list_slides(self, include_inactive: bool = False) -> List[Slide]:
         """List all slides (admin)."""
         return await self.repository.list_all(include_inactive)
+
+    async def list_slides_paginated(
+        self,
+        page: int = 1,
+        limit: int = 10,
+        search: Optional[str] = None,
+        include_inactive: bool = True
+    ) -> dict:
+        """List slides with pagination."""
+        offset = (page - 1) * limit
+        return await self.repository.list_paginated(
+            limit=limit,
+            offset=offset,
+            search=search,
+            include_inactive=include_inactive
+        )
     
     async def list_active_slides(self) -> List[Slide]:
         """List active slides for homepage (public)."""

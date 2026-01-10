@@ -87,3 +87,12 @@ class SlideResponse(BaseModel):
 class SlideOrderUpdate(BaseModel):
     """Schema for updating slide order."""
     slide_ids: List[UUID] = Field(..., description="Ordered list of slide IDs")
+
+
+class SlideListResponse(BaseModel):
+    """Paginated slide list response."""
+    items: List[SlideResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int

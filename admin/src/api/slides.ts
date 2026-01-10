@@ -57,14 +57,27 @@ export const getSlidesByType = createServerFn({ method: "GET" })
   });
 
 // Admin: Get all slides
+export interface PaginatedSlidesResponse {
+  items: Slide[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 export const getSlides = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data?: { include_inactive?: boolean } }) => {
+  .handler(async ({ data }: { data?: { page?: number; limit?: number; search?: string; include_inactive?: boolean } }) => {
     const token = getCookie("access_token");
     if (!token) throw new Error("Not authenticated");
 
-    const query = data?.include_inactive ? "?include_inactive=true" : "";
-    return apiRequest<ApiResponse<Slide[]>>(
-      `/slides/admin${query}`,
+    const queryParams = new URLSearchParams();
+    if (data?.page) queryParams.append("page", data.page.toString());
+    if (data?.limit) queryParams.append("limit", data.limit.toString());
+    if (data?.search) queryParams.append("search", data.search);
+    if (data?.include_inactive) queryParams.append("include_inactive", "true");
+
+    return apiRequest<ApiResponse<PaginatedSlidesResponse>>(
+      `/slides/admin?${queryParams.toString()}`,
       {},
       token
     );

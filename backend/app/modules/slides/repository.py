@@ -33,6 +33,50 @@ class SlideRepository:
         query = query.order_by(Slide.sort_order, Slide.created_at.desc())
         result = await self.session.execute(query)
         return list(result.scalars().all())
+
+    async def list_paginated(
+        self,
+        limit: int,
+        offset: int,
+        search: Optional[str] = None,
+        include_inactive: bool = True
+    ) -> dict:
+        """List slides with pagination."""
+        from sqlalchemy import func, or_
+        
+        query = select(Slide)
+        
+        if not include_inactive:
+            query = query.where(Slide.is_active == True)
+            
+        if search:
+            search_query = f"%{search}%"
+            query = query.where(
+                or_(
+                    Slide.title.ilike(search_query),
+                    Slide.subtitle.ilike(search_query),
+                    Slide.description.ilike(search_query)
+                )
+            )
+            
+        # Get total count
+        count_query = select(func.count()).select_from(query.subquery())
+        total = await self.session.scalar(count_query) or 0
+        
+        # Get items
+        query = query.order_by(Slide.sort_order, Slide.created_at.desc())
+        query = query.limit(limit).offset(offset)
+        
+        result = await self.session.execute(query)
+        items = list(result.scalars().all())
+        
+        return {
+            "items": items,
+            "total": total,
+            "page": offset // limit + 1,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit if limit > 0 else 0
+        }
     
     async def list_active(self) -> List[Slide]:
         """List active slides within their schedule."""
