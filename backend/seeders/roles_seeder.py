@@ -49,10 +49,8 @@ class RolesSeeder(BaseSeeder):
     
     async def should_run(self) -> bool:
         """Check if roles need to be seeded."""
-        result = await self.session.execute(
-            select(Role).where(Role.name == "SUPER_ADMIN")
-        )
-        return result.first() is None
+        # Always run to ensure permissions are up to date for SUPER_ADMIN
+        return True
     
     async def run(self) -> None:
         """Create default roles with permissions."""
@@ -65,34 +63,35 @@ class RolesSeeder(BaseSeeder):
             result = await self.session.execute(
                 select(Role).where(Role.name == role_data["name"])
             )
-            if result.first():
-                continue
+            role = result.scalars().first()
             
-            # Create role
-            role = Role(
-                name=role_data["name"],
-                description=role_data["description"],
-                is_system=role_data["is_system"]
-            )
-            self.session.add(role)
-            await self.session.flush()  # Get role.id
+            if not role:
+                # Create role
+                role = Role(
+                    name=role_data["name"],
+                    description=role_data["description"],
+                    is_system=role_data["is_system"]
+                )
+                self.session.add(role)
+                await self.session.flush()  # Get role.id
             
-            # Assign permissions via junction table
-            perm_codes = role_data["permissions"]
-            if "*" in perm_codes:
-                # All permissions
+            # For SUPER_ADMIN, ensure all permissions are assigned
+            if role_data["permissions"] == ["*"]:
+                # Get existing permissions for role
+                result = await self.session.execute(
+                    select(RolePermission).where(RolePermission.role_id == role.id)
+                )
+                existing_role_perms = {rp.permission_id for rp in result.scalars().all()}
+                
+                # Add missing permissions
                 for permission in all_permissions.values():
-                    role_perm = RolePermission(role_id=role.id, permission_id=permission.id)
-                    self.session.add(role_perm)
-            else:
-                for code in perm_codes:
-                    if code in all_permissions:
-                        role_perm = RolePermission(
-                            role_id=role.id, 
-                            permission_id=all_permissions[code].id
-                        )
+                    if permission.id not in existing_role_perms:
+                        role_perm = RolePermission(role_id=role.id, permission_id=permission.id)
                         self.session.add(role_perm)
+                        
+            # For other roles, we skip updating for now to preserve manual changes
+            # (unless strictly enforcing seed state is desired, but let's be safe)
         
         await self.session.commit()
-        print(f"  ✅ Seeded {len(self.DEFAULT_ROLES)} roles")
+        print(f"  ✅ Seeded/Updated {len(self.DEFAULT_ROLES)} roles")
 

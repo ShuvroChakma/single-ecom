@@ -1,3 +1,7 @@
+
+
+// Removed useAuth import
+
 import { Category, getCategories } from "@/api/categories"
 import { DataTable } from "@/components/shared/data-table"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +30,7 @@ const searchSchema = z.object({
     sort_order: z.enum(['asc', 'desc']).optional(),
 })
 
-export const Route = createFileRoute('/dashboard/products/categories')({
+export const Route = createFileRoute('/dashboard/products/categories/')({
     validateSearch: searchSchema,
     component: CategoriesPage,
 })
@@ -36,7 +40,7 @@ function CategoriesPage() {
     const { page, limit, search, sort_by, sort_order } = Route.useSearch()
 
     const [pagination, setPagination] = useState({
-        pageIndex: page - 1, // TanStack Table is 0-indexed
+        pageIndex: page - 1,
         pageSize: limit,
     })
 
@@ -54,6 +58,7 @@ function CategoriesPage() {
                 sort_order,
             }
         }),
+        // removed enabled check since auth is handled by server function/cookie
     })
 
     // Columns definition
@@ -165,17 +170,17 @@ function CategoriesPage() {
                 <Button>Create Category</Button>
             </div>
 
-          <DataTable
-              columns={columns}
-              data={data?.success ? data.data.items : []}
-              pageCount={data?.success ? data.data.pages : -1}
-              rowCount={data?.success ? data.data.total : 0}
-              pagination={pagination}
-              onPaginationChange={handlePaginationChange}
-              onSortingChange={handleSortingChange}
-              onGlobalFilterChange={handleSearchChange}
-              isLoading={isLoading}
-          />
-      </div>
-  )
+            <DataTable
+                columns={columns}
+                data={data?.success ? data.data.items : []}
+                pageCount={data?.success ? data.data.pages : -1}
+                rowCount={data?.success ? data.data.total : 0}
+                pagination={pagination}
+                onPaginationChange={handlePaginationChange}
+                onSortingChange={handleSortingChange}
+                onGlobalFilterChange={handleSearchChange}
+                isLoading={isLoading}
+            />
+        </div>
+    )
 }

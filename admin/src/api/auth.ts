@@ -26,12 +26,21 @@ export const loginAdmin = createServerFn({ method: "POST" })
     });
 
     // Store refresh token in HttpOnly cookie on the TanStack Start server
-    if (response.success && response.data.refresh_token) {
+    if (response.success && response.data.refresh_token && response.data.access_token) {
       setCookie("refresh_token", response.data.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: "/",
+      });
+
+      // Store access token in cookie for Server Functions
+      setCookie("access_token", response.data.access_token, {
+        httpOnly: true, // Secure it as well
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60, // 1 hour (or match backend expiry)
         path: "/",
       });
     }
@@ -40,24 +49,39 @@ export const loginAdmin = createServerFn({ method: "POST" })
   });
 
 export const getMe = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    return apiRequest<ApiResponse<UserProfile>>("/auth/me", {}, data.token);
+  .handler(async ({ data }: { data?: { token?: string } }) => {
+    // Try to get token from cookie if not provided
+    const token = data?.token || getCookie("access_token");
+    if (!token) {
+      throw new Error("Not authenticated");
+    }
+    return apiRequest<ApiResponse<UserProfile>>("/auth/me", {}, token);
   });
 
 export const logout = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    // Clear refresh token cookie
-    setCookie("refresh_token", "", {
+  .handler(async ({ data }: { data?: { token?: string } }) => {
+    // Clear cookies
+    const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 0, // Expire immediately
+      sameSite: "lax" as const,
+      maxAge: 0,
       path: "/",
-    });
+    };
 
-    return apiRequest<ApiResponse<null>>("/auth/logout", {
-      method: "POST",
-    }, data.token);
+    setCookie("refresh_token", "", options);
+    setCookie("access_token", "", options);
+
+    // Get token for request
+    const token = data?.token || getCookie("access_token");
+
+    if (token) {
+      return apiRequest<ApiResponse<null>>("/auth/logout", {
+        method: "POST",
+        }, token);
+    }
+
+    return { success: true, message: "Logged out", data: null };
   });
 
 export const refreshToken = createServerFn({ method: "POST" })
@@ -82,8 +106,8 @@ export const refreshToken = createServerFn({ method: "POST" })
         body: JSON.stringify({ refresh_token: storedRefreshToken }),
       });
 
-      // Update refresh token cookie with new token
-      if (response.success && response.data.refresh_token) {
+      // Update cookies with new tokens
+      if (response.success && response.data.refresh_token && response.data.access_token) {
         setCookie("refresh_token", response.data.refresh_token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -91,18 +115,29 @@ export const refreshToken = createServerFn({ method: "POST" })
           maxAge: 7 * 24 * 60 * 60, // 7 days
           path: "/",
         });
+
+        setCookie("access_token", response.data.access_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60, // 1 hour
+          path: "/",
+        });
       }
 
       return response;
     } catch {
-      // Clear invalid token
-      setCookie("refresh_token", "", {
+      // Clear invalid tokens
+      const options = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: "lax" as const,
         maxAge: 0,
         path: "/",
-      });
+      };
+
+      setCookie("refresh_token", "", options);
+      setCookie("access_token", "", options);
 
       return {
         success: false,

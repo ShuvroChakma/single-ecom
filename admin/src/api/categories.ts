@@ -2,6 +2,7 @@
  * Categories API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
 
 export interface Category {
@@ -17,6 +18,14 @@ export interface Category {
   subcategories?: Category[];
 }
 
+export interface GetCategoryListRequest {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sort_by?: string;
+    sort_order?: "asc" | "desc";
+}
+
 export interface GetCategoriesResponse {
   items: Category[];
   total: number;
@@ -26,7 +35,7 @@ export interface GetCategoriesResponse {
 }
 
 export const getCategories = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data?: { page?: number; limit?: number; search?: string; sort_by?: string; sort_order?: "asc" | "desc" } }) => {
+    .handler(async ({ data }: { data: GetCategoryListRequest }) => {
     const query = new URLSearchParams();
     if (data?.page) query.set("page", data.page.toString());
     if (data?.limit) query.set("limit", data.limit.toString());
@@ -34,34 +43,37 @@ export const getCategories = createServerFn({ method: "GET" })
     if (data?.sort_by) query.set("sort_by", data.sort_by);
     if (data?.sort_order) query.set("sort_order", data.sort_order);
 
-      return apiRequest<ApiResponse<GetCategoriesResponse>>(`/admin/categories?${query.toString()}`);
+        const token = getCookie("access_token");
+        if (!token) {
+            throw new Error("Not authenticated");
+        }
+
+        return apiRequest<ApiResponse<GetCategoriesResponse>>(
+            `/catalog/admin/categories?${query.toString()}`,
+            {},
+            token
+        );
   });
 
 export const getCategory = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-      // Note: getCategory by ID might probably be public? 
-      // Wait, the backend shows update/delete are admin.
-      // There is no public "get single category" endpoint in admin endpoints.
-      // Assuming admin GET for now for the form.
-      // But there is NO specific GET /admin/categories/{id} in endpoints.py!
-      // There is create, update, delete, get_categories (list).
-      // The public endpoints has "get_category_tree".
-      // Let's assume I missed adding GET /admin/categories/{id} or we use the list?
-      // Wait, looking at endpoints.py content in step 1166... there is NO GET /admin/categories/{id}.
-      // This will fail. I need to add that endpoint too!
+    .handler(async ({ data }: { data: { id: string } }) => {
+        const token = getCookie("access_token");
+        if (!token) {
+            throw new Error("Not authenticated");
+        }
 
-      // For now, let's update the paths that DO exist.
-      // List: /admin/categories
-      // Toggle: /admin/categories/{id}/toggle
-
-      return apiRequest<ApiResponse<Category>>(`/admin/categories/${data.id}`);
+        return apiRequest<ApiResponse<Category>>(
+            `/catalog/admin/categories/${data.id}`,
+            {},
+            token
+        );
   });
 
 export const createCategory = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { category: Partial<Category> } }) => {
       // Legacy method, should probably remove or update
     return apiRequest<ApiResponse<Category>>(
-        "/admin/categories",
+        "/catalog/admin/categories",
         {
             method: "POST",
             body: JSON.stringify(data.category),
@@ -72,7 +84,7 @@ export const createCategory = createServerFn({ method: "POST" })
 export const createCategoryWithToken = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { category: Partial<Category>; token: string } }) => {
     return apiRequest<ApiResponse<Category>>(
-        "/admin/categories",
+        "/catalog/admin/categories",
       {
         method: "POST",
         body: JSON.stringify(data.category),
@@ -84,7 +96,7 @@ export const createCategoryWithToken = createServerFn({ method: "POST" })
 export const updateCategory = createServerFn({ method: "PUT" })
   .handler(async ({ data }: { data: { id: string; category: Partial<Category>; token: string } }) => {
     return apiRequest<ApiResponse<Category>>(
-        `/admin/categories/${data.id}`,
+        `/catalog/admin/categories/${data.id}`,
       {
         method: "PUT",
         body: JSON.stringify(data.category),
@@ -96,7 +108,7 @@ export const updateCategory = createServerFn({ method: "PUT" })
 export const deleteCategory = createServerFn({ method: "DELETE" })
   .handler(async ({ data }: { data: { id: string; token: string } }) => {
     return apiRequest<ApiResponse<{ deleted: boolean }>>(
-        `/admin/categories/${data.id}`,
+        `/catalog/admin/categories/${data.id}`,
       { method: "DELETE" },
       data.token
     );
@@ -105,7 +117,7 @@ export const deleteCategory = createServerFn({ method: "DELETE" })
 export const toggleCategoryActive = createServerFn({ method: "PATCH" })
   .handler(async ({ data }: { data: { id: string; is_active: boolean; token: string } }) => {
     return apiRequest<ApiResponse<Category>>(
-        `/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
+        `/catalog/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
       { method: "PATCH" },
       data.token
     );
