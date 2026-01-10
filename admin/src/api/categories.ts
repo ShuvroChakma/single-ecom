@@ -101,15 +101,21 @@ export const createCategory = createServerFn({ method: "POST" })
     );
   });
 
-export const updateCategory = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { id: string; category: Partial<Category>; token: string } }) => {
+export const updateCategory = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { category: Partial<Category>, id: string } }) => {
+    console.log("updateCategory Handler Received:", data)
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    const { id, category } = data;
+
     return apiRequest<ApiResponse<Category>>(
-        `/catalog/admin/categories/${data.id}`,
+      `/catalog/admin/categories/${id}`,
       {
         method: "PUT",
-        body: JSON.stringify(data.category),
+        body: JSON.stringify(category),
       },
-      data.token
+      token
     );
   });
 

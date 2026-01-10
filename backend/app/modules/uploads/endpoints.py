@@ -10,7 +10,7 @@ from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse, create_success_response
 from app.modules.users.models import User
 from app.modules.uploads.service import UploadService
-from app.modules.uploads.schemas import ImageUploadResponse, MultiImageUploadResponse, ImageDeleteResponse
+from app.modules.uploads.schemas import ImageUploadResponse, MultiImageUploadResponse, ImageDeleteResponse, ImageListResponse
 from app.modules.products.service import ProductService
 from app.modules.products.repository import ProductRepository
 from app.modules.audit.service import AuditService
@@ -232,4 +232,25 @@ async def upload_category_image(
     return create_success_response(
         message="Category image uploaded successfully",
         data=ImageUploadResponse(url=url, filename=filename)
+    )
+
+
+@router.get(
+    "/admin/uploads/categories",
+    response_model=SuccessResponse[ImageListResponse]
+)
+async def list_category_images(
+    request: Request,
+    current_user: User = Depends(require_permissions(["categories:read"])),
+    upload_service: UploadService = Depends(get_upload_service)
+):
+    """List all available category images."""
+    images = upload_service.list_category_images()
+    
+    return create_success_response(
+        message="Images retrieved successfully",
+        data=ImageListResponse(
+            items=[ImageUploadResponse(url=img["url"], filename=img["filename"]) for img in images],
+            count=len(images)
+        )
     )

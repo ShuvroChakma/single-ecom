@@ -21,3 +21,9 @@ class ImageDeleteResponse(BaseModel):
     """Response for image deletion."""
     deleted: bool
     url: str
+
+
+class ImageListResponse(BaseModel):
+    """Response for listing images."""
+    items: List[ImageUploadResponse]
+    count: int

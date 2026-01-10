@@ -2,7 +2,7 @@
 
 
 import { Category, getCategories } from "@/api/categories"
-import { CreateCategoryDialog } from "@/components/shared/create-category-dialog"
+import { CategoryDialog } from "@/components/shared/create-category-dialog"
 import { DataTable } from "@/components/shared/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ColumnDef, SortingState } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { MoreHorizontal, Pencil, Trash } from "lucide-react"
+import { MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { z } from 'zod'
 
@@ -38,14 +38,13 @@ export const Route = createFileRoute('/dashboard/products/categories/')({
 function CategoriesPage() {
     const navigate = useNavigate({ from: Route.fullPath })
     const { page, limit, search, sort_by, sort_order } = Route.useSearch()
+    const [selectedCategory, setSelectedCategory] = useState<Category | undefined>()
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
 
     const [pagination, setPagination] = useState({
         pageIndex: page - 1,
         pageSize: limit,
     })
-
-    // Ensure pagination state syncs with URL
-    // This is a simplified approach; ideally we'd use useEffect to sync from URL to state too
 
     const { data, isLoading } = useQuery({
         queryKey: ['categories', pagination.pageIndex, pagination.pageSize, search, sort_by, sort_order],
@@ -58,8 +57,17 @@ function CategoriesPage() {
                 sort_order,
             }
         }),
-        // removed enabled check since auth is handled by server function/cookie
     })
+
+    const handleEdit = (category: Category) => {
+        setSelectedCategory(category)
+        setIsDialogOpen(true)
+    }
+
+    const handleCreate = () => {
+        setSelectedCategory(undefined)
+        setIsDialogOpen(true)
+    }
 
     // Columns definition
     const columns: ColumnDef<Category>[] = [
@@ -112,7 +120,7 @@ function CategoriesPage() {
                                 Copy ID
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(category)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
                             </DropdownMenuItem>
@@ -167,7 +175,10 @@ function CategoriesPage() {
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
-                <CreateCategoryDialog />
+                <Button onClick={handleCreate}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Category
+                </Button>
             </div>
 
             <DataTable
@@ -181,6 +192,12 @@ function CategoriesPage() {
                 onGlobalFilterChange={handleSearchChange}
                 globalFilter={search}
                 isLoading={isLoading}
+            />
+
+            <CategoryDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                category={selectedCategory}
             />
         </div>
     )

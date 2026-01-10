@@ -270,3 +270,22 @@ class UploadService:
             self._optimize_image(file_path, max_size=1200)
             
         return f"/static/uploads/categories/{filename}"
+
+    def list_category_images(self) -> List[dict]:
+        """List all category images."""
+        category_dir = self.base_upload_dir / "categories"
+        images = []
+        
+        if category_dir.exists():
+            for file in category_dir.iterdir():
+                if file.is_file() and self._get_extension(file.name) in ALLOWED_EXTENSIONS:
+                    images.append({
+                        "url": f"/static/uploads/categories/{file.name}",
+                        "filename": file.name,
+                        "mtime": file.stat().st_mtime
+                    })
+        
+        # Sort by modification time, newest first
+        images.sort(key=lambda x: x["mtime"], reverse=True)
+        
+        return images

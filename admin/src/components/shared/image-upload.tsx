@@ -1,5 +1,6 @@
 import { uploadCategoryImage } from "@/api/uploads"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import { ImagePlus, Loader2, X } from "lucide-react"
 import { useState } from "react"
@@ -14,6 +15,8 @@ interface ImageUploadProps {
     className?: string
 }
 
+import { ImageGalleryDialog } from "./image-gallery-dialog"
+
 export function ImageUpload({
     value,
     onChange,
@@ -22,7 +25,9 @@ export function ImageUpload({
     disabled,
     className
 }: ImageUploadProps) {
+    const { token } = useAuth()
     const [isUploading, setIsUploading] = useState(false)
+    const [showGallery, setShowGallery] = useState(false)
 
     const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -30,7 +35,7 @@ export function ImageUpload({
 
         try {
             setIsUploading(true)
-            const res = await uploadCategoryImage(file, type)
+            const res = await uploadCategoryImage(file, type, token || undefined)
             onChange(res.url)
             toast.success("Image uploaded successfully")
         } catch (error: any) {
@@ -66,22 +71,44 @@ export function ImageUpload({
     }
 
     return (
-        <div className={cn("relative flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/25 bg-muted/50 hover:bg-muted", className)}>
-            <input
-                type="file"
-                accept="image/*"
-                className="absolute inset-0 cursor-pointer opacity-0"
-                onChange={onUpload}
+        <div className="space-y-2">
+            <div className={cn("relative flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/25 bg-muted/50 hover:bg-muted", className)}>
+                <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    onChange={onUpload}
+                    disabled={disabled || isUploading}
+                />
+                {isUploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <ImagePlus className="h-8 w-8" />
+                        <span className="text-xs font-medium">Upload {type}</span>
+                    </div>
+                )}
+            </div>
+
+            <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowGallery(true)}
                 disabled={disabled || isUploading}
+            >
+                <ImagePlus className="mr-2 h-4 w-4" />
+                Select from Gallery
+            </Button>
+
+            <ImageGalleryDialog
+                open={showGallery}
+                onOpenChange={setShowGallery}
+                onSelect={(url) => {
+                    onChange(url)
+                    setShowGallery(false)
+                }}
             />
-            {isUploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <ImagePlus className="h-8 w-8" />
-                    <span className="text-xs font-medium">Upload {type}</span>
-                </div>
-            )}
         </div>
     )
 }
