@@ -45,14 +45,30 @@ export const getCategoryImages = createServerFn({ method: "GET" })
     })
 
 // Media Library API functions
-export const getMediaImages = createServerFn({ method: "GET" })
-    .handler(async () => {
+export interface PaginatedMediaResponse {
+    items: ImageUploadResponse[]
+    total: number
+    page: number
+    limit: number
+    pages: number
+    has_next: boolean
+}
+
+export const getMediaImages = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data?: { page?: number; limit?: number } }) => {
         const token = getCookie("access_token")
         if (!token) throw new Error("Not authenticated")
 
+        const page = data?.page || 1
+        const limit = data?.limit || 20
+
         try {
-            const result = await apiRequest<ApiResponse<ImageListResponse>>('/admin/uploads/media', {}, token)
-            return result.data.items
+            const result = await apiRequest<ApiResponse<PaginatedMediaResponse>>(
+                `/admin/uploads/media?page=${page}&limit=${limit}`,
+                {},
+                token
+            )
+            return result.data
         } catch (error) {
             console.error("Error fetching media images:", error)
             throw error

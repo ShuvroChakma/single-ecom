@@ -1,4 +1,4 @@
-import { getMediaImages, ImageUploadResponse, uploadMediaImage } from "@/api/uploads"
+import { getMediaImages, ImageUploadResponse, PaginatedMediaResponse, uploadMediaImage } from "@/api/uploads"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -6,12 +6,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query"
 import { FolderOpen, Image as ImageIcon, Loader2, Upload } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface ImageGalleryDialogProps {
@@ -25,14 +24,54 @@ export function ImageGalleryDialog({ open, onOpenChange, onSelect }: ImageGaller
     const queryClient = useQueryClient()
     const [isUploading, setIsUploading] = useState(false)
     const [activeTab, setActiveTab] = useState("gallery")
+    const scrollRef = useRef<HTMLDivElement>(null)
 
-    const { data, isLoading, error, refetch } = useQuery({
+    const {
+        data,
+        isLoading,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        refetch,
+    } = useInfiniteQuery({
         queryKey: ['media-images'],
-        queryFn: () => getMediaImages(),
+        queryFn: async ({ pageParam = 1 }) => {
+            const result = await getMediaImages({ data: { page: pageParam, limit: 20 } })
+            return result as PaginatedMediaResponse
+        },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.has_next) {
+                return lastPage.page + 1
+            }
+            return undefined
+        },
+        initialPageParam: 1,
         enabled: open,
     })
 
-    const images = Array.isArray(data) ? data : []
+    // Flatten all pages into a single array
+    const images = data?.pages.flatMap(page => page.items) || []
+
+    // Infinite scroll handler
+    const handleScroll = useCallback(() => {
+        if (!scrollRef.current || isFetchingNextPage || !hasNextPage) return
+
+        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+        // Load more when user scrolls within 100px of bottom
+        if (scrollHeight - scrollTop - clientHeight < 100) {
+            fetchNextPage()
+        }
+    }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+    // Attach scroll listener
+    useEffect(() => {
+        const scrollEl = scrollRef.current
+        if (scrollEl) {
+            scrollEl.addEventListener('scroll', handleScroll)
+            return () => scrollEl.removeEventListener('scroll', handleScroll)
+        }
+    }, [handleScroll])
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -50,7 +89,6 @@ export function ImageGalleryDialog({ open, onOpenChange, onSelect }: ImageGaller
             toast.error(error.message || "Failed to upload image")
         } finally {
             setIsUploading(false)
-            // Reset input
             e.target.value = ""
         }
     }
@@ -78,7 +116,10 @@ export function ImageGalleryDialog({ open, onOpenChange, onSelect }: ImageGaller
                     </TabsList>
 
                     <TabsContent value="gallery" className="mt-4">
-                        <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+                        <div
+                            ref={scrollRef}
+                            className="h-[400px] w-full overflow-y-auto rounded-md border p-4"
+                        >
                             {isLoading ? (
                                 <div className="flex h-full items-center justify-center">
                                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -98,28 +139,40 @@ export function ImageGalleryDialog({ open, onOpenChange, onSelect }: ImageGaller
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                                    {images.map((image: ImageUploadResponse) => (
-                                        <button
-                                            key={image.filename}
-                                            className="group relative aspect-square overflow-hidden rounded-lg border border-border transition-all hover:ring-2 hover:ring-primary"
-                                            onClick={() => {
-                                                onSelect(image.url)
-                                                onOpenChange(false)
-                                            }}
-                                        >
-                                            <img
-                                                src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${image.url}`}
-                                                alt={image.filename}
-                                                className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                                                loading="lazy"
-                                            />
-                                            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
-                                        </button>
-                                    ))}
-                                </div>
+                                            <>
+                                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                                                    {images.map((image: ImageUploadResponse, index: number) => (
+                                                        <button
+                                                key={`${image.filename}-${index}`}
+                                                className="group relative aspect-square overflow-hidden rounded-lg border border-border transition-all hover:ring-2 hover:ring-primary"
+                                                onClick={() => {
+                                                    onSelect(image.url)
+                                                    onOpenChange(false)
+                                                }}
+                                            >
+                                                <img
+                                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${image.url}`}
+                                                    alt={image.filename}
+                                                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                                    loading="lazy"
+                                                />
+                                                <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                                            </button>
+                                        ))}
+                                                </div>
+                                                {isFetchingNextPage && (
+                                                    <div className="flex justify-center py-4">
+                                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                    {!hasNextPage && images.length > 0 && (
+                                        <p className="text-center text-sm text-muted-foreground py-4">
+                                            All images loaded
+                                        </p>
+                                    )}
+                                </>
                             )}
-                        </ScrollArea>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="upload" className="mt-4">

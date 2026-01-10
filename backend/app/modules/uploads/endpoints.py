@@ -10,7 +10,7 @@ from app.core.permissions import require_permissions
 from app.core.schemas.response import SuccessResponse, create_success_response
 from app.modules.users.models import User
 from app.modules.uploads.service import UploadService
-from app.modules.uploads.schemas import ImageUploadResponse, MultiImageUploadResponse, ImageDeleteResponse, ImageListResponse
+from app.modules.uploads.schemas import ImageUploadResponse, MultiImageUploadResponse, ImageDeleteResponse, ImageListResponse, PaginatedImageListResponse
 from app.modules.products.service import ProductService
 from app.modules.products.repository import ProductRepository
 from app.modules.audit.service import AuditService
@@ -286,20 +286,26 @@ async def upload_media(
 
 @router.get(
     "/admin/uploads/media",
-    response_model=SuccessResponse[ImageListResponse]
+    response_model=SuccessResponse[PaginatedImageListResponse]
 )
 async def list_media(
     request: Request,
+    page: int = 1,
+    limit: int = 20,
     current_user: User = Depends(require_permissions(["products:read"])),
     upload_service: UploadService = Depends(get_upload_service)
 ):
-    """List all files in the media library."""
-    images = upload_service.list_media()
+    """List files in the media library with pagination."""
+    result = upload_service.list_media(page=page, limit=limit)
     
     return create_success_response(
         message="Media files retrieved successfully",
-        data=ImageListResponse(
-            items=[ImageUploadResponse(url=img["url"], filename=img["filename"]) for img in images],
-            count=len(images)
+        data=PaginatedImageListResponse(
+            items=[ImageUploadResponse(url=img["url"], filename=img["filename"]) for img in result["items"]],
+            total=result["total"],
+            page=result["page"],
+            limit=result["limit"],
+            pages=result["pages"],
+            has_next=result["has_next"]
         )
     )

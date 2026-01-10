@@ -314,21 +314,34 @@ class UploadService:
             
         return f"/static/uploads/media/{filename}"
 
-    def list_media(self) -> List[dict]:
-        """List all media library images."""
+    def list_media(self, page: int = 1, limit: int = 20) -> dict:
+        """List media library images with pagination."""
         media_dir = self.base_upload_dir / "media"
-        images = []
+        all_images = []
         
         if media_dir.exists():
             for file in media_dir.iterdir():
                 if file.is_file() and self._get_extension(file.name) in ALLOWED_EXTENSIONS:
-                    images.append({
+                    all_images.append({
                         "url": f"/static/uploads/media/{file.name}",
                         "filename": file.name,
                         "mtime": file.stat().st_mtime
                     })
         
         # Sort by modification time, newest first
-        images.sort(key=lambda x: x["mtime"], reverse=True)
+        all_images.sort(key=lambda x: x["mtime"], reverse=True)
         
-        return images
+        # Paginate
+        total = len(all_images)
+        start = (page - 1) * limit
+        end = start + limit
+        items = all_images[start:end]
+        
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit if total > 0 else 1,
+            "has_next": end < total
+        }
