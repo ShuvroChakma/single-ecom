@@ -10,7 +10,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
-import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Outlet, createFileRoute, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 import { AppSidebar } from '@/components/shared/app-sidebar'
@@ -24,6 +24,7 @@ export const Route = createFileRoute('/dashboard')({
 function RouteComponent() {
   const { isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   // Redirect to login if not authenticated after loading
   useEffect(() => {
@@ -62,13 +63,30 @@ function RouteComponent() {
             />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block ">
+                <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  {/* <BreadcrumbPage>route</BreadcrumbPage> */}
-                </BreadcrumbItem>
+                {location.pathname.split('/').filter(Boolean).slice(1).map((segment, index, array) => {
+                  const path = `/dashboard/${array.slice(0, index + 1).join('/')}`
+                  const label = segment
+                    .replace(/-/g, ' ')
+                    .replace(/([A-Z])/g, ' $1')
+                    .trim()
+                    .replace(/\b\w/g, char => char.toUpperCase())
+
+                  return (
+                    <div key={path} className="flex items-center">
+                      <BreadcrumbSeparator className="hidden md:block" />
+                      <BreadcrumbItem className="hidden md:block">
+                        {index === array.length - 1 ? (
+                          <span className="font-normal text-foreground">{label}</span>
+                        ) : (
+                          <BreadcrumbLink href={path}>{label}</BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                    </div>
+                  )
+                })}
               </BreadcrumbList>
             </Breadcrumb>
           </div>
