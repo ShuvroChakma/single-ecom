@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardSettingsGeneralRouteImport } from './routes/dashboard/settings/general'
+import { Route as DashboardSettingsBillingRouteImport } from './routes/dashboard/settings/billing'
 import { Route as DashboardRoleAdminRouteImport } from './routes/dashboard/role/admin'
 import { Route as DashboardProductsProductListRouteImport } from './routes/dashboard/products/productList'
 import { Route as DashboardOrdersOrderListRouteImport } from './routes/dashboard/orders/orderList'
@@ -32,6 +34,18 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardSettingsGeneralRoute =
+  DashboardSettingsGeneralRouteImport.update({
+    id: '/settings/general',
+    path: '/settings/general',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardSettingsBillingRoute =
+  DashboardSettingsBillingRouteImport.update({
+    id: '/settings/billing',
+    path: '/settings/billing',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardRoleAdminRoute = DashboardRoleAdminRouteImport.update({
   id: '/role/admin',
   path: '/role/admin',
@@ -64,6 +78,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/orders/orderList': typeof DashboardOrdersOrderListRoute
   '/dashboard/products/productList': typeof DashboardProductsProductListRoute
   '/dashboard/role/admin': typeof DashboardRoleAdminRoute
+  '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
+  '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -72,6 +88,8 @@ export interface FileRoutesByTo {
   '/dashboard/orders/orderList': typeof DashboardOrdersOrderListRoute
   '/dashboard/products/productList': typeof DashboardProductsProductListRoute
   '/dashboard/role/admin': typeof DashboardRoleAdminRoute
+  '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
+  '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -82,6 +100,8 @@ export interface FileRoutesById {
   '/dashboard/orders/orderList': typeof DashboardOrdersOrderListRoute
   '/dashboard/products/productList': typeof DashboardProductsProductListRoute
   '/dashboard/role/admin': typeof DashboardRoleAdminRoute
+  '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
+  '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -93,6 +113,8 @@ export interface FileRouteTypes {
     | '/dashboard/orders/orderList'
     | '/dashboard/products/productList'
     | '/dashboard/role/admin'
+    | '/dashboard/settings/billing'
+    | '/dashboard/settings/general'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -101,6 +123,8 @@ export interface FileRouteTypes {
     | '/dashboard/orders/orderList'
     | '/dashboard/products/productList'
     | '/dashboard/role/admin'
+    | '/dashboard/settings/billing'
+    | '/dashboard/settings/general'
   id:
     | '__root__'
     | '/'
@@ -110,6 +134,8 @@ export interface FileRouteTypes {
     | '/dashboard/orders/orderList'
     | '/dashboard/products/productList'
     | '/dashboard/role/admin'
+    | '/dashboard/settings/billing'
+    | '/dashboard/settings/general'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -138,6 +164,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/settings/general': {
+      id: '/dashboard/settings/general'
+      path: '/settings/general'
+      fullPath: '/dashboard/settings/general'
+      preLoaderRoute: typeof DashboardSettingsGeneralRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/settings/billing': {
+      id: '/dashboard/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/dashboard/settings/billing'
+      preLoaderRoute: typeof DashboardSettingsBillingRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/role/admin': {
@@ -177,6 +217,8 @@ interface DashboardRouteRouteChildren {
   DashboardOrdersOrderListRoute: typeof DashboardOrdersOrderListRoute
   DashboardProductsProductListRoute: typeof DashboardProductsProductListRoute
   DashboardRoleAdminRoute: typeof DashboardRoleAdminRoute
+  DashboardSettingsBillingRoute: typeof DashboardSettingsBillingRoute
+  DashboardSettingsGeneralRoute: typeof DashboardSettingsGeneralRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -185,6 +227,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardOrdersOrderListRoute: DashboardOrdersOrderListRoute,
   DashboardProductsProductListRoute: DashboardProductsProductListRoute,
   DashboardRoleAdminRoute: DashboardRoleAdminRoute,
+  DashboardSettingsBillingRoute: DashboardSettingsBillingRoute,
+  DashboardSettingsGeneralRoute: DashboardSettingsGeneralRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

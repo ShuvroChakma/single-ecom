@@ -22,15 +22,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -88,6 +79,8 @@ const initialProducts: Product[] = [
     price: 185000,
     stock: 12,
     status: "Active",
+    image:
+      "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=300",
   },
 ]
 
@@ -96,9 +89,11 @@ const initialProducts: Product[] = [
 ======================= */
 
 export default function ProductListTable() {
-  const [products, setProducts] = React.useState(initialProducts)
+  const [products, setProducts] = React.useState<Product[]>(initialProducts)
   const [open, setOpen] = React.useState(false)
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const [editingProduct, setEditingProduct] =
+    React.useState<Product | null>(null)
 
   const [form, setForm] = React.useState<ProductForm>({
     name: "",
@@ -121,10 +116,19 @@ export default function ProductListTable() {
       accessorKey: "name",
       header: "Product",
       cell: ({ row }) => (
-        <div>
-          <div className="font-medium">{row.getValue("name")}</div>
-          <div className="text-xs text-muted-foreground">
-            SKU: {row.original.sku}
+        <div className="flex items-center gap-3">
+          <img
+            src={
+              row.original.image ||
+              "https://placehold.co/60x60?text=IMG"
+            }
+            className="h-10 w-10 rounded object-cover border"
+          />
+          <div>
+            <div className="font-medium">{row.original.name}</div>
+            <div className="text-xs text-muted-foreground">
+              SKU: {row.original.sku}
+            </div>
           </div>
         </div>
       ),
@@ -163,23 +167,81 @@ export default function ProductListTable() {
       },
     },
     {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge
+          variant={
+            row.getValue("status") === "Active"
+              ? "secondary"
+              : "outline"
+          }
+        >
+          {row.getValue("status")}
+        </Badge>
+      ),
+    },
+    {
       id: "actions",
       header: "",
-      cell: () => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              Disable
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) => {
+        const product = row.original
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditingProduct(product)
+                  setForm({
+                    name: product.name,
+                    sku: product.sku,
+                    category: product.category,
+                    purity: product.purity,
+                    weight: product.weight.toString(),
+                    price: product.price.toString(),
+                    stock: product.stock.toString(),
+                    description: "",
+                    images: [],
+                  })
+                  setOpen(true)
+                }}
+              >
+                Edit
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() =>
+                  setProducts((prev) =>
+                    prev.map((p) =>
+                      p.id === product.id
+                        ? {
+                            ...p,
+                            status:
+                              p.status === "Active"
+                                ? "Hidden"
+                                : "Active",
+                          }
+                        : p
+                    )
+                  )
+                }
+              >
+                {product.status === "Active"
+                  ? "Disable"
+                  : "Enable"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
     },
   ]
 
@@ -206,27 +268,61 @@ export default function ProductListTable() {
   }
 
   const removeImage = (index: number) => {
-    setForm({
-      ...form,
-      images: form.images.filter((_, i) => i !== index),
-    })
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }))
   }
 
+  /* =======================
+     SUBMIT
+  ======================= */
+
   const handleSubmit = () => {
-    setProducts([
-      ...products,
-      {
-        id: Date.now().toString(),
-        name: form.name,
-        sku: form.sku,
-        category: form.category,
-        purity: form.purity,
-        weight: Number(form.weight),
-        price: Number(form.price),
-        stock: Number(form.stock),
-        status: "Active",
-      },
-    ])
+    const image =
+      form.images.length > 0
+        ? URL.createObjectURL(form.images[0])
+        : editingProduct?.image
+
+    if (editingProduct) {
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === editingProduct.id
+            ? {
+                ...p,
+                ...{
+                  name: form.name,
+                  sku: form.sku,
+                  category: form.category,
+                  purity: form.purity,
+                  weight: Number(form.weight),
+                  price: Number(form.price),
+                  stock: Number(form.stock),
+                  image,
+                },
+              }
+            : p
+        )
+      )
+    } else {
+      setProducts((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          name: form.name,
+          sku: form.sku,
+          category: form.category,
+          purity: form.purity,
+          weight: Number(form.weight),
+          price: Number(form.price),
+          stock: Number(form.stock),
+          status: "Active",
+          image,
+        },
+      ])
+    }
+
+    setEditingProduct(null)
     setOpen(false)
   }
 
@@ -236,7 +332,6 @@ export default function ProductListTable() {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex justify-between items-center">
         <Input
           placeholder="Search products..."
@@ -247,7 +342,6 @@ export default function ProductListTable() {
         <Button onClick={() => setOpen(true)}>Add Product</Button>
       </div>
 
-      {/* Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -281,34 +375,62 @@ export default function ProductListTable() {
         </Table>
       </div>
 
-      {/* Add Product Dialog */}
+      {/* ✅ ADD / EDIT DIALOG (THIS FIXES EDIT) */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Add Product</DialogTitle>
+            <DialogTitle>
+              {editingProduct ? "Edit Product" : "Add Product"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-4">
-            <Input placeholder="Product Name" onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Input placeholder="SKU" onChange={(e) => setForm({ ...form, sku: e.target.value })} />
-            <Input placeholder="Weight (gm)" onChange={(e) => setForm({ ...form, weight: e.target.value })} />
-            <Input placeholder="Price" onChange={(e) => setForm({ ...form, price: e.target.value })} />
-            <Input placeholder="Stock" onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+            <Input
+              placeholder="Product Name"
+              value={form.name}
+              onChange={(e) =>
+                setForm({ ...form, name: e.target.value })
+              }
+            />
+            <Input
+              placeholder="SKU"
+              value={form.sku}
+              onChange={(e) =>
+                setForm({ ...form, sku: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Weight"
+              value={form.weight}
+              onChange={(e) =>
+                setForm({ ...form, weight: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Price"
+              value={form.price}
+              onChange={(e) =>
+                setForm({ ...form, price: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Stock"
+              value={form.stock}
+              onChange={(e) =>
+                setForm({ ...form, stock: e.target.value })
+              }
+            />
           </div>
 
-          {/* Drag & Drop */}
           <div
             onDrop={(e) => {
               e.preventDefault()
               onDrop(e.dataTransfer.files)
             }}
             onDragOver={(e) => e.preventDefault()}
-            className="border border-dashed rounded-lg p-6 text-center cursor-pointer"
+            className="border border-dashed rounded-lg p-6 text-center"
           >
             <Upload className="mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              Drag & drop images or click to upload
-            </p>
             <Input
               type="file"
               multiple
@@ -316,9 +438,9 @@ export default function ProductListTable() {
               className="hidden"
               onChange={(e) => onDrop(e.target.files)}
             />
+            Drag & drop images or click
           </div>
 
-          {/* Preview */}
           <div className="flex gap-3 flex-wrap">
             {form.images.map((file, i) => (
               <div key={i} className="relative h-20 w-20 border rounded">
@@ -328,7 +450,7 @@ export default function ProductListTable() {
                 />
                 <button
                   onClick={() => removeImage(i)}
-                  className="absolute top-1 right-1 bg-black/70 rounded-full p-1"
+                  className="absolute top-1 right-1 bg-black/70 p-1 rounded-full"
                 >
                   <X className="h-3 w-3 text-white" />
                 </button>
@@ -340,7 +462,9 @@ export default function ProductListTable() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit}>Save Product</Button>
+            <Button onClick={handleSubmit}>
+              {editingProduct ? "Update Product" : "Save Product"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

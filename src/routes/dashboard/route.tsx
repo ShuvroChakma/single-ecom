@@ -30,7 +30,7 @@ function RouteComponent() {
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
+              className="mr-2 data-[orientation=vertical]:h-6 mt-1"
             />
             <Breadcrumb>
               <BreadcrumbList>
@@ -39,7 +39,7 @@ function RouteComponent() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage> route</BreadcrumbPage>
+                  {/* <BreadcrumbPage> route</BreadcrumbPage> */}
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
