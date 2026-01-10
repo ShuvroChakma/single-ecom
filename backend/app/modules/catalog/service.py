@@ -214,3 +214,47 @@ class CategoryService:
             details={"name": category.name},
             request=request
         )
+    async def get_list(
+        self,
+        page: int = 1,
+        limit: int = 20,
+        search: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc"
+    ) -> Dict[str, Any]:
+        """Get paginated list."""
+        filters = {}
+        if search:
+            filters["search"] = search
+            
+        items, total = await self.repository.get_list(page, limit, filters, sort_by, sort_order)
+        
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "per_page": limit,
+            "pages": (total + limit - 1) // limit
+        }
+
+    async def toggle_active(self, category_id: UUID, is_active: bool, actor_id: str, request: Optional[Request] = None) -> Category:
+        """Toggle active status."""
+        category = await self.repository.get(category_id)
+        if not category:
+            raise NotFoundError(message="Category not found", error_code="CATALOG_002")
+            
+        category = await self.repository.update(category, {"is_active": is_active})
+        
+        # Clear cache
+        await delete_cache(CACHE_KEY_TREE)
+        
+        # Audit
+        await self.audit_service.log_action(
+            action="update_category",
+            actor_id=actor_id,
+            target_id=str(category_id),
+            target_type="category",
+            details={"is_active": is_active},
+            request=request
+        )
+        return category

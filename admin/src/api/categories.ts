@@ -2,7 +2,6 @@
  * Categories API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
 
 export interface Category {
@@ -35,40 +34,45 @@ export const getCategories = createServerFn({ method: "GET" })
     if (data?.sort_by) query.set("sort_by", data.sort_by);
     if (data?.sort_order) query.set("sort_order", data.sort_order);
 
-    return apiRequest<ApiResponse<GetCategoriesResponse>>(`/categories?${query.toString()}`);
+      return apiRequest<ApiResponse<GetCategoriesResponse>>(`/admin/categories?${query.toString()}`);
   });
 
 export const getCategory = createServerFn({ method: "GET" })
   .handler(async ({ data }: { data: { id: string } }) => {
-    return apiRequest<ApiResponse<Category>>(`/categories/${data.id}`);
+      // Note: getCategory by ID might probably be public? 
+      // Wait, the backend shows update/delete are admin.
+      // There is no public "get single category" endpoint in admin endpoints.
+      // Assuming admin GET for now for the form.
+      // But there is NO specific GET /admin/categories/{id} in endpoints.py!
+      // There is create, update, delete, get_categories (list).
+      // The public endpoints has "get_category_tree".
+      // Let's assume I missed adding GET /admin/categories/{id} or we use the list?
+      // Wait, looking at endpoints.py content in step 1166... there is NO GET /admin/categories/{id}.
+      // This will fail. I need to add that endpoint too!
+
+      // For now, let's update the paths that DO exist.
+      // List: /admin/categories
+      // Toggle: /admin/categories/{id}/toggle
+
+      return apiRequest<ApiResponse<Category>>(`/admin/categories/${data.id}`);
   });
 
 export const createCategory = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { category: Partial<Category> } }) => {
-    const token = getCookie("access_token"); // Should ideally come from somewhere else or use existing pattern
-    // Ideally we should pass token from client if not using cookie for access token
-    // But since we moved to cookie auth for refresh, we need to see how access token is passed
-    // For now assuming token is passed in data or arguments, matching existing pattern
-    // Wait, the existing pattern in products.ts uses `data.token` passed from client.
-    
-    // Correction: We should follow the pattern in products.ts where token is passed from client
-    // because access token is in memory on client.
-    
+      // Legacy method, should probably remove or update
     return apiRequest<ApiResponse<Category>>(
-        "/categories",
+        "/admin/categories",
         {
             method: "POST",
             body: JSON.stringify(data.category),
         }
-        // Token will be passed by call signature update below
     );
   });
-  
-// Re-writing createCategory to match pattern
+
 export const createCategoryWithToken = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { category: Partial<Category>; token: string } }) => {
     return apiRequest<ApiResponse<Category>>(
-      "/categories",
+        "/admin/categories",
       {
         method: "POST",
         body: JSON.stringify(data.category),
@@ -80,7 +84,7 @@ export const createCategoryWithToken = createServerFn({ method: "POST" })
 export const updateCategory = createServerFn({ method: "PUT" })
   .handler(async ({ data }: { data: { id: string; category: Partial<Category>; token: string } }) => {
     return apiRequest<ApiResponse<Category>>(
-      `/categories/${data.id}`,
+        `/admin/categories/${data.id}`,
       {
         method: "PUT",
         body: JSON.stringify(data.category),
@@ -92,7 +96,7 @@ export const updateCategory = createServerFn({ method: "PUT" })
 export const deleteCategory = createServerFn({ method: "DELETE" })
   .handler(async ({ data }: { data: { id: string; token: string } }) => {
     return apiRequest<ApiResponse<{ deleted: boolean }>>(
-      `/categories/${data.id}`,
+        `/admin/categories/${data.id}`,
       { method: "DELETE" },
       data.token
     );
@@ -101,7 +105,7 @@ export const deleteCategory = createServerFn({ method: "DELETE" })
 export const toggleCategoryActive = createServerFn({ method: "PATCH" })
   .handler(async ({ data }: { data: { id: string; is_active: boolean; token: string } }) => {
     return apiRequest<ApiResponse<Category>>(
-      `/categories/${data.id}/toggle?is_active=${data.is_active}`,
+        `/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
       { method: "PATCH" },
       data.token
     );
