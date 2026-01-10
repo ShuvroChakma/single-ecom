@@ -79,3 +79,5 @@ Thumbs.db
 
 !frontend/src/lib
 !admin/src/lib
+media/
+static/

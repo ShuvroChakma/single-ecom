@@ -41,6 +41,24 @@ const SLIDE_TYPES: { value: SlideType; label: string }[] = [
     { value: "COLLECTION", label: "Collection" },
 ]
 
+function FieldInfo({ field }: { field: any }) {
+    if (!field.state.meta.isTouched || !field.state.meta.errors.length) {
+        return null
+    }
+
+    return (
+        <p className="text-[0.8rem] font-medium text-destructive">
+            {field.state.meta.errors.map((error: any, i: number) => (
+                <span key={i} className="block">
+                    {typeof error === 'object' && error !== null
+                        ? error.message || JSON.stringify(error)
+                        : error}
+                </span>
+            ))}
+        </p>
+    )
+}
+
 export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
     const { token } = useAuth()
     const queryClient = useQueryClient()
@@ -182,6 +200,10 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                     {/* Title */}
                     <form.Field
                         name="title"
+                        validators={{
+                            onChange: ({ value }) =>
+                                !value ? 'Title is required' : undefined,
+                        }}
                         children={(field) => (
                             <div className="space-y-2">
                                 <Label htmlFor="title">Title *</Label>
@@ -189,8 +211,10 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                                     id="title"
                                     value={field.state.value}
                                     onChange={(e) => field.handleChange(e.target.value)}
+                                    onBlur={field.handleBlur}
                                     placeholder="Slide title"
                                 />
+                                <FieldInfo field={field} />
                             </div>
                         )}
                     />
