@@ -245,6 +245,7 @@ function SlidesPage() {
         rowCount={data?.success ? data.data.total : 0}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
+        manualPagination={true}
         onSortingChange={handleSortingChange}
         onGlobalFilterChange={handleSearchChange}
         globalFilter={search}
