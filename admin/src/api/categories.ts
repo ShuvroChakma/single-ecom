@@ -119,12 +119,15 @@ export const updateCategory = createServerFn({ method: "POST" })
     );
   });
 
-export const deleteCategory = createServerFn({ method: "DELETE" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
+export const deleteCategory = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<{ deleted: boolean }>>(
         `/catalog/admin/categories/${data.id}`,
       { method: "DELETE" },
-      data.token
+      token
     );
   });
 

@@ -1,9 +1,19 @@
 
 
 
-import { Category, getCategories } from "@/api/categories"
+import { Category, deleteCategory, getCategories } from "@/api/categories"
 import { CategoryDialog } from "@/components/shared/create-category-dialog"
 import { DataTable } from "@/components/shared/data-table"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,12 +24,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ColumnDef, SortingState } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
+import { Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import { z } from 'zod'
 
 const searchSchema = z.object({
@@ -37,9 +48,11 @@ export const Route = createFileRoute('/dashboard/products/categories/')({
 
 function CategoriesPage() {
     const navigate = useNavigate({ from: Route.fullPath })
+    const queryClient = useQueryClient()
     const { page, limit, search, sort_by, sort_order } = Route.useSearch()
     const [selectedCategory, setSelectedCategory] = useState<Category | undefined>()
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
 
     const [pagination, setPagination] = useState({
         pageIndex: page - 1,
@@ -59,6 +72,19 @@ function CategoriesPage() {
         }),
     })
 
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => deleteCategory({ data: { id } }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["categories"] })
+            queryClient.invalidateQueries({ queryKey: ["category-tree"] })
+            toast.success("Category deleted successfully")
+            setCategoryToDelete(null)
+        },
+        onError: (error: any) => {
+            toast.error(error.message || "Failed to delete category")
+        },
+    })
+
     const handleEdit = (category: Category) => {
         setSelectedCategory(category)
         setIsDialogOpen(true)
@@ -67,6 +93,16 @@ function CategoriesPage() {
     const handleCreate = () => {
         setSelectedCategory(undefined)
         setIsDialogOpen(true)
+    }
+
+    const handleDelete = (category: Category) => {
+        setCategoryToDelete(category)
+    }
+
+    const confirmDelete = () => {
+        if (categoryToDelete) {
+            deleteMutation.mutate(categoryToDelete.id)
+        }
     }
 
     // Columns definition
@@ -124,7 +160,10 @@ function CategoriesPage() {
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                            <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600"
+                                onClick={() => handleDelete(category)}
+                            >
                                 <Trash className="mr-2 h-4 w-4" />
                                 Delete
                             </DropdownMenuItem>
@@ -164,7 +203,7 @@ function CategoriesPage() {
             search: (prev) => ({
                 ...prev,
                 search: value || undefined,
-                page: 1, // Reset to first page on search
+                page: 1,
             }),
             replace: true,
         })
@@ -199,6 +238,33 @@ function CategoriesPage() {
                 onOpenChange={setIsDialogOpen}
                 category={selectedCategory}
             />
+
+            <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => !open && setCategoryToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{categoryToDelete?.name}"? This action cannot be undone.
+                            {categoryToDelete?.subcategories && categoryToDelete.subcategories.length > 0 && (
+                                <span className="block mt-2 text-destructive font-medium">
+                                    Warning: This category has subcategories that will also be affected.
+                                </span>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            disabled={deleteMutation.isPending}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }
