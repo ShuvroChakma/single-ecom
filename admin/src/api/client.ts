@@ -168,6 +168,7 @@ export async function apiRequest<T>(
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
+      credentials: "include", // Include cookies for HttpOnly refresh token
   });
 
     // Handle 401 Unauthorized - try to refresh token

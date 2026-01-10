@@ -1,9 +1,12 @@
 /**
- * Auth Store using React Context with Token Refresh
- * Manages authentication state across the admin app
+ * Auth Store using React Context with HttpOnly Cookie-based Refresh
+ * 
+ * Security: 
+ * - Access token stored in memory only (not localStorage)
+ * - Refresh token in HttpOnly cookie (managed by TanStack Start server)
  */
 import { refreshToken as refreshTokenApi } from "@/api/auth";
-import { AuthenticationError, setTokenRefreshCallback } from "@/api/client";
+import { setTokenRefreshCallback } from "@/api/client";
 import {
     createContext,
     ReactNode,
@@ -22,123 +25,102 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-    refreshTokenValue: string | null;
+    token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-    login: (token: string, refreshToken: string, user: User) => void;
+    login: (token: string, user: User) => void;
   logout: () => void;
-    updateTokens: (accessToken: string, refreshToken: string) => void;
+    setAccessToken: (token: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const TOKEN_KEY = "admin_token";
-const REFRESH_TOKEN_KEY = "admin_refresh_token";
 const USER_KEY = "admin_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-    const [refreshTokenValue, setRefreshTokenValue] = useState<string | null>(null);
+    const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-    // Update tokens (used for refresh)
-    const updateTokens = useCallback((accessToken: string, refreshToken: string) => {
+    // Update access token
+    const setAccessToken = useCallback((accessToken: string) => {
         setToken(accessToken);
-        setRefreshTokenValue(refreshToken);
+  }, []);
 
-        if (typeof window !== "undefined") {
-            localStorage.setItem(TOKEN_KEY, accessToken);
-            localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-        }
-    }, []);
+    // Logout function
+    const logout = useCallback(() => {
+        setToken(null);
+        setUser(null);
 
-    // Handle token refresh
+      if (typeof window !== "undefined") {
+          localStorage.removeItem(USER_KEY);
+      }
+  }, []);
+
+    // Handle token refresh (called by API client on 401)
     const handleTokenRefresh = useCallback(async () => {
-        const storedRefreshToken =
-            refreshTokenValue ||
-            (typeof window !== "undefined"
-                ? localStorage.getItem(REFRESH_TOKEN_KEY)
-                : null);
+      try {
+        // Call server function - it reads refresh token from HttpOnly cookie
+        const response = await refreshTokenApi();
 
-        if (!storedRefreshToken) {
-            return null;
+        if (response.success && response.data) {
+            setToken(response.data.access_token);
+            return {
+                access_token: response.data.access_token,
+                refresh_token: response.data.refresh_token,
+            };
         }
-
-        try {
-            const response = await refreshTokenApi({
-                data: { refresh_token: storedRefreshToken },
-            });
-
-            if (response.success) {
-                updateTokens(response.data.access_token, response.data.refresh_token);
-                return {
-                    access_token: response.data.access_token,
-                    refresh_token: response.data.refresh_token,
-                };
-            }
-            return null;
-        } catch {
-            // Refresh failed - clear auth state
-            logout();
-            return null;
-        }
-    }, [refreshTokenValue, updateTokens]);
+        return null;
+    } catch {
+        // Refresh failed - clear auth state
+        logout();
+        return null;
+    }
+  }, [logout]);
 
     // Set up token refresh callback for API client
     useEffect(() => {
         setTokenRefreshCallback(handleTokenRefresh);
     }, [handleTokenRefresh]);
 
-  // Load auth state from localStorage on mount
+    // Try to restore session on mount by calling refresh
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedToken = localStorage.getItem(TOKEN_KEY);
-        const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-      const storedUser = localStorage.getItem(USER_KEY);
+      const restoreSession = async () => {
+          // Check if we have stored user data
+          const storedUser = typeof window !== "undefined"
+              ? localStorage.getItem(USER_KEY)
+              : null;
 
-      if (storedToken && storedUser) {
+        if (storedUser) {
         try {
-          setToken(storedToken);
-            setRefreshTokenValue(storedRefreshToken);
-          setUser(JSON.parse(storedUser));
+            // Try to refresh token using HttpOnly cookie
+            const response = await refreshTokenApi();
+
+            if (response.success && response.data) {
+                setToken(response.data.access_token);
+                setUser(JSON.parse(storedUser));
+          } else {
+              // Refresh failed, clear stored user
+              localStorage.removeItem(USER_KEY);
+          }
         } catch {
-          // Invalid stored data, clear it
-          localStorage.removeItem(TOKEN_KEY);
-            localStorage.removeItem(REFRESH_TOKEN_KEY);
+            // Refresh failed, clear stored user
           localStorage.removeItem(USER_KEY);
         }
       }
       setIsLoading(false);
-    }
+      };
+
+      restoreSession();
   }, []);
 
-    const login = (
-        newToken: string,
-        newRefreshToken: string,
-        newUser: User
-    ) => {
-    setToken(newToken);
-      setRefreshTokenValue(newRefreshToken);
+    const login = (newToken: string, newUser: User) => {
+      setToken(newToken);
     setUser(newUser);
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem(TOKEN_KEY, newToken);
-        localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+      // Only store user info (not tokens) in localStorage
+      if (typeof window !== "undefined") {
       localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-    }
-  };
-
-  const logout = () => {
-    setToken(null);
-      setRefreshTokenValue(null);
-    setUser(null);
-
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
     }
   };
 
@@ -146,13 +128,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        token,
-              refreshTokenValue,
+              token,
         isAuthenticated: !!token && !!user,
         isLoading,
         login,
         logout,
-              updateTokens,
+              setAccessToken,
       }}
     >
       {children}
@@ -167,6 +148,3 @@ export function useAuth() {
   }
   return context;
 }
-
-// Re-export AuthenticationError for use in components
-export { AuthenticationError };

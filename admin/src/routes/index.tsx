@@ -92,9 +92,9 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
           const userResponse = await getMe({ data: { token } });
 
           if (userResponse.success) {
+            // Login with access token only (refresh token is in HttpOnly cookie)
             login(
               response.data.access_token,
-              response.data.refresh_token,
               {
                 id: userResponse.data.id,
                 email: userResponse.data.email,

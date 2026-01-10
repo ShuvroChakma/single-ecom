@@ -256,22 +256,47 @@ async def resend_otp(
     )
 )
 async def refresh_token(
-    request: RefreshTokenRequest,
+    http_request: Request,
+    response: Response,
+    request: RefreshTokenRequest = None,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Refresh access token using refresh token from Post Body.
+    Refresh access token using refresh token.
     
+    - Reads refresh token from HttpOnly cookie (preferred) or request body
     - Validates refresh token
     - Implements token rotation (old token invalidated)
     - Detects token reuse and revokes entire token family
-    - Returns new access token and new refresh token
+    - Sets new refresh token in HttpOnly cookie
+    - Returns new access token
     """
+    
+    # Get refresh token from cookie first, then fallback to body
+    token = http_request.cookies.get("refresh_token")
+    if not token and request:
+        token = request.refresh_token
+    
+    if not token:
+        raise AuthenticationError(
+            error_code=ErrorCode.INVALID_TOKEN,
+            message="Refresh token not provided"
+        )
     
     auth_service = AuthService(db)
     
     # Refresh tokens
-    new_access_token, new_refresh_token = await auth_service.refresh_access_token(request.refresh_token)
+    new_access_token, new_refresh_token = await auth_service.refresh_access_token(token)
+    
+    # Set new refresh token in HttpOnly cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,  # HTTPS only in production
+        samesite="lax",
+        max_age=7 * 24 * 60 * 60  # 7 days
+    )
     
     return SuccessResponse(
         message="Token refreshed successfully",
