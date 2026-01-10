@@ -239,9 +239,7 @@ function SlidesPage() {
         data={slides}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
-        onSortingChange={handleSortingChange}
-        onGlobalFilterChange={handleSearchChange}
-        globalFilter={search}
+        manualPagination={false}
         isLoading={isLoading}
       />
 

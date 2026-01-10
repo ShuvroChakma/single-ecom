@@ -1,37 +1,37 @@
 "use client"
 
 import {
-    ColumnDef,
-    ColumnFiltersState,
-    SortingState,
-    VisibilityState,
-    flexRender,
-    getCoreRowModel,
-    getFacetedRowModel,
-    getFacetedUniqueValues,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from "lucide-react"
 
@@ -46,10 +46,10 @@ interface DataTableProps<TData, TValue> {
   }
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange?: (sorting: SortingState) => void
-    onSortingChange?: (sorting: SortingState) => void
   onGlobalFilterChange?: (value: string) => void
-    globalFilter?: string
+  globalFilter?: string
   isLoading?: boolean
+  manualPagination?: boolean // Explicit control over server-side pagination
 }
 
 export function DataTable<TData, TValue>({
@@ -61,8 +61,9 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   onSortingChange,
   onGlobalFilterChange,
-    globalFilter: controlledGlobalFilter,
+  globalFilter: controlledGlobalFilter,
   isLoading = false,
+  manualPagination: manualPaginationProp,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -101,7 +102,7 @@ export function DataTable<TData, TValue>({
       pagination,
     },
     enableRowSelection: true,
-    manualPagination: !!onPaginationChange, // Server-side pagination if handler provided
+    manualPagination: manualPaginationProp ?? false, // Default to client-side pagination
     manualSorting: !!onSortingChange,       // Server-side sorting if handler provided
     manualFiltering: !!onGlobalFilterChange,// Server-side filtering if handler provided
     onRowSelectionChange: setRowSelection,
