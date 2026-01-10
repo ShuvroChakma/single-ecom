@@ -239,3 +239,34 @@ class UploadService:
         self._optimize_image(file_path, max_size=256)
         
         return f"/static/uploads/categories/{filename}"
+
+    async def upload_category_image_generic(self, file: UploadFile, type: str = "image") -> str:
+        """
+        Upload a generic category image (icon or banner).
+        Generates a random filename.
+        """
+        ext = self._validate_file(file)
+        
+        # Determine prefix based on type
+        prefix = "icon" if type == "icon" else "banner"
+        filename = self._generate_filename(file.filename, prefix=prefix)
+        file_path = self.base_upload_dir / "categories" / filename
+        
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise ValidationError(
+                error_code=ErrorCode.FIELD_INVALID,
+                message=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB",
+                field="file"
+            )
+        
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        # Optimization based on type
+        if type == "icon":
+            self._optimize_image(file_path, max_size=256)
+        else:
+            self._optimize_image(file_path, max_size=1200)
+            
+        return f"/static/uploads/categories/{filename}"

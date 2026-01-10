@@ -157,7 +157,7 @@ export async function apiRequest<T>(
     retryOnUnauthorized = true
 ): Promise<T> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+      ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
   };
 
@@ -196,6 +196,8 @@ export async function apiRequest<T>(
 
       // Extract detailed error message
       const message = extractErrorMessage(errorData);
+
+      console.log('API Error Response:', JSON.stringify(errorData, null, 2));
 
       throw new ApiError(
           message,

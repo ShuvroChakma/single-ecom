@@ -69,27 +69,35 @@ export const getCategory = createServerFn({ method: "GET" })
         );
   });
 
-export const createCategory = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { category: Partial<Category> } }) => {
-      // Legacy method, should probably remove or update
-    return apiRequest<ApiResponse<Category>>(
-        "/catalog/admin/categories",
-        {
-            method: "POST",
-            body: JSON.stringify(data.category),
-        }
-    );
-  });
+export interface CategoryTreeResponse extends Category {
+  children?: CategoryTreeResponse[];
+}
 
-export const createCategoryWithToken = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { category: Partial<Category>; token: string } }) => {
+export const getCategoryTree = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    return apiRequest<ApiResponse<CategoryTreeResponse[]>>(
+      "/catalog/categories/tree",
+      {},
+      token
+      );
+    });
+
+export const createCategory = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: Partial<Category> }) => {
+    console.log("createCategory Handler Received Data:", JSON.stringify(data, null, 2));
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<Category>>(
         "/catalog/admin/categories",
       {
         method: "POST",
-        body: JSON.stringify(data.category),
+        body: JSON.stringify(data),
       },
-      data.token
+      token
     );
   });
 

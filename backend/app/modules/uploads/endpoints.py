@@ -16,7 +16,7 @@ from app.modules.products.repository import ProductRepository
 from app.modules.audit.service import AuditService
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix="/products", tags=["Product Images"])
+router = APIRouter(tags=["Product Images"])
 
 
 def get_upload_service() -> UploadService:
@@ -202,4 +202,34 @@ async def reorder_product_images(
     return create_success_response(
         message="Image order updated",
         data={"images": image_urls}
+    )
+
+
+# ============ CATEGORY IMAGE ENDPOINTS ============
+
+@router.post(
+    "/admin/uploads/categories",
+    response_model=SuccessResponse[ImageUploadResponse],
+    status_code=201
+)
+async def upload_category_image(
+    request: Request,
+    file: UploadFile = File(..., description="Image file to upload"),
+    type: str = "icon",
+    current_user: User = Depends(require_permissions(["categories:write"])),
+    upload_service: UploadService = Depends(get_upload_service)
+):
+    """
+    Upload a category image (icon or banner).
+    
+    - Query param `type`: 'icon' or 'banner' (default: 'icon')
+    - Max size: 5MB
+    """
+    url = await upload_service.upload_category_image_generic(file, type=type)
+    
+    filename = url.split("/")[-1]
+    
+    return create_success_response(
+        message="Category image uploaded successfully",
+        data=ImageUploadResponse(url=url, filename=filename)
     )

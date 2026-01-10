@@ -1,8 +1,8 @@
 
 
-// Removed useAuth import
 
 import { Category, getCategories } from "@/api/categories"
+import { CreateCategoryDialog } from "@/components/shared/create-category-dialog"
 import { DataTable } from "@/components/shared/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -167,7 +167,7 @@ function CategoriesPage() {
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
-                <Button>Create Category</Button>
+                <CreateCategoryDialog />
             </div>
 
             <DataTable
