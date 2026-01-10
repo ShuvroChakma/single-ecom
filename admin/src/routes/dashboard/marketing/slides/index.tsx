@@ -22,25 +22,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
-import { ColumnDef } from "@tanstack/react-table"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { ColumnDef, SortingState } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { z } from "zod"
+
+const searchSchema = z.object({
+  page: z.number().optional().default(1),
+  limit: z.number().optional().default(10),
+  search: z.string().optional(),
+  sort_by: z.string().optional(),
+  sort_order: z.enum(['asc', 'desc']).optional(),
+})
 
 export const Route = createFileRoute('/dashboard/marketing/slides/')({
+  validateSearch: searchSchema,
   component: SlidesPage,
 })
 
 function SlidesPage() {
+  const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
+  const { page, limit, search, sort_by, sort_order } = Route.useSearch()
   const [selectedSlide, setSelectedSlide] = useState<Slide | undefined>()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [slideToDelete, setSlideToDelete] = useState<Slide | null>(null)
 
+  const [pagination, setPagination] = useState({
+    pageIndex: page - 1,
+    pageSize: limit,
+  })
+
   const { data, isLoading } = useQuery({
-    queryKey: ['slides'],
+    queryKey: ['slides', pagination.pageIndex, pagination.pageSize, search],
     queryFn: () => getSlides({ data: { include_inactive: true } }),
   })
 
@@ -168,6 +185,43 @@ function SlidesPage() {
     },
   ]
 
+  const handlePaginationChange = (newPagination: { pageIndex: number; pageSize: number }) => {
+    setPagination(newPagination)
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        page: newPagination.pageIndex + 1,
+        limit: newPagination.pageSize,
+      }),
+      replace: true,
+    })
+  }
+
+  const handleSortingChange = (sorting: SortingState) => {
+    const sort = sorting[0]
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        sort_by: sort ? sort.id : undefined,
+        sort_order: sort ? (sort.desc ? "desc" : "asc") : undefined,
+      }),
+      replace: true,
+    })
+  }
+
+  const handleSearchChange = (value: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        search: value || undefined,
+        page: 1,
+      }),
+      replace: true,
+    })
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }
+
+  // For client-side data, we use all slides
   const slides = data?.success ? data.data : []
 
   return (
@@ -183,6 +237,11 @@ function SlidesPage() {
       <DataTable
         columns={columns}
         data={slides}
+        pagination={pagination}
+        onPaginationChange={handlePaginationChange}
+        onSortingChange={handleSortingChange}
+        onGlobalFilterChange={handleSearchChange}
+        globalFilter={search}
         isLoading={isLoading}
       />
 

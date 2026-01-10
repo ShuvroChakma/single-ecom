@@ -372,7 +372,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                                         value={field.state.value}
                                         onValueChange={(value) => field.handleChange(value as SlideType)}
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Select type" />
                                         </SelectTrigger>
                                         <SelectContent>
