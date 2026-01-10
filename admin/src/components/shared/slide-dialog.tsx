@@ -1,6 +1,7 @@
 "use client"
 
 import { createSlide, Slide, SlidePayload, SlideType, updateSlide, uploadSlideImage } from "@/api/slides"
+import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -23,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/auth"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { ImagePlus, Loader2, X } from "lucide-react"
+import { FolderOpen, ImagePlus, Loader2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
@@ -46,6 +47,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
     const isEdit = !!slide
     const [isUploading, setIsUploading] = useState(false)
     const [imageUrl, setImageUrl] = useState("")
+    const [showGallery, setShowGallery] = useState(false)
 
     const form = useForm({
         defaultValues: {
@@ -228,7 +230,18 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
 
                     {/* Image Upload */}
                     <div className="space-y-2">
-                        <Label>Slide Image *</Label>
+                        <div className="flex items-center justify-between">
+                            <Label>Slide Image *</Label>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowGallery(true)}
+                            >
+                                <FolderOpen className="mr-2 h-4 w-4" />
+                                Media Library
+                            </Button>
+                        </div>
                         {imageUrl ? (
                             <div className="relative rounded-md border overflow-hidden">
                                 <Button
@@ -266,6 +279,15 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                             </div>
                         )}
                     </div>
+
+                    <ImageGalleryDialog
+                        open={showGallery}
+                        onOpenChange={setShowGallery}
+                        onSelect={(url) => {
+                            setImageUrl(url)
+                            form.setFieldValue("image_url", url)
+                        }}
+                    />
 
                     {/* Image Alt */}
                     <form.Field
