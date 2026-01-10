@@ -179,6 +179,7 @@ function CategoriesPage() {
                 onPaginationChange={handlePaginationChange}
                 onSortingChange={handleSortingChange}
                 onGlobalFilterChange={handleSearchChange}
+                globalFilter={search}
                 isLoading={isLoading}
             />
         </div>

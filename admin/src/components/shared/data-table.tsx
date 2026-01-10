@@ -46,7 +46,9 @@ interface DataTableProps<TData, TValue> {
   }
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange?: (sorting: SortingState) => void
+    onSortingChange?: (sorting: SortingState) => void
   onGlobalFilterChange?: (value: string) => void
+    globalFilter?: string
   isLoading?: boolean
 }
 
@@ -59,13 +61,24 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   onSortingChange,
   onGlobalFilterChange,
+    globalFilter: controlledGlobalFilter,
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [globalFilter, setGlobalFilter] = React.useState("")
+    const [globalFilter, setGlobalFilter] = React.useState(controlledGlobalFilter ?? "")
+    const [searchValue, setSearchValue] = React.useState(controlledGlobalFilter ?? "")
+
+    // Sync globalFilter if controlled
+    React.useEffect(() => {
+        if (controlledGlobalFilter !== undefined) {
+            setGlobalFilter(controlledGlobalFilter)
+            setSearchValue(controlledGlobalFilter)
+        }
+    }, [controlledGlobalFilter])
+
   const [internalPagination, setInternalPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
@@ -120,14 +133,24 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
+    // Debounce search value updates
+    React.useEffect(() => {
+        const timeout = setTimeout(() => {
+            table.setGlobalFilter(searchValue)
+        }, 500)
+
+        return () => clearTimeout(timeout)
+    }, [searchValue, table])
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex flex-1 items-center space-x-2">
           <Input
             placeholder="Search..."
-            value={globalFilter ?? ""}
-            onChange={(event) => table.setGlobalFilter(event.target.value)}
+                      value={searchValue ?? ""}
+                      onChange={(event) => setSearchValue(event.target.value)}
+                      maxLength={100}
             className="h-8 w-[150px] lg:w-[250px]"
           />
         </div>

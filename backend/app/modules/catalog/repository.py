@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import Optional, List, Dict, Any
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -50,7 +50,12 @@ class CategoryRepository(BaseRepository[Category]):
         if filters:
             if "search" in filters and filters["search"]:
                 search = f"%{filters['search']}%"
-                query = query.where(self.model.name.ilike(search))
+                query = query.where(
+                    or_(
+                        self.model.name.ilike(search),
+                        self.model.slug.ilike(search)
+                    )
+                )
             if "is_active" in filters:
                 query = query.where(self.model.is_active == filters["is_active"])
 
