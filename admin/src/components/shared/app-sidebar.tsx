@@ -1,21 +1,14 @@
-
-
-import * as React from "react"
 import {
-  AudioWaveform,
-  Command,
   GalleryVerticalEnd,
   ListOrdered,
   Lock,
- 
   Settings2,
-  
   Store,
   User2,
 } from "lucide-react"
+import * as React from "react"
 
 import { NavMain } from "@/components/shared/nav-main"
-import { NavProjects } from "@/components/shared/nav-projects"
 import { NavUser } from "@/components/shared/nav-user"
 import { TeamSwitcher } from "@/components/shared/team-switcher"
 import {
@@ -26,22 +19,17 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
+// Navigation data
 const data = {
-  user: {
-    name: "Naju Meah",
-    email: "Najumeahjewellers@gmail.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
-      name: "Naju Meah",
+      name: "Admin Panel",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      plan: "E-commerce",
     },
   ],
   navMain: [
-  {
+    {
       title: "Role",
       url: "#",
       icon: Lock,
@@ -51,8 +39,6 @@ const data = {
           title: "Admin",
           url: "/dashboard/role/admin",
         },
-
-       
       ],
     },
     {
@@ -65,10 +51,9 @@ const data = {
           title: "Product list",
           url: "/dashboard/products/productList",
         },
-       
       ],
     },
-  {
+    {
       title: "Orders",
       url: "#",
       icon: ListOrdered,
@@ -78,11 +63,9 @@ const data = {
           title: "All orders",
           url: "/dashboard/orders/orderList",
         },
-        
-       
       ],
     },
-   {
+    {
       title: "Customers",
       url: "#",
       icon: User2,
@@ -92,12 +75,9 @@ const data = {
           title: "Customer list",
           url: "/dashboard/customers/customerList",
         },
-
-        
-       
       ],
     },
-  {
+    {
       title: "Settings",
       url: "#",
       icon: Settings2,
@@ -107,31 +87,13 @@ const data = {
           title: "General",
           url: "/dashboard/settings/general",
         },
-         {
+        {
           title: "Billing",
           url: "/dashboard/settings/billing",
         },
-       
       ],
     },
   ],
-  // projects: [
-  //   {
-  //     name: "Design Engineering",
-  //     url: "#",
-  //     icon: Frame,
-  //   },
-  //   {
-  //     name: "Sales & Marketing",
-  //     url: "#",
-  //     icon: PieChart,
-  //   },
-  //   {
-  //     name: "Travel",
-  //     url: "#",
-  //     icon: Map,
-  //   },
-  // ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -142,10 +104,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
