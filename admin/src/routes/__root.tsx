@@ -8,6 +8,8 @@ import { toast } from "sonner"
 
 import appCss from '../styles.css?url'
 
+import { NotFound } from '@/components/shared/not-found'
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -31,6 +33,7 @@ export const Route = createRootRoute({
   }),
 
   shellComponent: RootDocument,
+  notFoundComponent: NotFound,
 })
 
 const queryClient = new QueryClient({

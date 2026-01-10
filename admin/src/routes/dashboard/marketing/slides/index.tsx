@@ -51,10 +51,12 @@ function SlidesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [slideToDelete, setSlideToDelete] = useState<Slide | null>(null)
 
-  const [pagination, setPagination] = useState({
+  const pagination = {
     pageIndex: page - 1,
     pageSize: limit,
-  })
+  }
+
+
 
   const { data, isLoading } = useQuery({
     queryKey: ['slides', pagination.pageIndex, pagination.pageSize, search, sort_by, sort_order],
@@ -193,7 +195,6 @@ function SlidesPage() {
   ]
 
   const handlePaginationChange = (newPagination: { pageIndex: number; pageSize: number }) => {
-    setPagination(newPagination)
     navigate({
       search: (prev) => ({
         ...prev,
@@ -225,7 +226,6 @@ function SlidesPage() {
       }),
       replace: true,
     })
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
 
   return (
