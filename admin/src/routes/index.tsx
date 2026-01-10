@@ -46,12 +46,16 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
       const response = await loginAdmin({ data: { email, password } });
 
       if (response.success) {
-        login(response.data.access_token, {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          full_name: response.data.user.full_name,
-          user_type: "ADMIN",
-        });
+        login(
+          response.data.access_token,
+          response.data.refresh_token,
+          {
+            id: response.data.user.id,
+            email: response.data.user.email,
+            full_name: response.data.user.full_name,
+            user_type: "ADMIN",
+          }
+        );
 
         toast.success("Login successful!");
         navigate({ to: "/dashboard" });

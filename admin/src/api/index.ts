@@ -4,12 +4,13 @@
  * Re-exports all API server functions organized by module
  */
 
-// Base client types
-export type { ApiError, ApiResponse, PaginatedResponse } from "./client";
+// Base client types and utilities
+export { ApiError, AuthenticationError, setTokenRefreshCallback } from "./client";
+export type { ApiErrorResponse, ApiResponse, PaginatedResponse } from "./client";
 
 // Auth
 export {
-    getMe, loginAdmin, logout,
+    getMe, loginAdmin, logout, refreshToken,
     type LoginResponse,
     type UserProfile
 } from "./auth";
