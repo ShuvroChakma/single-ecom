@@ -30,7 +30,7 @@ class UploadService:
     
     def _ensure_directories(self):
         """Create upload directories if they don't exist."""
-        dirs = ["products", "brands", "collections", "categories"]
+        dirs = ["products", "brands", "collections", "categories", "media"]
         for d in dirs:
             (self.base_upload_dir / d).mkdir(parents=True, exist_ok=True)
     
@@ -281,6 +281,49 @@ class UploadService:
                 if file.is_file() and self._get_extension(file.name) in ALLOWED_EXTENSIONS:
                     images.append({
                         "url": f"/static/uploads/categories/{file.name}",
+                        "filename": file.name,
+                        "mtime": file.stat().st_mtime
+                    })
+        
+        # Sort by modification time, newest first
+        images.sort(key=lambda x: x["mtime"], reverse=True)
+        
+        return images
+
+    async def upload_media(self, file: UploadFile) -> str:
+        """
+        Upload a file to the general media library.
+        """
+        ext = self._validate_file(file)
+        
+        filename = self._generate_filename(file.filename, prefix="media")
+        file_path = self.base_upload_dir / "media" / filename
+        
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise ValidationError(
+                error_code=ErrorCode.FIELD_INVALID,
+                message=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB",
+                field="file"
+            )
+        
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        self._optimize_image(file_path, max_size=1920)
+            
+        return f"/static/uploads/media/{filename}"
+
+    def list_media(self) -> List[dict]:
+        """List all media library images."""
+        media_dir = self.base_upload_dir / "media"
+        images = []
+        
+        if media_dir.exists():
+            for file in media_dir.iterdir():
+                if file.is_file() and self._get_extension(file.name) in ALLOWED_EXTENSIONS:
+                    images.append({
+                        "url": f"/static/uploads/media/{file.name}",
                         "filename": file.name,
                         "mtime": file.stat().st_mtime
                     })

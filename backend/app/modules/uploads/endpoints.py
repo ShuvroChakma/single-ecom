@@ -254,3 +254,52 @@ async def list_category_images(
             count=len(images)
         )
     )
+
+
+# ============ MEDIA LIBRARY ENDPOINTS ============
+
+@router.post(
+    "/admin/uploads/media",
+    response_model=SuccessResponse[ImageUploadResponse],
+    status_code=201
+)
+async def upload_media(
+    request: Request,
+    file: UploadFile = File(..., description="Image file to upload"),
+    current_user: User = Depends(require_permissions(["products:write"])),
+    upload_service: UploadService = Depends(get_upload_service)
+):
+    """
+    Upload a file to the media library.
+    
+    This is a general-purpose upload for images that can be used anywhere.
+    - Max size: 5MB
+    """
+    url = await upload_service.upload_media(file)
+    filename = url.split("/")[-1]
+    
+    return create_success_response(
+        message="File uploaded successfully",
+        data=ImageUploadResponse(url=url, filename=filename)
+    )
+
+
+@router.get(
+    "/admin/uploads/media",
+    response_model=SuccessResponse[ImageListResponse]
+)
+async def list_media(
+    request: Request,
+    current_user: User = Depends(require_permissions(["products:read"])),
+    upload_service: UploadService = Depends(get_upload_service)
+):
+    """List all files in the media library."""
+    images = upload_service.list_media()
+    
+    return create_success_response(
+        message="Media files retrieved successfully",
+        data=ImageListResponse(
+            items=[ImageUploadResponse(url=img["url"], filename=img["filename"]) for img in images],
+            count=len(images)
+        )
+    )

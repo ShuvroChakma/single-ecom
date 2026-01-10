@@ -43,3 +43,47 @@ export const getCategoryImages = createServerFn({ method: "GET" })
             throw error
         }
     })
+
+// Media Library API functions
+export const getMediaImages = createServerFn({ method: "GET" })
+    .handler(async () => {
+        const token = getCookie("access_token")
+        if (!token) throw new Error("Not authenticated")
+
+        try {
+            const result = await apiRequest<ApiResponse<ImageListResponse>>('/admin/uploads/media', {}, token)
+            return result.data.items
+        } catch (error) {
+            console.error("Error fetching media images:", error)
+            throw error
+        }
+    })
+
+export async function uploadMediaImage(file: File, token?: string): Promise<ImageUploadResponse> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    if (!token) {
+        throw new Error('Not authenticated')
+    }
+
+    const API_URL = (typeof process !== 'undefined' && process.env?.API_URL)
+        || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+        || "http://localhost:8000/api/v1";
+
+    const response = await fetch(`${API_URL}/admin/uploads/media`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+    })
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: "Upload failed" }))
+        throw new Error(error.message || "Failed to upload image")
+    }
+
+    const result = await response.json()
+    return result.data
+}
