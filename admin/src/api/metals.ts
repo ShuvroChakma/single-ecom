@@ -110,3 +110,68 @@ export const deleteMetal = createServerFn({ method: "POST" })
       token
     );
   });
+
+// ============ PURITY API ============
+
+export interface PurityPayload {
+    metal_id: string;
+    name: string;
+    code: string;
+    fineness: number;
+    sort_order?: number;
+    is_active?: boolean;
+}
+
+export interface PurityFull extends Purity {
+    metal_id: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// Admin: Create purity
+export const createPurity = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data: PurityPayload }) => {
+        const token = getCookie("access_token");
+        if (!token) throw new Error("Not authenticated");
+
+        return apiRequest<ApiResponse<PurityFull>>(
+            "/products/admin/purities",
+            {
+                method: "POST",
+                body: JSON.stringify(data),
+            },
+            token
+        );
+    });
+
+// Admin: Update purity
+export const updatePurity = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data: { purity: Partial<PurityPayload>; id: string } }) => {
+        const token = getCookie("access_token");
+        if (!token) throw new Error("Not authenticated");
+
+        const { id, purity } = data;
+
+        return apiRequest<ApiResponse<PurityFull>>(
+            `/products/admin/purities/${id}`,
+            {
+                method: "PUT",
+                body: JSON.stringify(purity),
+            },
+            token
+        );
+    });
+
+// Admin: Delete purity
+export const deletePurity = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data: { id: string } }) => {
+        const token = getCookie("access_token");
+        if (!token) throw new Error("Not authenticated");
+
+        return apiRequest<ApiResponse<{ deleted: boolean }>>(
+            `/products/admin/purities/${data.id}`,
+            { method: "DELETE" },
+            token
+        );
+    });
+

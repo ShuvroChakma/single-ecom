@@ -1,4 +1,4 @@
-import { Metal, deleteMetal, getMetals } from "@/api/metals"
+import { Metal, Purity, deleteMetal, getMetals } from "@/api/metals"
 import { DataTable } from "@/components/shared/data-table"
 import { MetalDialog } from "@/components/shared/metal-dialog"
 import {
@@ -39,6 +39,12 @@ function MetalsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [metalToDelete, setMetalToDelete] = useState<Metal | null>(null)
 
+    // Purity state
+    const [selectedPurity, setSelectedPurity] = useState<(Purity & { metal_id?: string }) | undefined>()
+    const [isPurityDialogOpen, setIsPurityDialogOpen] = useState(false)
+    const [purityToDelete, setPurityToDelete] = useState<Purity | null>(null)
+    const [defaultMetalId, setDefaultMetalId] = useState<string | undefined>()
+
     const { data, isLoading } = useQuery({
         queryKey: ['metals'],
         queryFn: () => getMetals(),
@@ -76,6 +82,41 @@ function MetalsPage() {
         }
     }
 
+    // Purity mutations and handlers
+    const deletePurityMutation = useMutation({
+        mutationFn: (id: string) => deletePurity({ data: { id } }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["metals"] })
+            toast.success("Purity deleted successfully")
+            setPurityToDelete(null)
+        },
+        onError: (error: any) => {
+            toast.error(error.message || "Failed to delete purity")
+        },
+    })
+
+    const handleAddPurity = (metalId: string) => {
+        setSelectedPurity(undefined)
+        setDefaultMetalId(metalId)
+        setIsPurityDialogOpen(true)
+    }
+
+    const handleEditPurity = (purity: Purity, metalId: string) => {
+        setSelectedPurity({ ...purity, metal_id: metalId })
+        setDefaultMetalId(metalId)
+        setIsPurityDialogOpen(true)
+    }
+
+    const handleDeletePurity = (purity: Purity) => {
+        setPurityToDelete(purity)
+    }
+
+    const confirmDeletePurity = () => {
+        if (purityToDelete) {
+            deletePurityMutation.mutate(purityToDelete.id)
+        }
+    }
+
     const columns: ColumnDef<Metal>[] = [
         {
             accessorKey: "name",
@@ -97,23 +138,34 @@ function MetalsPage() {
             accessorKey: "purities",
             header: "Purities",
             cell: ({ row }) => {
-                const purities = row.original.purities || []
+                const metal = row.original
+                const purities = metal.purities || []
                 return (
-                    <div className="flex gap-1 flex-wrap">
-                        {purities.length > 0 ? (
-                            purities.slice(0, 3).map((p) => (
-                                <Badge key={p.id} variant="outline" className="text-xs">
-                                    {p.name}
-                                </Badge>
-                            ))
-                        ) : (
-                            <span className="text-muted-foreground text-sm">No purities</span>
-                        )}
-                        {purities.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                                +{purities.length - 3}
-                            </Badge>
-                        )}
+                    <div className="flex items-center gap-2">
+                        <div className="flex gap-1 flex-wrap">
+                            {purities.length > 0 ? (
+                                purities.map((p) => (
+                                    <Badge
+                                        key={p.id}
+                                        variant="outline"
+                                        className="text-xs cursor-pointer hover:bg-muted"
+                                        onClick={() => handleEditPurity(p, metal.id)}
+                                    >
+                                        {p.name} ({(p.fineness * 100).toFixed(1)}%)
+                                    </Badge>
+                                ))
+                            ) : (
+                                <span className="text-muted-foreground text-sm">No purities</span>
+                            )}
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleAddPurity(metal.id)}
+                        >
+                            <Plus className="h-3 w-3" />
+                        </Button>
                     </div>
                 )
             },
@@ -223,6 +275,38 @@ function MetalsPage() {
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Purity Dialog */}
+            <PurityDialog
+                open={isPurityDialogOpen}
+                onOpenChange={setIsPurityDialogOpen}
+                purity={selectedPurity}
+                metals={metals}
+                defaultMetalId={defaultMetalId}
+            />
+
+            {/* Purity Delete Confirmation */}
+            <AlertDialog open={!!purityToDelete} onOpenChange={(open) => !open && setPurityToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Purity</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete purity "{purityToDelete?.name}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deletePurityMutation.isPending}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDeletePurity}
+                            disabled={deletePurityMutation.isPending}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {deletePurityMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>
