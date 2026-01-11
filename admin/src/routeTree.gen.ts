@@ -19,6 +19,7 @@ import { Route as DashboardProductsProductListRouteImport } from './routes/dashb
 import { Route as DashboardOrdersOrderListRouteImport } from './routes/dashboard/orders/orderList'
 import { Route as DashboardCustomersCustomerListRouteImport } from './routes/dashboard/customers/customerList'
 import { Route as DashboardProductsCategoriesIndexRouteImport } from './routes/dashboard/products/categories/index'
+import { Route as DashboardProductsBrandsIndexRouteImport } from './routes/dashboard/products/brands/index'
 import { Route as DashboardMarketingSlidesIndexRouteImport } from './routes/dashboard/marketing/slides/index'
 
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
@@ -77,6 +78,12 @@ const DashboardProductsCategoriesIndexRoute =
     path: '/products/categories/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardProductsBrandsIndexRoute =
+  DashboardProductsBrandsIndexRouteImport.update({
+    id: '/products/brands/',
+    path: '/products/brands/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardMarketingSlidesIndexRoute =
   DashboardMarketingSlidesIndexRouteImport.update({
     id: '/marketing/slides/',
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -107,6 +115,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
 }
 export interface FileRoutesById {
@@ -121,6 +130,7 @@ export interface FileRoutesById {
   '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
   '/dashboard/marketing/slides/': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/products/brands/': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories/': typeof DashboardProductsCategoriesIndexRoute
 }
 export interface FileRouteTypes {
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/billing'
     | '/dashboard/settings/general'
     | '/dashboard/marketing/slides'
+    | '/dashboard/products/brands'
     | '/dashboard/products/categories'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/billing'
     | '/dashboard/settings/general'
     | '/dashboard/marketing/slides'
+    | '/dashboard/products/brands'
     | '/dashboard/products/categories'
   id:
     | '__root__'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/billing'
     | '/dashboard/settings/general'
     | '/dashboard/marketing/slides/'
+    | '/dashboard/products/brands/'
     | '/dashboard/products/categories/'
   fileRoutesById: FileRoutesById
 }
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProductsCategoriesIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/products/brands/': {
+      id: '/dashboard/products/brands/'
+      path: '/products/brands'
+      fullPath: '/dashboard/products/brands'
+      preLoaderRoute: typeof DashboardProductsBrandsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/marketing/slides/': {
       id: '/dashboard/marketing/slides/'
       path: '/marketing/slides'
@@ -260,6 +280,7 @@ interface DashboardRouteRouteChildren {
   DashboardSettingsBillingRoute: typeof DashboardSettingsBillingRoute
   DashboardSettingsGeneralRoute: typeof DashboardSettingsGeneralRoute
   DashboardMarketingSlidesIndexRoute: typeof DashboardMarketingSlidesIndexRoute
+  DashboardProductsBrandsIndexRoute: typeof DashboardProductsBrandsIndexRoute
   DashboardProductsCategoriesIndexRoute: typeof DashboardProductsCategoriesIndexRoute
 }
 
@@ -272,6 +293,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardSettingsBillingRoute: DashboardSettingsBillingRoute,
   DashboardSettingsGeneralRoute: DashboardSettingsGeneralRoute,
   DashboardMarketingSlidesIndexRoute: DashboardMarketingSlidesIndexRoute,
+  DashboardProductsBrandsIndexRoute: DashboardProductsBrandsIndexRoute,
   DashboardProductsCategoriesIndexRoute: DashboardProductsCategoriesIndexRoute,
 }
 
