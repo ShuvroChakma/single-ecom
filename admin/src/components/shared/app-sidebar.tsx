@@ -64,6 +64,10 @@ const data = {
           title: "Attributes",
           url: "/dashboard/products/attributes",
         },
+        {
+          title: "Metals",
+          url: "/dashboard/products/metals",
+        },
       ],
     },
     {

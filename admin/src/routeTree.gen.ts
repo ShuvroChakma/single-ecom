@@ -18,6 +18,7 @@ import { Route as DashboardRoleAdminRouteImport } from './routes/dashboard/role/
 import { Route as DashboardProductsProductListRouteImport } from './routes/dashboard/products/productList'
 import { Route as DashboardOrdersOrderListRouteImport } from './routes/dashboard/orders/orderList'
 import { Route as DashboardCustomersCustomerListRouteImport } from './routes/dashboard/customers/customerList'
+import { Route as DashboardProductsMetalsIndexRouteImport } from './routes/dashboard/products/metals/index'
 import { Route as DashboardProductsCategoriesIndexRouteImport } from './routes/dashboard/products/categories/index'
 import { Route as DashboardProductsBrandsIndexRouteImport } from './routes/dashboard/products/brands/index'
 import { Route as DashboardMarketingSlidesIndexRouteImport } from './routes/dashboard/marketing/slides/index'
@@ -72,6 +73,12 @@ const DashboardCustomersCustomerListRoute =
     path: '/customers/customerList',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardProductsMetalsIndexRoute =
+  DashboardProductsMetalsIndexRouteImport.update({
+    id: '/products/metals/',
+    path: '/products/metals/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardProductsCategoriesIndexRoute =
   DashboardProductsCategoriesIndexRouteImport.update({
     id: '/products/categories/',
@@ -104,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -132,6 +141,7 @@ export interface FileRoutesById {
   '/dashboard/marketing/slides/': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/brands/': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories/': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/metals/': typeof DashboardProductsMetalsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/dashboard/marketing/slides'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
+    | '/dashboard/products/metals'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/dashboard/marketing/slides'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
+    | '/dashboard/products/metals'
   id:
     | '__root__'
     | '/'
@@ -175,6 +187,7 @@ export interface FileRouteTypes {
     | '/dashboard/marketing/slides/'
     | '/dashboard/products/brands/'
     | '/dashboard/products/categories/'
+    | '/dashboard/products/metals/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCustomersCustomerListRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/products/metals/': {
+      id: '/dashboard/products/metals/'
+      path: '/products/metals'
+      fullPath: '/dashboard/products/metals'
+      preLoaderRoute: typeof DashboardProductsMetalsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/products/categories/': {
       id: '/dashboard/products/categories/'
       path: '/products/categories'
@@ -282,6 +302,7 @@ interface DashboardRouteRouteChildren {
   DashboardMarketingSlidesIndexRoute: typeof DashboardMarketingSlidesIndexRoute
   DashboardProductsBrandsIndexRoute: typeof DashboardProductsBrandsIndexRoute
   DashboardProductsCategoriesIndexRoute: typeof DashboardProductsCategoriesIndexRoute
+  DashboardProductsMetalsIndexRoute: typeof DashboardProductsMetalsIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -295,6 +316,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardMarketingSlidesIndexRoute: DashboardMarketingSlidesIndexRoute,
   DashboardProductsBrandsIndexRoute: DashboardProductsBrandsIndexRoute,
   DashboardProductsCategoriesIndexRoute: DashboardProductsCategoriesIndexRoute,
+  DashboardProductsMetalsIndexRoute: DashboardProductsMetalsIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

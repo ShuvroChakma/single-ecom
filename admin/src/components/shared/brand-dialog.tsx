@@ -1,4 +1,5 @@
 import { Brand, BrandPayload, createBrand, updateBrand } from "@/api/brands"
+import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Loader2 } from "lucide-react"
+import { ImageIcon, Loader2 } from "lucide-react"
 import { useEffect } from "react"
 import { toast } from "sonner"
 
@@ -32,6 +33,7 @@ function FieldInfo({ field }: { field: any }) {
 export function BrandDialog({ open, onOpenChange, brand }: BrandDialogProps) {
   const queryClient = useQueryClient()
   const isEditing = !!brand
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false)
 
   const createMutation = useMutation({
     mutationFn: (data: BrandPayload) => createBrand({ data }),
@@ -174,17 +176,49 @@ export function BrandDialog({ open, onOpenChange, brand }: BrandDialogProps) {
             name="logo"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="logo">Logo URL</Label>
-                <Input
-                  id="logo"
-                  placeholder="https://example.com/logo.png"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+                    <Label>Logo</Label>
+                    <div className="flex items-center gap-4">
+                        {field.state.value && (
+                            <img
+                                src={field.state.value.startsWith('/') ? `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${field.state.value}` : field.state.value}
+                                alt="Brand logo"
+                                className="h-16 w-16 rounded-lg object-cover border"
+                            />
+                        )}
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsGalleryOpen(true)}
+                            >
+                                <ImageIcon className="mr-2 h-4 w-4" />
+                                {field.state.value ? "Change Logo" : "Select Logo"}
+                            </Button>
+                            {field.state.value && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => field.handleChange("")}
+                                >
+                                    Remove
+                                </Button>
+                            )}
+                        </div>
+                    </div>
               </div>
             )}
           />
+
+                  <ImageGalleryDialog
+                      open={isGalleryOpen}
+                      onOpenChange={setIsGalleryOpen}
+                      onSelectImage={(url) => {
+                          form.setFieldValue("logo", url)
+                          setIsGalleryOpen(false)
+                      }}
+                  />
 
           <form.Field
             name="is_active"
