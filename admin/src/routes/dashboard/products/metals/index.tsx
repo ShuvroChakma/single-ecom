@@ -250,6 +250,7 @@ function MetalsPage() {
             />
 
             <MetalDialog
+                key={selectedMetal?.id || 'new-metal'}
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 metal={selectedMetal}
@@ -284,6 +285,7 @@ function MetalsPage() {
 
             {/* Purity Dialog */}
             <PurityDialog
+                key={selectedPurity?.id || `new-purity-${defaultMetalId}`}
                 open={isPurityDialogOpen}
                 onOpenChange={setIsPurityDialogOpen}
                 purity={selectedPurity}
