@@ -2,6 +2,7 @@
  * Orders API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
 
 export type OrderStatus = 
@@ -23,9 +24,14 @@ export interface OrderItem {
   product_name: string;
   variant_sku: string;
   product_image: string | null;
+  metal_type: string | null;
+  metal_purity: string | null;
+  metal_color: string | null;
+  size: string | null;
   quantity: number;
   unit_price: number;
   line_total: number;
+  net_weight: number | null;
 }
 
 export interface Order {
@@ -37,14 +43,20 @@ export interface Order {
   pos_customer_phone: string | null;
   shipping_address: Record<string, any>;
   is_gift: boolean;
+  gift_message: string | null;
+  hide_prices: boolean;
   subtotal: number;
   discount_amount: number;
   delivery_charge: number;
+  tax_amount: number;
   total: number;
+  currency: string;
   promo_code: string | null;
   payment_method: string;
   payment_status: PaymentStatus;
+  paid_at: string | null;
   status: OrderStatus;
+  customer_notes: string | null;
   items: OrderItem[];
   created_at: string;
   confirmed_at: string | null;
@@ -62,49 +74,76 @@ export interface OrderListItem {
   created_at: string;
 }
 
-export const getOrders = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string; status?: string; limit?: number; offset?: number } }) => {
-    const query = new URLSearchParams();
-    if (data.status) query.set("status", data.status);
-    if (data.limit) query.set("limit", data.limit.toString());
-    if (data.offset) query.set("offset", data.offset.toString());
+export interface OrderListParams {
+  status?: OrderStatus;
+  limit?: number;
+  offset?: number;
+}
+
+export interface UpdateOrderStatusPayload {
+  status: OrderStatus;
+  notes?: string;
+}
+
+// Admin: List all orders
+export const getOrders = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: OrderListParams }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    const params = new URLSearchParams();
+    if (data.status) params.append("status", data.status);
+    if (data.limit !== undefined) params.append("limit", data.limit.toString());
+    if (data.offset !== undefined) params.append("offset", data.offset.toString());
 
     return apiRequest<ApiResponse<OrderListItem[]>>(
-      `/orders/admin/all?${query.toString()}`,
+      `/orders/admin/all?${params.toString()}`,
       {},
-      data.token
+      token
     );
   });
 
-export const getOrder = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
+// Admin: Get single order
+export const getOrder = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<Order>>(
       `/orders/admin/${data.id}`,
       {},
-      data.token
+      token
     );
   });
 
-export const updateOrderStatus = createServerFn({ method: "PATCH" })
-  .handler(async ({ data }: { data: { id: string; status: OrderStatus; notes?: string; token: string } }) => {
+// Admin: Update order status
+export const updateOrderStatus = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string; payload: UpdateOrderStatusPayload } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<Order>>(
       `/orders/admin/${data.id}/status`,
       {
-        method: "PATCH",
-        body: JSON.stringify({ status: data.status, notes: data.notes }),
+        method: "PUT",
+        body: JSON.stringify(data.payload),
       },
-      data.token
+      token
     );
   });
 
+// Admin: Create POS order
 export const createPosOrder = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { order: any; token: string } }) => {
+  .handler(async ({ data }: { data: { order: any } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<Order>>(
       "/admin/pos/orders",
       {
         method: "POST",
         body: JSON.stringify(data.order),
       },
-      data.token
+      token
     );
   });

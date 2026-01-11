@@ -68,6 +68,10 @@ const data = {
           title: "Metals",
           url: "/dashboard/products/metals",
         },
+        {
+          title: "Rates",
+          url: "/dashboard/products/rates",
+        },
       ],
     },
     {
@@ -92,7 +96,7 @@ const data = {
       items: [
         {
           title: "All Customers",
-          url: "/dashboard/customers",
+          url: "/dashboard/users/customers",
         },
       ],
     },
@@ -144,7 +148,7 @@ const data = {
         },
         {
           title: "Admins",
-          url: "/dashboard/admins",
+          url: "/dashboard/users/admins",
         },
       ],
     },

@@ -1,61 +1,56 @@
 /**
- * Customers API Server Functions
+ * Admins API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
 
-export interface Customer {
+export interface Admin {
   id: string;
   user_id: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  phone_number: string | null;
+  username: string;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface CustomerPayload {
+export interface AdminPayload {
   email: string;
   password: string;
-  first_name: string;
-  last_name: string;
-  phone_number?: string;
+  username: string;
+  role_id?: string;
 }
 
-export interface CustomerUpdatePayload {
+export interface AdminUpdatePayload {
   email?: string;
-  first_name?: string;
-  last_name?: string;
-  phone_number?: string;
+  username?: string;
   password?: string;
   is_active?: boolean;
 }
 
-export interface PaginatedCustomers {
-  items: Customer[];
+export interface PaginatedAdmins {
+  items: Admin[];
   total: number;
   page: number;
   per_page: number;
 }
 
-export interface CustomerListParams {
+export interface AdminListParams {
   skip?: number;
   limit?: number;
   q?: string;
   sort?: string;
   order?: string;
+  username?: string;
   email?: string;
-  first_name?: string;
   is_active?: boolean;
 }
 
-// Admin: List customers with pagination
-export const getCustomers = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: CustomerListParams }) => {
+// Admin: List admins with pagination
+export const getAdmins = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: AdminListParams }) => {
     const token = getCookie("access_token");
     if (!token) throw new Error("Not authenticated");
 
@@ -65,38 +60,38 @@ export const getCustomers = createServerFn({ method: "POST" })
     if (data.q) params.append("q", data.q);
     if (data.sort) params.append("sort", data.sort);
     if (data.order) params.append("order", data.order);
+    if (data.username) params.append("username", data.username);
     if (data.email) params.append("email", data.email);
-    if (data.first_name) params.append("first_name", data.first_name);
     if (data.is_active !== undefined) params.append("is_active", data.is_active.toString());
 
-    return apiRequest<ApiResponse<PaginatedCustomers>>(
-      `/customers?${params.toString()}`,
+    return apiRequest<ApiResponse<PaginatedAdmins>>(
+      `/admins?${params.toString()}`,
       {},
       token
     );
   });
 
-// Admin: Get single customer
-export const getCustomer = createServerFn({ method: "POST" })
+// Admin: Get single admin
+export const getAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { id: string } }) => {
     const token = getCookie("access_token");
     if (!token) throw new Error("Not authenticated");
 
-    return apiRequest<ApiResponse<Customer>>(
-      `/customers/${data.id}`,
+    return apiRequest<ApiResponse<Admin>>(
+      `/admins/${data.id}`,
       {},
       token
     );
   });
 
-// Admin: Create customer
-export const createCustomer = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: CustomerPayload }) => {
+// Admin: Create admin
+export const createAdmin = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: AdminPayload }) => {
     const token = getCookie("access_token");
     if (!token) throw new Error("Not authenticated");
 
-    return apiRequest<ApiResponse<Customer>>(
-      "/customers",
+    return apiRequest<ApiResponse<Admin>>(
+      "/admins",
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -105,32 +100,32 @@ export const createCustomer = createServerFn({ method: "POST" })
     );
   });
 
-// Admin: Update customer
-export const updateCustomer = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { customer: CustomerUpdatePayload; id: string } }) => {
+// Admin: Update admin
+export const updateAdmin = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { admin: AdminUpdatePayload; id: string } }) => {
     const token = getCookie("access_token");
     if (!token) throw new Error("Not authenticated");
 
-    const { id, customer } = data;
+    const { id, admin } = data;
 
-    return apiRequest<ApiResponse<Customer>>(
-      `/customers/${id}`,
+    return apiRequest<ApiResponse<Admin>>(
+      `/admins/${id}`,
       {
         method: "PUT",
-        body: JSON.stringify(customer),
+        body: JSON.stringify(admin),
       },
       token
     );
   });
 
-// Admin: Delete customer
-export const deleteCustomer = createServerFn({ method: "POST" })
+// Admin: Delete admin
+export const deleteAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { id: string } }) => {
     const token = getCookie("access_token");
     if (!token) throw new Error("Not authenticated");
 
     return apiRequest<ApiResponse<null>>(
-      `/customers/${data.id}`,
+      `/admins/${data.id}`,
       { method: "DELETE" },
       token
     );
