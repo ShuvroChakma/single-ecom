@@ -1,6 +1,14 @@
 import { Metal, Purity, PurityPayload, createPurity, updatePurity } from "@/api/metals"
 import { Button } from "@/components/ui/button"
 import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox"
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -10,13 +18,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -143,27 +144,34 @@ export function PurityDialog({ open, onOpenChange, purity, metals, defaultMetalI
               onChange: ({ value }) =>
                 !value ? "Metal is required" : undefined,
             }}
-            children={(field) => (
-              <div className="space-y-2">
-                <Label>Metal *</Label>
-                <Select
-                  value={field.state.value}
-                  onValueChange={field.handleChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a metal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {metals.map((metal) => (
-                      <SelectItem key={metal.id} value={metal.id}>
-                        {metal.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldInfo field={field} />
-              </div>
-            )}
+            children={(field) => {
+              const selectedMetal = metals.find(m => m.id === field.state.value)
+              return (
+                <div className="space-y-2">
+                  <Label>Metal *</Label>
+                  <Combobox
+                    value={field.state.value}
+                    onValueChange={(val) => field.handleChange(val as string)}
+                  >
+                    <ComboboxInput
+                      placeholder={selectedMetal?.name || "Search metals..."}
+                      className="w-full"
+                    />
+                    <ComboboxContent>
+                      <ComboboxList>
+                        {metals.map((metal) => (
+                          <ComboboxItem key={metal.id} value={metal.id}>
+                            {metal.name} ({metal.code})
+                          </ComboboxItem>
+                        ))}
+                      </ComboboxList>
+                      <ComboboxEmpty>No metals found</ComboboxEmpty>
+                    </ComboboxContent>
+                  </Combobox>
+                  <FieldInfo field={field} />
+                </div>
+              )
+            }}
           />
 
           <form.Field
