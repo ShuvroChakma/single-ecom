@@ -1,4 +1,5 @@
 import { Metal, Purity, PurityPayload, createPurity, updatePurity } from "@/api/metals"
+import { AsyncCombobox } from "@/components/ui/async-combobox"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,13 +11,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -144,27 +138,21 @@ export function PurityDialog({ open, onOpenChange, purity, metals, defaultMetalI
                 !value ? "Metal is required" : undefined,
             }}
             children={(field) => {
-              const selectedMetal = metals.find(m => m.id === field.state.value)
+              const metalOptions = metals.map(m => ({
+                value: m.id,
+                label: `${m.name} (${m.code})`
+              }))
               return (
                 <div className="space-y-2">
                   <Label>Metal *</Label>
-                  <Select
+                  <AsyncCombobox
                     value={field.state.value}
                     onValueChange={field.handleChange}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a metal">
-                        {selectedMetal ? `${selectedMetal.name} (${selectedMetal.code})` : "Select a metal"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {metals.map((metal) => (
-                        <SelectItem key={metal.id} value={metal.id}>
-                          {metal.name} ({metal.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={metalOptions}
+                    placeholder="Select a metal"
+                    searchPlaceholder="Search metals..."
+                    emptyText="No metals found"
+                  />
                   <FieldInfo field={field} />
                 </div>
               )
