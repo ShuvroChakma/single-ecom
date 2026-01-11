@@ -1,6 +1,7 @@
-import { Metal, Purity, deleteMetal, getMetals } from "@/api/metals"
+import { Metal, Purity, deleteMetal, deletePurity, getMetals } from "@/api/metals"
 import { DataTable } from "@/components/shared/data-table"
 import { MetalDialog } from "@/components/shared/metal-dialog"
+import { PurityDialog } from "@/components/shared/purity-dialog"
 import {
     AlertDialog,
     AlertDialogAction,
