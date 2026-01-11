@@ -49,6 +49,20 @@ async def list_metals(
     )
 
 
+@router.get("/metals/search", response_model=SuccessResponse[List[MetalResponse]])
+async def search_metals(
+    q: str = "",
+    limit: int = 20,
+    service: MetalService = Depends(get_metal_service)
+):
+    """Search metals by name or code (public)."""
+    metals = await service.search_metals(query=q, limit=limit)
+    return create_success_response(
+        message="Metals search completed",
+        data=[MetalResponse.model_validate(m) for m in metals]
+    )
+
+
 @router.get("/metals/{metal_id}", response_model=SuccessResponse[MetalWithPuritiesResponse])
 async def get_metal(
     metal_id: UUID,

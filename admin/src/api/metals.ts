@@ -51,6 +51,26 @@ export const getMetals = createServerFn({ method: "GET" })
     );
   });
 
+// Public: Search metals by name/code
+export interface MetalSearchResult {
+    id: string;
+    name: string;
+    code: string;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export const searchMetals = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
+        const params = new URLSearchParams();
+        if (data.query) params.append("q", data.query);
+        if (data.limit) params.append("limit", data.limit.toString());
+
+        return apiRequest<ApiResponse<MetalSearchResult[]>>(
+            `/products/metals/search?${params.toString()}`
+        );
+    });
+
 // Admin: Get single metal
 export const getMetal = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: { id: string } }) => {

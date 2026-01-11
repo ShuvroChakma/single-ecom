@@ -45,6 +45,7 @@ function MetalsPage() {
     const [isPurityDialogOpen, setIsPurityDialogOpen] = useState(false)
     const [purityToDelete, setPurityToDelete] = useState<Purity | null>(null)
     const [defaultMetalId, setDefaultMetalId] = useState<string | undefined>()
+    const [initialMetalLabel, setInitialMetalLabel] = useState<string | undefined>()
 
     const { data, isLoading } = useQuery({
         queryKey: ['metals'],
@@ -96,15 +97,17 @@ function MetalsPage() {
         },
     })
 
-    const handleAddPurity = (metalId: string) => {
+    const handleAddPurity = (metal: Metal) => {
         setSelectedPurity(undefined)
-        setDefaultMetalId(metalId)
+        setDefaultMetalId(metal.id)
+        setInitialMetalLabel(`${metal.name} (${metal.code})`)
         setIsPurityDialogOpen(true)
     }
 
-    const handleEditPurity = (purity: Purity, metalId: string) => {
-        setSelectedPurity({ ...purity, metal_id: metalId })
-        setDefaultMetalId(metalId)
+    const handleEditPurity = (purity: Purity, metal: Metal) => {
+        setSelectedPurity({ ...purity, metal_id: metal.id })
+        setDefaultMetalId(metal.id)
+        setInitialMetalLabel(`${metal.name} (${metal.code})`)
         setIsPurityDialogOpen(true)
     }
 
@@ -150,7 +153,7 @@ function MetalsPage() {
                                         key={p.id}
                                         variant="outline"
                                         className="text-xs cursor-pointer hover:bg-muted"
-                                        onClick={() => handleEditPurity(p, metal.id)}
+                                        onClick={() => handleEditPurity(p, metal)}
                                     >
                                         {p.name} ({(p.fineness * 100).toFixed(1)}%)
                                     </Badge>
@@ -163,7 +166,7 @@ function MetalsPage() {
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0"
-                            onClick={() => handleAddPurity(metal.id)}
+                            onClick={() => handleAddPurity(metal)}
                         >
                             <Plus className="h-3 w-3" />
                         </Button>
@@ -289,8 +292,8 @@ function MetalsPage() {
                 open={isPurityDialogOpen}
                 onOpenChange={setIsPurityDialogOpen}
                 purity={selectedPurity}
-                metals={metals}
                 defaultMetalId={defaultMetalId}
+                initialMetalLabel={initialMetalLabel}
             />
 
             {/* Purity Delete Confirmation */}

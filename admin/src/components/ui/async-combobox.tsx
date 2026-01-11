@@ -33,10 +33,10 @@ function useDebounce<T>(value: T, delay: number): T {
             setDebouncedValue(value)
         }, delay)
 
-        return () => {
-            clearTimeout(handler)
-        }
-    }, [value, delay])
+      return () => {
+          clearTimeout(handler)
+      }
+  }, [value, delay])
 
     return debouncedValue
 }
@@ -44,10 +44,8 @@ function useDebounce<T>(value: T, delay: number): T {
 interface AsyncComboboxProps {
   value?: string
   onValueChange: (value: string) => void
-    // For static options (client-side filtering)
-    options?: AsyncComboboxOption[]
-    // For async options (server-side fetching)
-    fetchOptions?: (query: string) => Promise<AsyncComboboxOption[]>
+    // Async function to fetch options from server
+    fetchOptions: (query: string) => Promise<AsyncComboboxOption[]>
     // Debounce delay in ms (default 300ms)
     debounceMs?: number
   placeholder?: string
@@ -55,12 +53,13 @@ interface AsyncComboboxProps {
     emptyText?: string
   disabled?: boolean
   className?: string
+    // Optional: provide initial selected option to display label before fetch
+    initialOption?: AsyncComboboxOption
 }
 
 export function AsyncCombobox({
   value,
-  onValueChange,
-    options: staticOptions,
+    onValueChange,
     fetchOptions,
     debounceMs = 300,
   placeholder = "Select option...",
@@ -68,80 +67,79 @@ export function AsyncCombobox({
     emptyText = "No results found.",
   disabled = false,
   className,
+    initialOption,
 }: AsyncComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
-    const [asyncOptions, setAsyncOptions] = React.useState<AsyncComboboxOption[]>([])
+    const [options, setOptions] = React.useState<AsyncComboboxOption[]>([])
     const [isLoading, setIsLoading] = React.useState(false)
-    const [hasSearched, setHasSearched] = React.useState(false)
+    const [hasInitialLoad, setHasInitialLoad] = React.useState(false)
+    const [selectedLabel, setSelectedLabel] = React.useState<string | null>(
+        initialOption?.label || null
+    )
 
     // Debounce the search query
     const debouncedQuery = useDebounce(searchQuery, debounceMs)
 
-    // Determine which options to use
-    const options = fetchOptions ? asyncOptions : staticOptions || []
-
-    // Find selected option from both static and async options
+    // Find selected option from current options
     const selectedOption = React.useMemo(() => {
-        // First check current options
-        const found = options.find((option) => option.value === value)
-        if (found) return found
-        // If using static options and value exists, it might just not be filtered in
-        if (staticOptions && value) {
-            return staticOptions.find((option) => option.value === value)
-        }
-        return null
-    }, [options, staticOptions, value])
+      if (!value) return null
+      const found = options.find((option) => option.value === value)
+      if (found) {
+          return found
+      }
+      // Return a temporary option with the stored label
+      if (selectedLabel) {
+          return { value, label: selectedLabel }
+      }
+      return null
+  }, [options, value, selectedLabel])
 
-    // Client-side filtering for static options
-  const filteredOptions = React.useMemo(() => {
-      if (fetchOptions) return asyncOptions // Server already filtered
-      if (!searchQuery) return staticOptions || []
-    const query = searchQuery.toLowerCase()
-      return (staticOptions || []).filter((option) =>
-      option.label.toLowerCase().includes(query)
-    )
-  }, [staticOptions, asyncOptions, fetchOptions, searchQuery])
-
-    // Fetch options when debounced query changes (async mode only)
+    // Fetch options when debounced query changes
     React.useEffect(() => {
-        if (!fetchOptions) return
+      if (!open) return
 
-        const fetchData = async () => {
-            setIsLoading(true)
-            setHasSearched(true)
-            try {
-                const results = await fetchOptions(debouncedQuery)
-                setAsyncOptions(results)
+      const fetchData = async () => {
+          setIsLoading(true)
+        try {
+            const results = await fetchOptions(debouncedQuery)
+          setOptions(results)
+      } catch (error) {
+          console.error("Error fetching options:", error)
+            setOptions([])
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+      fetchData()
+  }, [debouncedQuery, fetchOptions, open])
+
+    // Initial load when opening
+    React.useEffect(() => {
+      if (open && !hasInitialLoad) {
+          const fetchInitial = async () => {
+              setIsLoading(true)
+              try {
+                  const results = await fetchOptions("")
+                setOptions(results)
+                setHasInitialLoad(true)
             } catch (error) {
-                console.error("Error fetching options:", error)
-                setAsyncOptions([])
+                console.error("Error fetching initial options:", error)
             } finally {
                 setIsLoading(false)
             }
         }
+        fetchInitial()
+    }
+  }, [open, fetchOptions, hasInitialLoad])
 
-        fetchData()
-    }, [debouncedQuery, fetchOptions])
-
-    // Initial load for async mode when opening
-    React.useEffect(() => {
-        if (fetchOptions && open && !hasSearched) {
-            const fetchInitial = async () => {
-                setIsLoading(true)
-                try {
-                    const results = await fetchOptions("")
-                    setAsyncOptions(results)
-                    setHasSearched(true)
-                } catch (error) {
-                    console.error("Error fetching initial options:", error)
-                } finally {
-                    setIsLoading(false)
-                }
-            }
-            fetchInitial()
-        }
-    }, [open, fetchOptions, hasSearched])
+    const handleSelect = (option: AsyncComboboxOption) => {
+        onValueChange(option.value)
+        setSelectedLabel(option.label)
+        setOpen(false)
+        setSearchQuery("")
+    }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -174,30 +172,26 @@ export function AsyncCombobox({
                               <Loader2 className="h-4 w-4 animate-spin mr-2" />
                               <span className="text-sm text-muted-foreground">Loading...</span>
                           </div>
-                      ) : filteredOptions.length === 0 ? (
-                              <CommandEmpty>{emptyText}</CommandEmpty>
-                          ) : (
-                                  <CommandGroup>
-                                      {filteredOptions.map((option) => (
+                      ) : options.length === 0 ? (
+                          <CommandEmpty>{emptyText}</CommandEmpty>
+                      ) : (
+                          <CommandGroup>
+                                      {options.map((option) => (
                                           <CommandItem
                                               key={option.value}
                                               value={option.value}
-                                              onSelect={() => {
-                                                  onValueChange(option.value)
-                                                  setOpen(false)
-                                                  setSearchQuery("")
-                                              }}
-                                          >
-                                              <Check
-                                                  className={cn(
-                                                      "mr-2 h-4 w-4",
-                                                      value === option.value ? "opacity-100" : "opacity-0"
-                                                  )}
-                                              />
-                                              {option.label}
-                                          </CommandItem>
-                                      ))}
-                                  </CommandGroup>
+                        onSelect={() => handleSelect(option)}
+                    >
+                        <Check
+                            className={cn(
+                                "mr-2 h-4 w-4",
+                                value === option.value ? "opacity-100" : "opacity-0"
+                            )}
+                        />
+                        {option.label}
+                    </CommandItem>
+                ))}
+                          </CommandGroup>
                       )}
           </CommandList>
         </Command>

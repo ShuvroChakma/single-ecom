@@ -1,4 +1,4 @@
-import { Metal, Purity, PurityPayload, createPurity, updatePurity } from "@/api/metals"
+import { Purity, PurityPayload, createPurity, searchMetals, updatePurity } from "@/api/metals"
 import { AsyncCombobox } from "@/components/ui/async-combobox"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,8 +22,9 @@ interface PurityDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   purity?: Purity & { metal_id?: string }
-  metals: Metal[]
   defaultMetalId?: string
+  // Optional initial metal for display when editing
+  initialMetalLabel?: string
 }
 
 function FieldInfo({ field }: { field: any }) {
@@ -32,7 +33,7 @@ function FieldInfo({ field }: { field: any }) {
   ) : null
 }
 
-export function PurityDialog({ open, onOpenChange, purity, metals, defaultMetalId }: PurityDialogProps) {
+export function PurityDialog({ open, onOpenChange, purity, defaultMetalId, initialMetalLabel }: PurityDialogProps) {
   const queryClient = useQueryClient()
   const isEditing = !!purity
 
@@ -138,20 +139,34 @@ export function PurityDialog({ open, onOpenChange, purity, metals, defaultMetalI
                 !value ? "Metal is required" : undefined,
             }}
             children={(field) => {
-              const metalOptions = metals.map(m => ({
-                value: m.id,
-                label: `${m.name} (${m.code})`
-              }))
+              // Async fetch function for metals
+              const fetchMetalOptions = async (query: string) => {
+                try {
+                  const result = await searchMetals({ data: { query, limit: 20 } })
+                  if (result.success) {
+                    return result.data.map(m => ({
+                      value: m.id,
+                      label: `${m.name} (${m.code})`
+                    }))
+                  }
+                  return []
+                } catch (error) {
+                  console.error("Error fetching metals:", error)
+                  return []
+                }
+              }
+
               return (
                 <div className="space-y-2">
                   <Label>Metal *</Label>
                   <AsyncCombobox
                     value={field.state.value}
                     onValueChange={field.handleChange}
-                    options={metalOptions}
+                    fetchOptions={fetchMetalOptions}
                     placeholder="Select a metal"
                     searchPlaceholder="Search metals..."
                     emptyText="No metals found"
+                    initialOption={initialMetalLabel ? { value: field.state.value, label: initialMetalLabel } : undefined}
                   />
                   <FieldInfo field={field} />
                 </div>
