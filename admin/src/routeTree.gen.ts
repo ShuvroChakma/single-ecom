@@ -27,6 +27,7 @@ import { Route as DashboardProductsMetalsIndexRouteImport } from './routes/dashb
 import { Route as DashboardProductsCategoriesIndexRouteImport } from './routes/dashboard/products/categories/index'
 import { Route as DashboardProductsBrandsIndexRouteImport } from './routes/dashboard/products/brands/index'
 import { Route as DashboardMarketingSlidesIndexRouteImport } from './routes/dashboard/marketing/slides/index'
+import { Route as DashboardCatalogAttributesIndexRouteImport } from './routes/dashboard/catalog/attributes/index'
 
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
@@ -130,6 +131,12 @@ const DashboardMarketingSlidesIndexRoute =
     path: '/marketing/slides/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardCatalogAttributesIndexRoute =
+  DashboardCatalogAttributesIndexRouteImport.update({
+    id: '/catalog/attributes/',
+    path: '/catalog/attributes/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
   '/dashboard/orders': typeof DashboardOrdersIndexRoute
   '/dashboard/roles': typeof DashboardRolesIndexRoute
+  '/dashboard/catalog/attributes': typeof DashboardCatalogAttributesIndexRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
   '/dashboard/orders': typeof DashboardOrdersIndexRoute
   '/dashboard/roles': typeof DashboardRolesIndexRoute
+  '/dashboard/catalog/attributes': typeof DashboardCatalogAttributesIndexRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
   '/dashboard/orders/': typeof DashboardOrdersIndexRoute
   '/dashboard/roles/': typeof DashboardRolesIndexRoute
+  '/dashboard/catalog/attributes/': typeof DashboardCatalogAttributesIndexRoute
   '/dashboard/marketing/slides/': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/brands/': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories/': typeof DashboardProductsCategoriesIndexRoute
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/general'
     | '/dashboard/orders'
     | '/dashboard/roles'
+    | '/dashboard/catalog/attributes'
     | '/dashboard/marketing/slides'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/general'
     | '/dashboard/orders'
     | '/dashboard/roles'
+    | '/dashboard/catalog/attributes'
     | '/dashboard/marketing/slides'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
@@ -244,6 +256,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/general'
     | '/dashboard/orders/'
     | '/dashboard/roles/'
+    | '/dashboard/catalog/attributes/'
     | '/dashboard/marketing/slides/'
     | '/dashboard/products/brands/'
     | '/dashboard/products/categories/'
@@ -386,6 +399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMarketingSlidesIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/catalog/attributes/': {
+      id: '/dashboard/catalog/attributes/'
+      path: '/catalog/attributes'
+      fullPath: '/dashboard/catalog/attributes'
+      preLoaderRoute: typeof DashboardCatalogAttributesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
@@ -399,6 +419,7 @@ interface DashboardRouteRouteChildren {
   DashboardSettingsGeneralRoute: typeof DashboardSettingsGeneralRoute
   DashboardOrdersIndexRoute: typeof DashboardOrdersIndexRoute
   DashboardRolesIndexRoute: typeof DashboardRolesIndexRoute
+  DashboardCatalogAttributesIndexRoute: typeof DashboardCatalogAttributesIndexRoute
   DashboardMarketingSlidesIndexRoute: typeof DashboardMarketingSlidesIndexRoute
   DashboardProductsBrandsIndexRoute: typeof DashboardProductsBrandsIndexRoute
   DashboardProductsCategoriesIndexRoute: typeof DashboardProductsCategoriesIndexRoute
@@ -418,6 +439,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardSettingsGeneralRoute: DashboardSettingsGeneralRoute,
   DashboardOrdersIndexRoute: DashboardOrdersIndexRoute,
   DashboardRolesIndexRoute: DashboardRolesIndexRoute,
+  DashboardCatalogAttributesIndexRoute: DashboardCatalogAttributesIndexRoute,
   DashboardMarketingSlidesIndexRoute: DashboardMarketingSlidesIndexRoute,
   DashboardProductsBrandsIndexRoute: DashboardProductsBrandsIndexRoute,
   DashboardProductsCategoriesIndexRoute: DashboardProductsCategoriesIndexRoute,

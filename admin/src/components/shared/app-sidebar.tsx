@@ -62,7 +62,7 @@ const data = {
         },
         {
           title: "Attributes",
-          url: "/dashboard/products/attributes",
+          url: "/dashboard/catalog/attributes",
         },
         {
           title: "Metals",
