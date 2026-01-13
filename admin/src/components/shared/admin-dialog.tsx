@@ -97,13 +97,9 @@ export function AdminDialog({ open, onOpenChange, admin }: AdminDialogProps) {
   // Fetch roles for AsyncCombobox
   const fetchRoles = async (query: string) => {
     try {
-      const result = await getRoles({ data: { per_page: 50 } })
+      const result = await getRoles({ data: { per_page: 50, q: query || undefined } })
       if (result.success) {
-        // Filter roles based on query
-        const filtered = result.data.items.filter(role =>
-          role.name.toLowerCase().includes(query.toLowerCase())
-        )
-        return filtered.map(role => ({
+        return result.data.items.map(role => ({
           value: role.id,
           label: role.name,
         }))
