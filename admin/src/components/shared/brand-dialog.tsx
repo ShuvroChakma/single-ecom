@@ -2,12 +2,12 @@ import { Brand, BrandPayload, createBrand, updateBrand } from "@/api/brands"
 import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ImageIcon, Loader2 } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface BrandDialogProps {
@@ -174,18 +174,33 @@ export function BrandDialog({ open, onOpenChange, brand }: BrandDialogProps) {
 
           <form.Field
             name="logo"
-            children={(field) => (
-              <div className="space-y-2">
-                    <Label>Logo</Label>
-                    <div className="flex items-center gap-4">
-                        {field.state.value && (
-                            <img
-                                src={field.state.value.startsWith('/') ? `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${field.state.value}` : field.state.value}
-                                alt="Brand logo"
-                                className="h-16 w-16 rounded-lg object-cover border"
-                            />
-                        )}
-                        <div className="flex flex-col gap-2">
+            children={(field) => {
+              // Construct proper image URL
+              const getImageUrl = (url: string) => {
+                if (!url) return ''
+                if (url.startsWith('http://') || url.startsWith('https://')) {
+                  return url
+                }
+                // For relative paths, use the backend URL from window location
+                const backendUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || ''
+                return `${backendUrl}${url}`
+              }
+
+              return (
+                <div className="space-y-2">
+                  <Label>Logo</Label>
+                  <div className="flex items-center gap-4">
+                    {field.state.value && (
+                      <img
+                        src={getImageUrl(field.state.value)}
+                        alt="Brand logo"
+                        className="h-16 w-16 rounded-lg object-cover border"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    )}
+                    <div className="flex flex-col gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -205,16 +220,17 @@ export function BrandDialog({ open, onOpenChange, brand }: BrandDialogProps) {
                                     Remove
                                 </Button>
                             )}
-                        </div>
                     </div>
-              </div>
-            )}
+                  </div>
+                </div>
+              )
+            }}
           />
 
                   <ImageGalleryDialog
                       open={isGalleryOpen}
                       onOpenChange={setIsGalleryOpen}
-                      onSelectImage={(url) => {
+            onSelect={(url) => {
                           form.setFieldValue("logo", url)
                           setIsGalleryOpen(false)
                       }}
