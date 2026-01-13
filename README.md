@@ -36,7 +36,8 @@ A full-stack e-commerce application built with FastAPI (Backend), TanStack Start
 3. **Access the application**
    - Backend API: http://localhost:8000
    - API Docs: http://localhost:8000/docs
-   - Frontend: http://localhost:3000
+   - Customer Frontend: http://localhost:3000
+   - Admin Panel: http://localhost:3001
    - Redis: localhost:6379
 
 4. **Run Migrations & Seeds**
@@ -72,9 +73,13 @@ single-ecom/
 │   ├── tests/           # Tests
 │   ├── pyproject.toml   # Python dependencies
 │   └── manage.py        # Management CLI
-├── frontend/            # TanStack Start application
-│   ├── app/             # Frontend source
+├── frontend/            # Customer frontend (TanStack Start)
+│   ├── src/             # Frontend source
 │   ├── Dockerfile       # Frontend container
+│   └── package.json     # Node dependencies
+├── admin/               # Admin panel (TanStack Start)
+│   ├── src/             # Admin source
+│   ├── Dockerfile       # Admin container
 │   └── package.json     # Node dependencies
 ├── docker-compose.yml   # Development setup
 ├── docker-compose.prod.yml # Production setup
