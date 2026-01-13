@@ -1,5 +1,5 @@
-import { searchMetals } from "@/api/metals"
-import { RatePayload, addRate } from "@/api/rates"
+import { getMetals, Metal, searchMetals } from "@/api/metals"
+import { addRate, RatePayload } from "@/api/rates"
 import { AsyncCombobox } from "@/components/ui/async-combobox"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,8 +20,9 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { useForm } from "@tanstack/react-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface RateDialogProps {
@@ -37,6 +38,17 @@ function FieldInfo({ field }: { field: any }) {
 
 export function RateDialog({ open, onOpenChange }: RateDialogProps) {
   const queryClient = useQueryClient()
+  const [selectedMetal, setSelectedMetal] = useState<Metal | null>(null)
+  const [selectedPurity, setSelectedPurity] = useState<string>("")
+
+  // Fetch all metals to get purities
+  const { data: metalsData } = useQuery({
+    queryKey: ['metals'],
+    queryFn: () => getMetals(),
+    enabled: open,
+  })
+
+  const metals = metalsData?.success ? metalsData.data : []
 
   const createMutation = useMutation({
     mutationFn: (data: RatePayload) => addRate({ data }),
@@ -53,15 +65,18 @@ export function RateDialog({ open, onOpenChange }: RateDialogProps) {
   const form = useForm({
     defaultValues: {
       metal_type: "",
-      purity: "",
       rate_per_gram: "",
       currency: "BDT",
       source: "MANUAL" as "MANUAL" | "BAJUS" | "API",
     },
     onSubmit: async ({ value }) => {
+      if (!selectedPurity) {
+        toast.error("Please select a purity")
+        return
+      }
       const payload: RatePayload = {
         metal_type: value.metal_type,
-        purity: value.purity,
+        purity: selectedPurity,
         rate_per_gram: parseFloat(value.rate_per_gram),
         currency: value.currency,
         source: value.source,
@@ -70,7 +85,25 @@ export function RateDialog({ open, onOpenChange }: RateDialogProps) {
     },
   })
 
+  // Reset when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedMetal(null)
+      setSelectedPurity("")
+      form.reset()
+    }
+  }, [open])
+
+  // When metal changes, reset purity
+  const handleMetalChange = (metalCode: string) => {
+    form.setFieldValue("metal_type", metalCode)
+    const metal = metals.find(m => m.code === metalCode)
+    setSelectedMetal(metal || null)
+    setSelectedPurity("")
+  }
+
   const isPending = createMutation.isPending
+  const purities = selectedMetal?.purities || []
 
   // Async fetch function for metals
   const fetchMetalOptions = async (query: string) => {
@@ -118,7 +151,7 @@ export function RateDialog({ open, onOpenChange }: RateDialogProps) {
                 <Label>Metal Type *</Label>
                 <AsyncCombobox
                   value={field.state.value}
-                  onValueChange={field.handleChange}
+                  onValueChange={handleMetalChange}
                   fetchOptions={fetchMetalOptions}
                   placeholder="Select metal type"
                   searchPlaceholder="Search metals..."
@@ -129,26 +162,36 @@ export function RateDialog({ open, onOpenChange }: RateDialogProps) {
             )}
           />
 
-          <form.Field
-            name="purity"
-            validators={{
-              onChange: ({ value }) =>
-                !value ? "Purity is required" : undefined,
-            }}
-            children={(field) => (
-              <div className="space-y-2">
-                <Label htmlFor="purity">Purity Code *</Label>
-                <Input
-                  id="purity"
-                  placeholder="e.g., 22K, 24K, 18K"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
-                />
-                <FieldInfo field={field} />
-              </div>
+          <div className="space-y-2">
+            <Label>Purity *</Label>
+            <Select
+              value={selectedPurity}
+              onValueChange={setSelectedPurity}
+              disabled={!selectedMetal || purities.length === 0}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={
+                  !selectedMetal
+                    ? "Select a metal first"
+                    : purities.length === 0
+                      ? "No purities available"
+                      : "Select purity"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {purities.map((purity) => (
+                  <SelectItem key={purity.id} value={purity.code}>
+                    {purity.name} ({purity.code}) - {purity.fineness}%
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedMetal && purities.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                This metal has no purities defined. Please add purities first.
+              </p>
             )}
-          />
+          </div>
 
           <form.Field
             name="rate_per_gram"
@@ -189,7 +232,7 @@ export function RateDialog({ open, onOpenChange }: RateDialogProps) {
                     value={field.state.value}
                     onValueChange={field.handleChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent>
@@ -210,7 +253,7 @@ export function RateDialog({ open, onOpenChange }: RateDialogProps) {
                     value={field.state.value}
                     onValueChange={(val) => field.handleChange(val as "MANUAL" | "BAJUS" | "API")}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select source" />
                     </SelectTrigger>
                     <SelectContent>
@@ -233,7 +276,7 @@ export function RateDialog({ open, onOpenChange }: RateDialogProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || !selectedPurity}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Rate
             </Button>
