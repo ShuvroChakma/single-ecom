@@ -73,6 +73,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      - API_URL=http://backend:8000/api/v1
     env_file:
       - ./frontend/.env
     ports:
@@ -91,6 +93,8 @@ services:
     volumes:
       - ./admin:/app
       - /app/node_modules
+    environment:
+      - API_URL=http://backend:8000/api/v1
     env_file:
       - ./admin/.env
     ports:

@@ -70,7 +70,7 @@ export const getCustomers = createServerFn({ method: "POST" })
     if (data.is_active !== undefined) params.append("is_active", data.is_active.toString());
 
     return apiRequest<ApiResponse<PaginatedCustomers>>(
-      `/customers?${params.toString()}`,
+      `/admin/customers?${params.toString()}`,
       {},
       token
     );
@@ -83,7 +83,7 @@ export const getCustomer = createServerFn({ method: "POST" })
     if (!token) throw new Error("Not authenticated");
 
     return apiRequest<ApiResponse<Customer>>(
-      `/customers/${data.id}`,
+      `/admin/customers/${data.id}`,
       {},
       token
     );
@@ -96,7 +96,7 @@ export const createCustomer = createServerFn({ method: "POST" })
     if (!token) throw new Error("Not authenticated");
 
     return apiRequest<ApiResponse<Customer>>(
-      "/customers",
+      "/admin/customers",
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -114,7 +114,7 @@ export const updateCustomer = createServerFn({ method: "POST" })
     const { id, customer } = data;
 
     return apiRequest<ApiResponse<Customer>>(
-      `/customers/${id}`,
+      `/admin/customers/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(customer),
@@ -130,7 +130,7 @@ export const deleteCustomer = createServerFn({ method: "POST" })
     if (!token) throw new Error("Not authenticated");
 
     return apiRequest<ApiResponse<null>>(
-      `/customers/${data.id}`,
+      `/admin/customers/${data.id}`,
       { method: "DELETE" },
       token
     );

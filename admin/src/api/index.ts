@@ -38,7 +38,8 @@ export {
 
 // Customers
 export {
-    getCustomer, getCustomers, toggleCustomerActive, updateCustomer, type Customer
+    createCustomer, deleteCustomer, getCustomer, getCustomers, updateCustomer,
+    type Customer, type CustomerListParams, type CustomerPayload, type CustomerUpdatePayload, type PaginatedCustomers
 } from "./customers";
 
 // Payments
