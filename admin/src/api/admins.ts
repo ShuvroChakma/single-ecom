@@ -12,6 +12,9 @@ export interface Admin {
   username: string;
   is_active: boolean;
   is_verified: boolean;
+  is_super_admin: boolean;
+  role_id: string | null;
+  role_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +31,7 @@ export interface AdminUpdatePayload {
   username?: string;
   password?: string;
   is_active?: boolean;
+  role_id?: string;
 }
 
 export interface PaginatedAdmins {
@@ -65,7 +69,7 @@ export const getAdmins = createServerFn({ method: "POST" })
     if (data.is_active !== undefined) params.append("is_active", data.is_active.toString());
 
     return apiRequest<ApiResponse<PaginatedAdmins>>(
-      `/admins?${params.toString()}`,
+      `/admin/admins?${params.toString()}`,
       {},
       token
     );
@@ -78,7 +82,7 @@ export const getAdmin = createServerFn({ method: "POST" })
     if (!token) throw new Error("Not authenticated");
 
     return apiRequest<ApiResponse<Admin>>(
-      `/admins/${data.id}`,
+      `/admin/admins/${data.id}`,
       {},
       token
     );
@@ -91,7 +95,7 @@ export const createAdmin = createServerFn({ method: "POST" })
     if (!token) throw new Error("Not authenticated");
 
     return apiRequest<ApiResponse<Admin>>(
-      "/admins",
+      "/admin/admins",
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -109,7 +113,7 @@ export const updateAdmin = createServerFn({ method: "POST" })
     const { id, admin } = data;
 
     return apiRequest<ApiResponse<Admin>>(
-      `/admins/${id}`,
+      `/admin/admins/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(admin),
@@ -125,7 +129,7 @@ export const deleteAdmin = createServerFn({ method: "POST" })
     if (!token) throw new Error("Not authenticated");
 
     return apiRequest<ApiResponse<null>>(
-      `/admins/${data.id}`,
+      `/admin/admins/${data.id}`,
       { method: "DELETE" },
       token
     );

@@ -21,6 +21,7 @@ class AdminUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = Field(None, min_length=8)
     is_active: Optional[bool] = None
+    role_id: Optional[UUID] = None
 
 class AdminDetailResponse(BaseModel):
     """Detailed response for an Admin."""
@@ -30,6 +31,9 @@ class AdminDetailResponse(BaseModel):
     username: str
     is_active: bool
     is_verified: bool
+    is_super_admin: bool = False
+    role_id: Optional[UUID] = None
+    role_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

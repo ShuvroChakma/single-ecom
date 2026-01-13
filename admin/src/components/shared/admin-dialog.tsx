@@ -1,12 +1,14 @@
 import { Admin, AdminPayload, AdminUpdatePayload, createAdmin, updateAdmin } from "@/api/admins"
+import { getRoles } from "@/api/roles"
+import { AsyncCombobox } from "@/components/ui/async-combobox"
 import { Button } from "@/components/ui/button"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +16,7 @@ import { Switch } from "@/components/ui/switch"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface AdminDialogProps {
@@ -32,6 +34,9 @@ function FieldInfo({ field }: { field: any }) {
 export function AdminDialog({ open, onOpenChange, admin }: AdminDialogProps) {
   const queryClient = useQueryClient()
   const isEditing = !!admin
+
+  // Track selected role for AsyncCombobox
+  const [selectedRoleId, setSelectedRoleId] = useState<string | undefined>(admin?.role_id || undefined)
 
   const createMutation = useMutation({
     mutationFn: (data: AdminPayload) => createAdmin({ data }),
@@ -71,6 +76,7 @@ export function AdminDialog({ open, onOpenChange, admin }: AdminDialogProps) {
           email: value.email,
           username: value.username,
           is_active: value.is_active,
+          role_id: selectedRoleId || undefined,
         }
         if (value.password) {
           updateData.password = value.password
@@ -81,11 +87,33 @@ export function AdminDialog({ open, onOpenChange, admin }: AdminDialogProps) {
           email: value.email,
           username: value.username,
           password: value.password,
+          role_id: selectedRoleId || undefined,
         }
         await createMutation.mutateAsync(createData)
       }
     },
   })
+
+  // Fetch roles for AsyncCombobox
+  const fetchRoles = async (query: string) => {
+    try {
+      const result = await getRoles({ data: { per_page: 50 } })
+      if (result.success) {
+        // Filter roles based on query
+        const filtered = result.data.items.filter(role =>
+          role.name.toLowerCase().includes(query.toLowerCase())
+        )
+        return filtered.map(role => ({
+          value: role.id,
+          label: role.name,
+        }))
+      }
+      return []
+    } catch (error) {
+      console.error("Error fetching roles:", error)
+      return []
+    }
+  }
 
   useEffect(() => {
     if (open) {
@@ -94,10 +122,16 @@ export function AdminDialog({ open, onOpenChange, admin }: AdminDialogProps) {
       form.setFieldValue("username", admin?.username || "")
       form.setFieldValue("password", "")
       form.setFieldValue("is_active", admin?.is_active ?? true)
+      setSelectedRoleId(admin?.role_id || undefined)
     }
   }, [open, admin])
 
   const isPending = createMutation.isPending || updateMutation.isPending
+
+  // Get initial option for AsyncCombobox when editing
+  const initialRoleOption = admin?.role_id && admin?.role_name
+    ? { value: admin.role_id, label: admin.role_name }
+    : undefined
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -194,6 +228,22 @@ export function AdminDialog({ open, onOpenChange, admin }: AdminDialogProps) {
               </div>
             )}
           />
+
+          <div className="space-y-2">
+            <Label>Role</Label>
+            <AsyncCombobox
+              value={selectedRoleId}
+              onValueChange={setSelectedRoleId}
+              fetchOptions={fetchRoles}
+              placeholder="Select a role..."
+              searchPlaceholder="Search roles..."
+              emptyText="No roles found."
+              initialOption={initialRoleOption}
+            />
+            <p className="text-xs text-muted-foreground">
+              {isEditing ? "Change the admin's role" : "If not selected, admin will have default role"}
+            </p>
+          </div>
 
           {isEditing && (
             <form.Field

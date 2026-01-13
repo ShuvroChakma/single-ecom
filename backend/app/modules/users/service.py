@@ -96,6 +96,9 @@ class UserManagementService:
             username=admin.username,
             is_active=user.is_active,
             is_verified=user.is_verified,
+            is_super_admin=admin.is_super_admin,
+            role_id=admin.role_id,
+            role_name=role.name if role else None,
             created_at=user.created_at,
             updated_at=user.updated_at
         )
@@ -112,8 +115,8 @@ class UserManagementService:
         """List admins with pagination, filtering, searching and sorting."""
         from app.core.filtering import apply_filters, apply_sorting, apply_search
         
-        # Base query
-        query = select(Admin, User).join(User).where(User.deleted_at == None)
+        # Base query with Role join
+        query = select(Admin, User, Role).join(User).outerjoin(Role).where(User.deleted_at == None)
         
         # Apply filters
         if filters:
@@ -172,7 +175,7 @@ class UserManagementService:
         rows = result.all()
         
         admins = []
-        for admin, user in rows:
+        for admin, user, role in rows:
             admins.append(AdminDetailResponse(
                 id=admin.id,
                 user_id=user.id,
@@ -180,6 +183,9 @@ class UserManagementService:
                 username=admin.username,
                 is_active=user.is_active,
                 is_verified=user.is_verified,
+                is_super_admin=admin.is_super_admin,
+                role_id=admin.role_id,
+                role_name=role.name if role else None,
                 created_at=user.created_at,
                 updated_at=user.updated_at
             ))
@@ -188,7 +194,7 @@ class UserManagementService:
 
     async def get_admin(self, admin_id: UUID) -> AdminDetailResponse:
         """Get admin by ID."""
-        query = select(Admin, User).join(User).where(
+        query = select(Admin, User, Role).join(User).outerjoin(Role).where(
             (Admin.id == admin_id) & (User.deleted_at == None)
         )
         result = await self.session.execute(query)
@@ -197,7 +203,7 @@ class UserManagementService:
         if not row:
             raise NotFoundError(error_code=ErrorCode.USER_NOT_FOUND, message="Admin not found")
             
-        admin, user = row
+        admin, user, role = row
         return AdminDetailResponse(
             id=admin.id,
             user_id=user.id,
@@ -205,6 +211,9 @@ class UserManagementService:
             username=admin.username,
             is_active=user.is_active,
             is_verified=user.is_verified,
+            is_super_admin=admin.is_super_admin,
+            role_id=admin.role_id,
+            role_name=role.name if role else None,
             created_at=user.created_at,
             updated_at=user.updated_at
         )
@@ -252,6 +261,13 @@ class UserManagementService:
         admin_updates = {}
         if data.username:
             admin_updates["username"] = data.username
+        
+        # Update role if provided
+        if data.role_id:
+            role = await self.role_repo.get(data.role_id)
+            if not role:
+                raise NotFoundError(error_code=ErrorCode.ROLE_NOT_FOUND, message="Role not found")
+            admin_updates["role_id"] = data.role_id
             
         if admin_updates:
             await self.admin_repo.update(admin, admin_updates)
