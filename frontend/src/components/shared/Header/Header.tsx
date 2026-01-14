@@ -5,6 +5,7 @@ import MobileMenu from "./MobileMenu";
 import SearchBar from "./SearchBar";
 import TopBar from "./TopBar";
 import NavIcons from "./NavIcons";
+import CategoryNav from "./CategoryNav";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -112,6 +113,7 @@ const Header = () => {
             )}
           </div>
         </div>
+        <CategoryNav />
       </header>
 
       {/* Mobile Menu */}

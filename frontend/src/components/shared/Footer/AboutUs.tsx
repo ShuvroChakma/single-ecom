@@ -1,8 +1,5 @@
 import React from "react";
 
-// About Us page for a Jewellery E‑commerce Website
-// Built with React + TypeScript (TSX)
-
 interface Owner {
   name: string;
   role: string;
@@ -29,7 +26,7 @@ const AboutUs: React.FC = () => {
       </div>
 
       {/* Store Info */}
-      <div className="max-w-6xl mx-auto px-2 py-6 bg-footer">
+      <div className="max-w-6xl mx-auto px-2 py-6 ">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div>
             <h2 className="text-4xl font-semibold mb-5">Our Story</h2>
@@ -56,7 +53,7 @@ const AboutUs: React.FC = () => {
       </div>
 
       {/* Founder Section */}
-      <div className="bg-gray-50 py-20">
+      <div className="bg-footer py-20">
         <div className="max-w-6xl mx-auto px-2">
           <h2 className="text-3xl font-semibold text-center mb-8">
             Faces of Nazu Meah Jewellers
