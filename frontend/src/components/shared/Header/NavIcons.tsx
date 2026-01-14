@@ -61,7 +61,7 @@ const NavIcons = () => {
 
   return (
     <>
-      <div className="flex items-center gap-3 md:gap-10 lg:gap-12">
+      <div className="flex items-center gap-4 md:gap-10 lg:gap-12">
 
         {/* === LG+ ONLY ICONS === */}
         <div className="hidden lg:flex items-center gap-12">

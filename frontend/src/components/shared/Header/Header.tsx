@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Menu } from 'lucide-react';
-import MobileMenu from './MobileMenu';
-import SearchBar from './SearchBar';
-import TopBar from './TopBar';
-import NavIcons from './NavIcons';
-
+import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import MobileMenu from "./MobileMenu";
+import SearchBar from "./SearchBar";
+import TopBar from "./TopBar";
+import NavIcons from "./NavIcons";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -13,90 +13,108 @@ const Header = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 40);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <>
-      <header className="w-full  z-50">
-        {/* TopBar - only visible when not scrolled on md+ */}
-        <div className={`${isScrolled ? 'hidden md:hidden' : 'block'}`}>
-          <TopBar />
-        </div>
+      {/* Spacer to prevent layout jump */}
+      <div
+        className={`
+          transition-all duration-300
+          ${isScrolled ? "h-[72px] sm:h-20 md:h-[104px]" : "h-0"}
+        `}
+      />
 
-        {/* Sticky wrapper for Main Header + CategoryNav */}
-        <div className={`
-          bg-white
-          ${isMobileMenuOpen ? 'top-0 z-100 lg:relative' : ''}
-          ${isScrolled && !isMobileMenuOpen ? 'md:sticky md:top-0 md:z-100' : ''}
-        `}>
-          {/* Main Header */}
-          <div className="bg-header text-white">
-            <div className="max-w-[1920px] mx-auto px-2 md:px-2 lg:px-2">
-              <div className="flex items-center justify-between gap-4 md:gap-6 lg:gap-6 xl:gap-8 py-4 md:py-5">
-                {/* Mobile Menu */}
-                <button
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  className="lg:hidden hover:bg-white/10 rounded-md "
-                >
-                  <Menu className="w-8 h-8" />
-                </button>
+      <header
+        className={`
+          w-full left-0 right-0 z-999
+          transition-all duration-300 ease-in-out
+          ${isScrolled ? "fixed top-0 shadow-lg bg-white" : "relative"}
+        `}
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
+        {/* TopBar (hidden after scroll) */}
+        {!isScrolled && <TopBar />}
 
-                {/* Logo */}
-                <a href="/" className="flex items-center shrink-0">
-                  <img
-                    // src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
-                    src="/NazuMeah.svg"
-                    alt="Malabar Gold & Diamonds"
-                    className="h-11 md:h-13 lg:h-15 w-auto object-contain"
-                  />
-                </a>
+        {/* Main Header */}
+        <div className="bg-header text-white">
+          <div className="max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6">
+            <div className="flex items-center justify-between gap-3 py-2 sm:py-3 md:py-5">
 
-                {/* Search */}
-                <div className="hidden md:flex flex-1 max-w-3xl">
-                  <SearchBar />
-                </div>
+              {/* Mobile Menu Toggle */}
+              <button
+                onClick={() => setIsMobileMenuOpen(prev => !prev)}
+                className="lg:hidden hover:bg-white/10 rounded-md p-1"
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-7 h-7 sm:w-8 sm:h-8" />
+                ) : (
+                  <Menu className="w-7 h-7 sm:w-8 sm:h-8" />
+                )}
+              </button>
 
-                {/* Mobile Search */}
-                <button
-                  onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-                  className="md:hidden flex flex-col items-center gap-1 text-primary-foreground hover:opacity-90"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  <span className="text-xs font-medium">Search</span>
-                </button>
+              {/* Logo */}
+              <Link to="/" aria-label="Go to home" className="shrink-0">
+                <img
+                  src="/NazuMeah.svg"
+                  alt="Malabar Gold & Diamonds"
+                  className="h-9 sm:h-10 md:h-12 lg:h-14 w-auto object-contain transition-transform hover:scale-105"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </Link>
 
-                {/* Nav Icons */}
-                <NavIcons />
+              {/* Desktop Search */}
+              <div className="hidden md:flex flex-1 max-w-3xl">
+                <SearchBar />
               </div>
 
-              {isMobileSearchOpen && (
-                <div className="md:hidden pb-3">
-                  <SearchBar />
-                </div>
-              )}
+              {/* Mobile Search */}
+              <button
+                onClick={() => setIsMobileSearchOpen(prev => !prev)}
+                className="md:hidden flex flex-col items-center hover:opacity-90"
+                aria-label="Search"
+              >
+                <svg
+                  className="w-7 h-7 sm:w-8 sm:h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <span className="text-xs sm:text-sm font-medium">
+                  Search
+                </span>
+              </button>
+
+              {/* Nav Icons */}
+              <NavIcons />
             </div>
+
+            {/* Mobile Search Bar */}
+            {isMobileSearchOpen && (
+              <div className="md:hidden pb-3">
+                <SearchBar />
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* MobileMenu with higher z-index */}
+      {/* Mobile Menu */}
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}

@@ -19,54 +19,68 @@ interface FooterSection {
   isCustomerService?: boolean
 }
 
+interface SocialLink {
+  icon: typeof FaFacebookF
+  href: string
+  label: string
+}
+
 const FOOTER_SECTIONS: Array<FooterSection> = [
   {
     title: 'Get To Know Us',
     links: [
-      { label: 'About Us', href: '#' },
-      { label: 'Brides Of India', href: '#' },
-      { label: 'Our Stores', href: '#' },
-      { label: 'CSR', href: '#' },
-      { label: 'Corporate Information', href: '#' },
-      { label: 'Blog', href: '#' },
+      { label: 'About Us', href: '/footer/about' },
+      { label: 'Our Stores', href: '/stores' },
     ],
   },
   {
     title: 'Let Us Help You',
     links: [
-      { label: 'FAQ', href: '#' },
-      { label: 'Track My Order', href: '#' },
-      { label: 'Ring Size Guide', href: '#' },
-      { label: 'Bangle Size Guide', href: '#' },
-      { label: 'Site Map', href: '#' },
+      { label: 'FAQ', href: '/footer/faq' },
+      { label: 'Track My Order', href: '/footer/track-order' },
+      { label: 'Size Guide', href: '/footer/size-guide' },
     ],
   },
   {
     title: 'Policies',
     links: [
-      { label: 'Refund Policy', href: '#' },
-      { label: 'Buyback Policy', href: '#' },
-      { label: 'Exchange Policy', href: '#' },
-      { label: 'Shipping Policy', href: '#' },
-      { label: 'Cancellation Policy', href: '#' },
-      { label: 'Privacy Policy', href: '#' },
-      { label: 'Make To Order', href: '#' },
-      { label: 'Terms of Service', href: '#' },
+      { label: 'Our Policies', href: '/footer/our-policies' },
     ],
   },
   {
     title: 'Useful Links',
     links: [
-      { label: 'Build Your Custom Jewellery', href: '#' },
-      { label: 'Scheme Payment (India only)', href: '#' },
-      { label: 'Careers', href: '#' },
-      { label: 'Verify Certificate', href: '#' },
+      { label: 'Build Your Custom Jewellery', href: '/footer/custom-jewellery' },
+      { label: 'Careers', href: '' },
     ],
   },
   {
     title: 'Customer Service',
     isCustomerService: true,
   },
+]
+
+const SOCIAL_LINKS: Array<SocialLink> = [
+  {
+    icon: FaFacebookF,
+    href: 'https://facebook.com/nazumeahjewellers',
+    label: 'Facebook'
+  },
+  {
+    icon: FaXTwitter,
+    href: 'https://twitter.com/nazumeahjewellers',
+    label: 'Twitter'
+  },
+  {
+    icon: FaPinterestP,
+    href: 'https://pinterest.com/nazumeahjewellers',
+    label: 'Pinterest'
+  },
+  {
+    icon: FaInstagram,
+    href: 'https://instagram.com/nazumeahjewellers',
+    label: 'Instagram'
+  }
 ]
 
 export default function Footer() {
@@ -129,16 +143,15 @@ export default function Footer() {
                   {/* CUSTOMER SERVICE */}
                   {section.isCustomerService && (
                     <div className="space-y-2 text-sm text-header pt-3">
-                      <div className="flex gap-0">
+                      <div className="flex gap-1">
                         <Phone className="w-3 h-4 mt-0.5" />
                         <span>
-                          +912262300916{' '}
+                          +123456789{' '}
                           <span className="text-gray-600">
                             (10.00am–7.00pm)
                           </span>
                         </span>
                       </div>
-                      
 
                       <div className="flex gap-2 text-green-600">
                         <FaWhatsapp className="w-4 h-4 mt-0.5" />
@@ -150,15 +163,13 @@ export default function Footer() {
                         </span>
                       </div>
 
-                      <div className="flex gap-0">
+                      <div className="flex gap-1">
                         <Mail className="w-4 h-4 mt-0.5" />
-                        <span>care.in@malabargoldanddiamonds.com</span>
+                        <span>nazumeahjewellers.com</span>
                       </div>
 
-                      <p className="text-xs text-gray-600 leading-relaxed pt-2">
-                        Malabar Gold and Diamonds Limited
-                        <br />
-                        (formerly known as Malabar Gold Limited)
+                      <p className="text-sm text-gray-600 leading-relaxed pt-2">
+                        Nazu Meah Jewellers
                         <br />
                         Plot No 44, 45, Street Number 14,
                         <br />
@@ -175,39 +186,91 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* SOCIALS */}
+      {/* SOCIALS & PAYMENT METHODS */}
       <div className="bg-white py-4 border-t border-gray-300">
-        <div className="flex justify-center gap-3">
-          {[FaFacebookF, FaXTwitter, FaPinterestP, FaInstagram].map(
-            (Icon, i) => (
-              <a
-                key={i}
-                href="#"
-                aria-label="Social link"
-                className="
-            w-8 h-8 flex items-center justify-center
-            border border-footer text-header
-            rounded
-            transition-transform duration-200 ease-in-out
-            hover:bg-header hover:text-white hover:border-header
-            hover:scale-102
-          "
-              >
-                <Icon size={20} />
-              </a>
-            ),
-          )}
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* SOCIAL ICONS */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700 mr-2">Follow Us:</span>
+              {SOCIAL_LINKS.map((social, i) => {
+                const Icon = social.icon
+                return (
+                  <a
+                    key={i}
+                    href={social.href}
+                    aria-label={social.label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="
+                      w-8 h-8 flex items-center justify-center
+                      border border-footer text-header
+                      rounded
+                      transition-transform duration-200 ease-in-out
+                      hover:bg-header hover:text-white hover:border-header
+                      hover:scale-102
+                    "
+                  >
+                    <Icon size={20} />
+                  </a>
+                )
+              })}
+            </div>
+
+            {/* PAYMENT METHODS */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700 mr-2">We Accept:</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* bKash */}
+                <img 
+                  src="/BkashLogo.svg" 
+                  alt="bKash" 
+                  className="h-8 w-auto object-contain"
+                />
+                
+                {/* Nagad */}
+                <img 
+                  src="/NagadLogo.svg" 
+                  alt="Nagad" 
+                  className="h-8 w-auto object-contain"
+                />
+                
+                {/* Visa */}
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" 
+                  alt="Visa" 
+                  className="h-6 w-auto object-contain"
+                />
+                
+                {/* Mastercard */}
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
+                  alt="Mastercard" 
+                  className="h-8 w-auto object-contain"
+                />
+                
+                {/* American Express */}
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" 
+                  alt="American Express" 
+                  className="h-6 w-auto object-contain"
+                />
+                
+               
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* COPYRIGHT */}
-      <div className="py-8 text-center text-xs text-gray-600 border-t border-gray-300">
-        © 2025 Nazu Meah Jewellers. All Rights Reserved.
+      <div className="py-8 text-center text-xs text-gray-900 border-t border-gray-300">
+        © 2025 <span className='text-header'>Nazu Meah Jewellers.</span> All Rights Reserved.
       </div>
 
       {/* FLOATING WHATSAPP */}
       <a
-        href="https://wa.me/919167780916"
+        href="https://wa.me/"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-1 right-0.5 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg z-50"

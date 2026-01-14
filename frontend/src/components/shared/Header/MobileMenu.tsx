@@ -1,85 +1,65 @@
-import { Link } from "@tanstack/react-router";
-import { ChevronRight, X } from "lucide-react";
-import { useEffect } from "react";
+import { Link } from '@tanstack/react-router'
+import { ChevronRight } from 'lucide-react'
+import { useEffect } from 'react'
 
 interface MobileMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   // Prevent body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = 'unset'
     }
     return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const categories = [
-    { name: "Diamond", path: "/category/diamond" },
-    { name: "Gold", path: "/category/gold" },
-    { name: "Gemstone", path: "/category/gemstone" },
-    { name: "Uncut Diamond", path: "/category/uncut-diamond" },
-    { name: "Platinum", path: "/category/platinum" },
-    { name: "Gold Coins", path: "/category/gold-coins" },
-    { name: "Silver", path: "/category/silver" },
-    { name: "Watches", path: "/category/watches" },
-    { name: "Gifts", path: "/category/gifts" },
-    { name: "Jewellery", path: "/category/jewellery" },
-    { name: "Gift Cards", path: "/category/gift-cards" },
-    { name: "Gold Rate", path: "/gold-rate" },
-  ];
+    { name: 'Diamond', path: '/category/diamond' },
+    { name: 'Gold', path: '/category/gold' },
+    { name: 'Gemstone', path: '/category/gemstone' },
+    { name: 'Uncut Diamond', path: '/category/uncut-diamond' },
+    { name: 'Platinum', path: '/category/platinum' },
+    { name: 'Gold Coins', path: '/category/gold-coins' },
+    { name: 'Silver', path: '/category/silver' },
+    { name: 'Watches', path: '/category/watches' },
+    { name: 'Gifts', path: '/category/gifts' },
+    { name: 'Jewellery', path: '/category/jewellery' },
+    { name: 'Gift Cards', path: '/category/gift-cards' },
+    { name: 'Gold Rate', path: '/gold-rate' },
+  ]
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/60 transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
-      
+
       {/* Menu Panel */}
       <div className="absolute left-0 top-0 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
-        
-        {/* Header */}
-        <div className="bg-header text-white px-2 py-4 flex items-center gap-3 shrink-0 shadow-sm">
-          <button 
-            onClick={onClose}
-            className=" hover:bg-white/10 rounded-lg transition-colors"
-            aria-label="Close menu"
-          >
-            <X className="w-8 h-8" />
-          </button>
-          <div className="flex items-center gap-2.5">
-            <img
-              src="https://static.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/new_icons/logo.svg"
-              alt="Malabar Gold & Diamonds"
-              className="h-10 w-auto object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
-        </div>
-
         {/* Categories List */}
-        <div className="flex-1 bg-white overflow-y-auto">
-          <nav className="py-1">
+        <div className="flex-1  bg-white overflow-y-auto">
+          <nav className="py-10">
             {categories.map((category, index) => (
               <Link
                 key={category.name}
                 to={category.path}
                 onClick={onClose}
                 className={`flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors ${
-                  index < categories.length - 1 ? 'border-b border-gray-100' : ''
+                  index < categories.length - 1
+                    ? 'border-b border-gray-100'
+                    : ''
                 }`}
               >
                 <span className="text-[15px] text-gray-900 font-normal">
@@ -115,8 +95,8 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           <div className="text-left">
             <p className="text-xs text-gray-700 leading-relaxed">
               NEED HELP? CALL{' '}
-              <a 
-                href="tel:+912262300916" 
+              <a
+                href="tel:+912262300916"
                 className="font-semibold text-gray-900 hover:underline"
               >
                 +91 22 62300916
@@ -126,7 +106,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MobileMenu;
+export default MobileMenu

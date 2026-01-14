@@ -70,6 +70,7 @@ const SearchBar = () => {
           <Search className="w-5 h-5" />
         </button>
       </div>
+      
 
       {/* Optional: Search suggestions dropdown */}
       {isFocused && searchValue && (
