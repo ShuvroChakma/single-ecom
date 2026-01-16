@@ -11,7 +11,7 @@ class MongoDB:
 
     def connect(self):
         """Connect to MongoDB."""
-        self.client = AsyncIOMotorClient(settings.MONGO_URI)
+        self.client = AsyncIOMotorClient(settings.MONGO_URI,uuidRepresentation="standard")
         print(f"✅ Connected to MongoDB at {settings.MONGO_URI}")
         
     def close(self):
