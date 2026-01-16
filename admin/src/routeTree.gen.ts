@@ -12,12 +12,22 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardRolesIndexRouteImport } from './routes/dashboard/roles/index'
+import { Route as DashboardOrdersIndexRouteImport } from './routes/dashboard/orders/index'
 import { Route as DashboardSettingsGeneralRouteImport } from './routes/dashboard/settings/general'
 import { Route as DashboardSettingsBillingRouteImport } from './routes/dashboard/settings/billing'
 import { Route as DashboardRoleAdminRouteImport } from './routes/dashboard/role/admin'
 import { Route as DashboardProductsProductListRouteImport } from './routes/dashboard/products/productList'
 import { Route as DashboardOrdersOrderListRouteImport } from './routes/dashboard/orders/orderList'
 import { Route as DashboardCustomersCustomerListRouteImport } from './routes/dashboard/customers/customerList'
+import { Route as DashboardUsersCustomersIndexRouteImport } from './routes/dashboard/users/customers/index'
+import { Route as DashboardUsersAdminsIndexRouteImport } from './routes/dashboard/users/admins/index'
+import { Route as DashboardProductsRatesIndexRouteImport } from './routes/dashboard/products/rates/index'
+import { Route as DashboardProductsMetalsIndexRouteImport } from './routes/dashboard/products/metals/index'
+import { Route as DashboardProductsCategoriesIndexRouteImport } from './routes/dashboard/products/categories/index'
+import { Route as DashboardProductsBrandsIndexRouteImport } from './routes/dashboard/products/brands/index'
+import { Route as DashboardMarketingSlidesIndexRouteImport } from './routes/dashboard/marketing/slides/index'
+import { Route as DashboardCatalogAttributesIndexRouteImport } from './routes/dashboard/catalog/attributes/index'
 
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
@@ -32,6 +42,16 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardRolesIndexRoute = DashboardRolesIndexRouteImport.update({
+  id: '/roles/',
+  path: '/roles/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardOrdersIndexRoute = DashboardOrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardSettingsGeneralRoute =
@@ -69,6 +89,54 @@ const DashboardCustomersCustomerListRoute =
     path: '/customers/customerList',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardUsersCustomersIndexRoute =
+  DashboardUsersCustomersIndexRouteImport.update({
+    id: '/users/customers/',
+    path: '/users/customers/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardUsersAdminsIndexRoute =
+  DashboardUsersAdminsIndexRouteImport.update({
+    id: '/users/admins/',
+    path: '/users/admins/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardProductsRatesIndexRoute =
+  DashboardProductsRatesIndexRouteImport.update({
+    id: '/products/rates/',
+    path: '/products/rates/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardProductsMetalsIndexRoute =
+  DashboardProductsMetalsIndexRouteImport.update({
+    id: '/products/metals/',
+    path: '/products/metals/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardProductsCategoriesIndexRoute =
+  DashboardProductsCategoriesIndexRouteImport.update({
+    id: '/products/categories/',
+    path: '/products/categories/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardProductsBrandsIndexRoute =
+  DashboardProductsBrandsIndexRouteImport.update({
+    id: '/products/brands/',
+    path: '/products/brands/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardMarketingSlidesIndexRoute =
+  DashboardMarketingSlidesIndexRouteImport.update({
+    id: '/marketing/slides/',
+    path: '/marketing/slides/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardCatalogAttributesIndexRoute =
+  DashboardCatalogAttributesIndexRouteImport.update({
+    id: '/catalog/attributes/',
+    path: '/catalog/attributes/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,6 +148,16 @@ export interface FileRoutesByFullPath {
   '/dashboard/role/admin': typeof DashboardRoleAdminRoute
   '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
+  '/dashboard/orders': typeof DashboardOrdersIndexRoute
+  '/dashboard/roles': typeof DashboardRolesIndexRoute
+  '/dashboard/catalog/attributes': typeof DashboardCatalogAttributesIndexRoute
+  '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
+  '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
+  '/dashboard/products/rates': typeof DashboardProductsRatesIndexRoute
+  '/dashboard/users/admins': typeof DashboardUsersAdminsIndexRoute
+  '/dashboard/users/customers': typeof DashboardUsersCustomersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,6 +168,16 @@ export interface FileRoutesByTo {
   '/dashboard/role/admin': typeof DashboardRoleAdminRoute
   '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
+  '/dashboard/orders': typeof DashboardOrdersIndexRoute
+  '/dashboard/roles': typeof DashboardRolesIndexRoute
+  '/dashboard/catalog/attributes': typeof DashboardCatalogAttributesIndexRoute
+  '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
+  '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
+  '/dashboard/products/rates': typeof DashboardProductsRatesIndexRoute
+  '/dashboard/users/admins': typeof DashboardUsersAdminsIndexRoute
+  '/dashboard/users/customers': typeof DashboardUsersCustomersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,6 +190,16 @@ export interface FileRoutesById {
   '/dashboard/role/admin': typeof DashboardRoleAdminRoute
   '/dashboard/settings/billing': typeof DashboardSettingsBillingRoute
   '/dashboard/settings/general': typeof DashboardSettingsGeneralRoute
+  '/dashboard/orders/': typeof DashboardOrdersIndexRoute
+  '/dashboard/roles/': typeof DashboardRolesIndexRoute
+  '/dashboard/catalog/attributes/': typeof DashboardCatalogAttributesIndexRoute
+  '/dashboard/marketing/slides/': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/products/brands/': typeof DashboardProductsBrandsIndexRoute
+  '/dashboard/products/categories/': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/metals/': typeof DashboardProductsMetalsIndexRoute
+  '/dashboard/products/rates/': typeof DashboardProductsRatesIndexRoute
+  '/dashboard/users/admins/': typeof DashboardUsersAdminsIndexRoute
+  '/dashboard/users/customers/': typeof DashboardUsersCustomersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,6 +213,16 @@ export interface FileRouteTypes {
     | '/dashboard/role/admin'
     | '/dashboard/settings/billing'
     | '/dashboard/settings/general'
+    | '/dashboard/orders'
+    | '/dashboard/roles'
+    | '/dashboard/catalog/attributes'
+    | '/dashboard/marketing/slides'
+    | '/dashboard/products/brands'
+    | '/dashboard/products/categories'
+    | '/dashboard/products/metals'
+    | '/dashboard/products/rates'
+    | '/dashboard/users/admins'
+    | '/dashboard/users/customers'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -125,6 +233,16 @@ export interface FileRouteTypes {
     | '/dashboard/role/admin'
     | '/dashboard/settings/billing'
     | '/dashboard/settings/general'
+    | '/dashboard/orders'
+    | '/dashboard/roles'
+    | '/dashboard/catalog/attributes'
+    | '/dashboard/marketing/slides'
+    | '/dashboard/products/brands'
+    | '/dashboard/products/categories'
+    | '/dashboard/products/metals'
+    | '/dashboard/products/rates'
+    | '/dashboard/users/admins'
+    | '/dashboard/users/customers'
   id:
     | '__root__'
     | '/'
@@ -136,6 +254,16 @@ export interface FileRouteTypes {
     | '/dashboard/role/admin'
     | '/dashboard/settings/billing'
     | '/dashboard/settings/general'
+    | '/dashboard/orders/'
+    | '/dashboard/roles/'
+    | '/dashboard/catalog/attributes/'
+    | '/dashboard/marketing/slides/'
+    | '/dashboard/products/brands/'
+    | '/dashboard/products/categories/'
+    | '/dashboard/products/metals/'
+    | '/dashboard/products/rates/'
+    | '/dashboard/users/admins/'
+    | '/dashboard/users/customers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -164,6 +292,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/roles/': {
+      id: '/dashboard/roles/'
+      path: '/roles'
+      fullPath: '/dashboard/roles'
+      preLoaderRoute: typeof DashboardRolesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/orders/': {
+      id: '/dashboard/orders/'
+      path: '/orders'
+      fullPath: '/dashboard/orders'
+      preLoaderRoute: typeof DashboardOrdersIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/settings/general': {
@@ -208,6 +350,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCustomersCustomerListRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/users/customers/': {
+      id: '/dashboard/users/customers/'
+      path: '/users/customers'
+      fullPath: '/dashboard/users/customers'
+      preLoaderRoute: typeof DashboardUsersCustomersIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/users/admins/': {
+      id: '/dashboard/users/admins/'
+      path: '/users/admins'
+      fullPath: '/dashboard/users/admins'
+      preLoaderRoute: typeof DashboardUsersAdminsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/products/rates/': {
+      id: '/dashboard/products/rates/'
+      path: '/products/rates'
+      fullPath: '/dashboard/products/rates'
+      preLoaderRoute: typeof DashboardProductsRatesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/products/metals/': {
+      id: '/dashboard/products/metals/'
+      path: '/products/metals'
+      fullPath: '/dashboard/products/metals'
+      preLoaderRoute: typeof DashboardProductsMetalsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/products/categories/': {
+      id: '/dashboard/products/categories/'
+      path: '/products/categories'
+      fullPath: '/dashboard/products/categories'
+      preLoaderRoute: typeof DashboardProductsCategoriesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/products/brands/': {
+      id: '/dashboard/products/brands/'
+      path: '/products/brands'
+      fullPath: '/dashboard/products/brands'
+      preLoaderRoute: typeof DashboardProductsBrandsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/marketing/slides/': {
+      id: '/dashboard/marketing/slides/'
+      path: '/marketing/slides'
+      fullPath: '/dashboard/marketing/slides'
+      preLoaderRoute: typeof DashboardMarketingSlidesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/catalog/attributes/': {
+      id: '/dashboard/catalog/attributes/'
+      path: '/catalog/attributes'
+      fullPath: '/dashboard/catalog/attributes'
+      preLoaderRoute: typeof DashboardCatalogAttributesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
@@ -219,6 +417,16 @@ interface DashboardRouteRouteChildren {
   DashboardRoleAdminRoute: typeof DashboardRoleAdminRoute
   DashboardSettingsBillingRoute: typeof DashboardSettingsBillingRoute
   DashboardSettingsGeneralRoute: typeof DashboardSettingsGeneralRoute
+  DashboardOrdersIndexRoute: typeof DashboardOrdersIndexRoute
+  DashboardRolesIndexRoute: typeof DashboardRolesIndexRoute
+  DashboardCatalogAttributesIndexRoute: typeof DashboardCatalogAttributesIndexRoute
+  DashboardMarketingSlidesIndexRoute: typeof DashboardMarketingSlidesIndexRoute
+  DashboardProductsBrandsIndexRoute: typeof DashboardProductsBrandsIndexRoute
+  DashboardProductsCategoriesIndexRoute: typeof DashboardProductsCategoriesIndexRoute
+  DashboardProductsMetalsIndexRoute: typeof DashboardProductsMetalsIndexRoute
+  DashboardProductsRatesIndexRoute: typeof DashboardProductsRatesIndexRoute
+  DashboardUsersAdminsIndexRoute: typeof DashboardUsersAdminsIndexRoute
+  DashboardUsersCustomersIndexRoute: typeof DashboardUsersCustomersIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -229,6 +437,16 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardRoleAdminRoute: DashboardRoleAdminRoute,
   DashboardSettingsBillingRoute: DashboardSettingsBillingRoute,
   DashboardSettingsGeneralRoute: DashboardSettingsGeneralRoute,
+  DashboardOrdersIndexRoute: DashboardOrdersIndexRoute,
+  DashboardRolesIndexRoute: DashboardRolesIndexRoute,
+  DashboardCatalogAttributesIndexRoute: DashboardCatalogAttributesIndexRoute,
+  DashboardMarketingSlidesIndexRoute: DashboardMarketingSlidesIndexRoute,
+  DashboardProductsBrandsIndexRoute: DashboardProductsBrandsIndexRoute,
+  DashboardProductsCategoriesIndexRoute: DashboardProductsCategoriesIndexRoute,
+  DashboardProductsMetalsIndexRoute: DashboardProductsMetalsIndexRoute,
+  DashboardProductsRatesIndexRoute: DashboardProductsRatesIndexRoute,
+  DashboardUsersAdminsIndexRoute: DashboardUsersAdminsIndexRoute,
+  DashboardUsersCustomersIndexRoute: DashboardUsersCustomersIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

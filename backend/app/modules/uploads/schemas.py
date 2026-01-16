@@ -21,3 +21,19 @@ class ImageDeleteResponse(BaseModel):
     """Response for image deletion."""
     deleted: bool
     url: str
+
+
+class ImageListResponse(BaseModel):
+    """Response for listing images."""
+    items: List[ImageUploadResponse]
+    count: int
+
+
+class PaginatedImageListResponse(BaseModel):
+    """Paginated response for listing images."""
+    items: List[ImageUploadResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+    has_next: bool

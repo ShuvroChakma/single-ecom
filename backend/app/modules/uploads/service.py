@@ -30,7 +30,7 @@ class UploadService:
     
     def _ensure_directories(self):
         """Create upload directories if they don't exist."""
-        dirs = ["products", "brands", "collections", "categories"]
+        dirs = ["products", "brands", "collections", "categories", "media"]
         for d in dirs:
             (self.base_upload_dir / d).mkdir(parents=True, exist_ok=True)
     
@@ -239,3 +239,109 @@ class UploadService:
         self._optimize_image(file_path, max_size=256)
         
         return f"/static/uploads/categories/{filename}"
+
+    async def upload_category_image_generic(self, file: UploadFile, type: str = "image") -> str:
+        """
+        Upload a generic category image (icon or banner).
+        Generates a random filename.
+        """
+        ext = self._validate_file(file)
+        
+        # Determine prefix based on type
+        prefix = "icon" if type == "icon" else "banner"
+        filename = self._generate_filename(file.filename, prefix=prefix)
+        file_path = self.base_upload_dir / "categories" / filename
+        
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise ValidationError(
+                error_code=ErrorCode.FIELD_INVALID,
+                message=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB",
+                field="file"
+            )
+        
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        # Optimization based on type
+        if type == "icon":
+            self._optimize_image(file_path, max_size=256)
+        else:
+            self._optimize_image(file_path, max_size=1200)
+            
+        return f"/static/uploads/categories/{filename}"
+
+    def list_category_images(self) -> List[dict]:
+        """List all category images."""
+        category_dir = self.base_upload_dir / "categories"
+        images = []
+        
+        if category_dir.exists():
+            for file in category_dir.iterdir():
+                if file.is_file() and self._get_extension(file.name) in ALLOWED_EXTENSIONS:
+                    images.append({
+                        "url": f"/static/uploads/categories/{file.name}",
+                        "filename": file.name,
+                        "mtime": file.stat().st_mtime
+                    })
+        
+        # Sort by modification time, newest first
+        images.sort(key=lambda x: x["mtime"], reverse=True)
+        
+        return images
+
+    async def upload_media(self, file: UploadFile) -> str:
+        """
+        Upload a file to the general media library.
+        """
+        ext = self._validate_file(file)
+        
+        filename = self._generate_filename(file.filename, prefix="media")
+        file_path = self.base_upload_dir / "media" / filename
+        
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise ValidationError(
+                error_code=ErrorCode.FIELD_INVALID,
+                message=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB",
+                field="file"
+            )
+        
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        self._optimize_image(file_path, max_size=1920)
+            
+        return f"/static/uploads/media/{filename}"
+
+    def list_media(self, page: int = 1, limit: int = 20) -> dict:
+        """List media library images with pagination."""
+        media_dir = self.base_upload_dir / "media"
+        all_images = []
+        
+        if media_dir.exists():
+            for file in media_dir.iterdir():
+                if file.is_file() and self._get_extension(file.name) in ALLOWED_EXTENSIONS:
+                    all_images.append({
+                        "url": f"/static/uploads/media/{file.name}",
+                        "filename": file.name,
+                        "mtime": file.stat().st_mtime
+                    })
+        
+        # Sort by modification time, newest first
+        all_images.sort(key=lambda x: x["mtime"], reverse=True)
+        
+        # Paginate
+        total = len(all_images)
+        start = (page - 1) * limit
+        end = start + limit
+        items = all_images[start:end]
+        
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit if total > 0 else 1,
+            "has_next": end < total
+        }

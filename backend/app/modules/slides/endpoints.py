@@ -14,7 +14,7 @@ from app.modules.audit.service import AuditService
 from app.modules.slides.service import SlideService
 from app.modules.slides.repository import SlideRepository
 from app.modules.slides.schemas import (
-    SlideCreate, SlideUpdate, SlideResponse, SlideOrderUpdate
+    SlideCreate, SlideUpdate, SlideResponse, SlideOrderUpdate, SlideListResponse
 )
 from app.modules.slides.models import SlideType
 from app.modules.uploads.service import UploadService
@@ -68,17 +68,31 @@ async def list_slides_by_type(
 
 # ============ ADMIN ENDPOINTS ============
 
-@router.get("/admin", response_model=SuccessResponse[List[SlideResponse]])
+@router.get("/admin", response_model=SuccessResponse[SlideListResponse])
 async def list_all_slides(
-    include_inactive: bool = False,
+    page: int = 1,
+    limit: int = 10,
+    search: Optional[str] = None,
+    include_inactive: bool = True,
     current_user: User = Depends(require_permissions([PermissionEnum.SLIDES_READ])),
     service: SlideService = Depends(get_slide_service)
 ):
-    """List all slides including inactive (admin)."""
-    slides = await service.list_slides(include_inactive=include_inactive)
+    """List all slides with pagination (admin)."""
+    result = await service.list_slides_paginated(
+        page=page,
+        limit=limit,
+        search=search,
+        include_inactive=include_inactive
+    )
     return create_success_response(
         message="All slides retrieved successfully",
-        data=[SlideResponse.model_validate(s) for s in slides]
+        data=SlideListResponse(
+            items=[SlideResponse.model_validate(s) for s in result["items"]],
+            total=result["total"],
+            page=result["page"],
+            limit=result["limit"],
+            pages=result["pages"]
+        )
     )
 
 

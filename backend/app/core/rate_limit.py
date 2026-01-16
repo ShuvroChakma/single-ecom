@@ -232,6 +232,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if os.environ.get("TESTING") == "1":
             return await call_next(request)
         
+        # Skip CORS preflight requests
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        
         # Skip health check and docs
         if request.url.path in ["/health", "/docs", "/redoc", "/openapi.json"]:
             return await call_next(request)

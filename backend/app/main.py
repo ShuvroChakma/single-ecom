@@ -21,13 +21,25 @@ app.mount("/static/uploads", StaticFiles(directory="static/uploads"), name="uplo
 
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # Check if wildcard is in origins
+    origins = [str(origin).rstrip('/') for origin in settings.BACKEND_CORS_ORIGINS]
+    if "*" in origins:
+        # Allow all origins in development
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=False,  # Cannot use credentials with wildcard
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+    else:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
 # Add rate limiting middleware (60 requests per minute globally)
 from app.core.rate_limit import RateLimitMiddleware

@@ -59,6 +59,21 @@ class MetalRepository:
         )
         return list(result.scalars().all())
     
+    async def search(self, query: str = "", limit: int = 20) -> List[Metal]:
+        """Search metals by name or code."""
+        stmt = select(Metal).where(Metal.is_active == True)
+        
+        if query:
+            search_pattern = f"%{query}%"
+            stmt = stmt.where(
+                (Metal.name.ilike(search_pattern)) | 
+                (Metal.code.ilike(search_pattern))
+            )
+        
+        stmt = stmt.order_by(Metal.sort_order).limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+    
     async def create(self, metal: Metal) -> Metal:
         """Create a new metal."""
         self.session.add(metal)

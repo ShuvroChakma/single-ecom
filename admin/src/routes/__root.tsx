@@ -1,8 +1,14 @@
+import { Toaster } from '@/components/ui/sonner'
+import { AuthProvider } from '@/lib/auth'
+import { TanStackDevtools } from '@tanstack/react-devtools'
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
+import { toast } from "sonner"
 
 import appCss from '../styles.css?url'
+
+import { NotFound } from '@/components/shared/not-found'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -27,6 +33,20 @@ export const Route = createRootRoute({
   }),
 
   shellComponent: RootDocument,
+  notFoundComponent: NotFound,
+})
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      toast.error(error.message)
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      toast.error(error.message)
+    },
+  }),
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -36,7 +56,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
+        </QueryClientProvider>
         <TanStackDevtools
           config={{
             position: 'bottom-right',
@@ -53,3 +78,4 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     </html>
   )
 }
+

@@ -29,6 +29,10 @@ class MetalService:
             return await self.repository.list_all()
         return await self.repository.list_active()
     
+    async def search_metals(self, query: str = "", limit: int = 20) -> List[Metal]:
+        """Search metals by name or code."""
+        return await self.repository.search(query=query, limit=limit)
+    
     async def get_metal(self, metal_id: UUID) -> Metal:
         """Get metal by ID with purities."""
         metal = await self.repository.get_with_purities(metal_id)
