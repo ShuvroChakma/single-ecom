@@ -9,38 +9,253 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WishlistRouteRouteImport } from './routes/wishlist/route'
+import { Route as StoresRouteRouteImport } from './routes/stores/route'
+import { Route as ProfileRouteRouteImport } from './routes/profile/route'
+import { Route as ProductsRouteRouteImport } from './routes/products/route'
+import { Route as CheckoutRouteRouteImport } from './routes/checkout/route'
+import { Route as CartRouteRouteImport } from './routes/cart/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FooterTrackOrderRouteImport } from './routes/footer/track-order'
+import { Route as FooterSizeGuideRouteImport } from './routes/footer/size-guide'
+import { Route as FooterOurPoliciesRouteImport } from './routes/footer/our-policies'
+import { Route as FooterFaqRouteImport } from './routes/footer/faq'
+import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custom-jewellery'
+import { Route as FooterAboutRouteImport } from './routes/footer/about'
+import { Route as CategoriesDiamondRouteImport } from './routes/categories/Diamond'
 
+const WishlistRouteRoute = WishlistRouteRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresRouteRoute = StoresRouteRouteImport.update({
+  id: '/stores',
+  path: '/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRouteRoute = ProfileRouteRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsRouteRoute = ProductsRouteRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRouteRoute = CheckoutRouteRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRouteRoute = CartRouteRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FooterTrackOrderRoute = FooterTrackOrderRouteImport.update({
+  id: '/footer/track-order',
+  path: '/footer/track-order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FooterSizeGuideRoute = FooterSizeGuideRouteImport.update({
+  id: '/footer/size-guide',
+  path: '/footer/size-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FooterOurPoliciesRoute = FooterOurPoliciesRouteImport.update({
+  id: '/footer/our-policies',
+  path: '/footer/our-policies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FooterFaqRoute = FooterFaqRouteImport.update({
+  id: '/footer/faq',
+  path: '/footer/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FooterCustomJewelleryRoute = FooterCustomJewelleryRouteImport.update({
+  id: '/footer/custom-jewellery',
+  path: '/footer/custom-jewellery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FooterAboutRoute = FooterAboutRouteImport.update({
+  id: '/footer/about',
+  path: '/footer/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategoriesDiamondRoute = CategoriesDiamondRouteImport.update({
+  id: '/categories/Diamond',
+  path: '/categories/Diamond',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cart': typeof CartRouteRoute
+  '/checkout': typeof CheckoutRouteRoute
+  '/products': typeof ProductsRouteRoute
+  '/profile': typeof ProfileRouteRoute
+  '/stores': typeof StoresRouteRoute
+  '/wishlist': typeof WishlistRouteRoute
+  '/categories/Diamond': typeof CategoriesDiamondRoute
+  '/footer/about': typeof FooterAboutRoute
+  '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
+  '/footer/faq': typeof FooterFaqRoute
+  '/footer/our-policies': typeof FooterOurPoliciesRoute
+  '/footer/size-guide': typeof FooterSizeGuideRoute
+  '/footer/track-order': typeof FooterTrackOrderRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cart': typeof CartRouteRoute
+  '/checkout': typeof CheckoutRouteRoute
+  '/products': typeof ProductsRouteRoute
+  '/profile': typeof ProfileRouteRoute
+  '/stores': typeof StoresRouteRoute
+  '/wishlist': typeof WishlistRouteRoute
+  '/categories/Diamond': typeof CategoriesDiamondRoute
+  '/footer/about': typeof FooterAboutRoute
+  '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
+  '/footer/faq': typeof FooterFaqRoute
+  '/footer/our-policies': typeof FooterOurPoliciesRoute
+  '/footer/size-guide': typeof FooterSizeGuideRoute
+  '/footer/track-order': typeof FooterTrackOrderRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cart': typeof CartRouteRoute
+  '/checkout': typeof CheckoutRouteRoute
+  '/products': typeof ProductsRouteRoute
+  '/profile': typeof ProfileRouteRoute
+  '/stores': typeof StoresRouteRoute
+  '/wishlist': typeof WishlistRouteRoute
+  '/categories/Diamond': typeof CategoriesDiamondRoute
+  '/footer/about': typeof FooterAboutRoute
+  '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
+  '/footer/faq': typeof FooterFaqRoute
+  '/footer/our-policies': typeof FooterOurPoliciesRoute
+  '/footer/size-guide': typeof FooterSizeGuideRoute
+  '/footer/track-order': typeof FooterTrackOrderRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/cart'
+    | '/checkout'
+    | '/products'
+    | '/profile'
+    | '/stores'
+    | '/wishlist'
+    | '/categories/Diamond'
+    | '/footer/about'
+    | '/footer/custom-jewellery'
+    | '/footer/faq'
+    | '/footer/our-policies'
+    | '/footer/size-guide'
+    | '/footer/track-order'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/cart'
+    | '/checkout'
+    | '/products'
+    | '/profile'
+    | '/stores'
+    | '/wishlist'
+    | '/categories/Diamond'
+    | '/footer/about'
+    | '/footer/custom-jewellery'
+    | '/footer/faq'
+    | '/footer/our-policies'
+    | '/footer/size-guide'
+    | '/footer/track-order'
+  id:
+    | '__root__'
+    | '/'
+    | '/cart'
+    | '/checkout'
+    | '/products'
+    | '/profile'
+    | '/stores'
+    | '/wishlist'
+    | '/categories/Diamond'
+    | '/footer/about'
+    | '/footer/custom-jewellery'
+    | '/footer/faq'
+    | '/footer/our-policies'
+    | '/footer/size-guide'
+    | '/footer/track-order'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CartRouteRoute: typeof CartRouteRoute
+  CheckoutRouteRoute: typeof CheckoutRouteRoute
+  ProductsRouteRoute: typeof ProductsRouteRoute
+  ProfileRouteRoute: typeof ProfileRouteRoute
+  StoresRouteRoute: typeof StoresRouteRoute
+  WishlistRouteRoute: typeof WishlistRouteRoute
+  CategoriesDiamondRoute: typeof CategoriesDiamondRoute
+  FooterAboutRoute: typeof FooterAboutRoute
+  FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
+  FooterFaqRoute: typeof FooterFaqRoute
+  FooterOurPoliciesRoute: typeof FooterOurPoliciesRoute
+  FooterSizeGuideRoute: typeof FooterSizeGuideRoute
+  FooterTrackOrderRoute: typeof FooterTrackOrderRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wishlist': {
+      id: '/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof WishlistRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores': {
+      id: '/stores'
+      path: '/stores'
+      fullPath: '/stores'
+      preLoaderRoute: typeof StoresRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +263,73 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/footer/track-order': {
+      id: '/footer/track-order'
+      path: '/footer/track-order'
+      fullPath: '/footer/track-order'
+      preLoaderRoute: typeof FooterTrackOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/footer/size-guide': {
+      id: '/footer/size-guide'
+      path: '/footer/size-guide'
+      fullPath: '/footer/size-guide'
+      preLoaderRoute: typeof FooterSizeGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/footer/our-policies': {
+      id: '/footer/our-policies'
+      path: '/footer/our-policies'
+      fullPath: '/footer/our-policies'
+      preLoaderRoute: typeof FooterOurPoliciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/footer/faq': {
+      id: '/footer/faq'
+      path: '/footer/faq'
+      fullPath: '/footer/faq'
+      preLoaderRoute: typeof FooterFaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/footer/custom-jewellery': {
+      id: '/footer/custom-jewellery'
+      path: '/footer/custom-jewellery'
+      fullPath: '/footer/custom-jewellery'
+      preLoaderRoute: typeof FooterCustomJewelleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/footer/about': {
+      id: '/footer/about'
+      path: '/footer/about'
+      fullPath: '/footer/about'
+      preLoaderRoute: typeof FooterAboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/categories/Diamond': {
+      id: '/categories/Diamond'
+      path: '/categories/Diamond'
+      fullPath: '/categories/Diamond'
+      preLoaderRoute: typeof CategoriesDiamondRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CartRouteRoute: CartRouteRoute,
+  CheckoutRouteRoute: CheckoutRouteRoute,
+  ProductsRouteRoute: ProductsRouteRoute,
+  ProfileRouteRoute: ProfileRouteRoute,
+  StoresRouteRoute: StoresRouteRoute,
+  WishlistRouteRoute: WishlistRouteRoute,
+  CategoriesDiamondRoute: CategoriesDiamondRoute,
+  FooterAboutRoute: FooterAboutRoute,
+  FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,
+  FooterFaqRoute: FooterFaqRoute,
+  FooterOurPoliciesRoute: FooterOurPoliciesRoute,
+  FooterSizeGuideRoute: FooterSizeGuideRoute,
+  FooterTrackOrderRoute: FooterTrackOrderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
