@@ -8,6 +8,44 @@ from fastapi import Request
 from app.core.mongo import mongodb
 from app.modules.audit.models import AuditLog
 
+
+import math
+from enum import Enum
+from decimal import Decimal
+from datetime import datetime
+
+def bson_safe(value):
+    if value is None:
+        return None
+
+    if isinstance(value, UUID):
+        return str(value)
+
+    if isinstance(value, Enum):
+        return value.value
+
+    if isinstance(value, Decimal):
+        return float(value)
+
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return value
+
+    if isinstance(value, datetime):
+        return value
+
+    if isinstance(value, dict):
+        return {k: bson_safe(v) for k, v in value.items()}
+
+    if isinstance(value, list):
+        return [bson_safe(v) for v in value]
+
+    return value
+
+
+
+
 class AuditService:
     """Service for handling audit logs."""
     
@@ -60,9 +98,11 @@ class AuditService:
         
         try:
             data = log_entry.model_dump()
+            
         except AttributeError:
             data = log_entry.dict()
-            
+
+        data = bson_safe(data)
         await collection.insert_one(data)
 
 
@@ -158,3 +198,6 @@ class AuditService:
 
 # Global instance
 audit_service = AuditService()
+
+
+
