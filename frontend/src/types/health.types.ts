@@ -16,7 +16,7 @@ export interface HealthCheckResponse {
     success: boolean;
     data: HealthCheckData;
     message: string;
-    errors: any[];
+    errors: Array<any>;
     meta: {
         timestamp: string;
     };
