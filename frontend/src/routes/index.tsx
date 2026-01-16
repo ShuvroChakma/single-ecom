@@ -1,31 +1,49 @@
-import DataDisplay from '@/components/DataDisplay'
-import { Button } from '@/components/ui/button'
-import { apiClient } from '@/utils/api-client'
 import { createFileRoute } from '@tanstack/react-router'
+import Header from '@/components/shared/Header/Header'
+import Carousel from '@/components/shared/HeroBanner/Carousel'
+import CategoryHero from '@/components/shared/HeroBanner/CategoryHero'
+import Footer from '@/components/shared/Footer/Footer'
+import JewelryOffers from '@/components/shared/HeroBanner/JewelryOffers'
+import { HandPicked } from '@/components/shared/HeroBanner/HandPicked'
+import { SilverCollection } from '@/components/shared/HeroBanner/SilverCollection'
+import Gemstone from '@/components/shared/HeroBanner/Gemstone'
+import PlatinumCollection from '@/components/shared/HeroBanner/PlatinumCollection'
+import GoldJewellery from '@/components/shared/HeroBanner/GoldJewellery'
+import OurCollection from '@/components/shared/HeroBanner/OurCollection'
+import OneDayShipping from '@/components/shared/HeroBanner/OneDayShipping'
+import ShopByGender from '@/components/shared/HeroBanner/ShopByGender'
+import NewArrivals from '@/components/shared/HeroBanner/NewArrivals'
+import GiftingPage from '@/components/shared/HeroBanner/GiftingPage'
+import AboutPage from '@/components/shared/HeroBanner/AboutPage'
+
+
+
+
 
 export const Route = createFileRoute('/')({
   component: App,
-  loader: async () => {
-    const data = await apiClient.get("/v1/health/")
-
-    return {
-      "apiUrl": import.meta.env.VITE_API_URL,
-      "apiTimeout": import.meta.env.VITE_API_TIMEOUT,
-      "data": data
-    }
-  }
 })
 
 function App() {
-  const { apiUrl, apiTimeout, data } = Route.useLoaderData()
-
   return (
     <div>
-      <h1>Home</h1>
-      <Button>Test Button</Button>
-      <p>{apiUrl}</p>
-      <p>{apiTimeout}</p>
-      <DataDisplay data={data} />
+      <Header />
+      <Carousel />
+      <CategoryHero />
+      <JewelryOffers />
+      <HandPicked />
+      <SilverCollection />
+      <Gemstone />
+      <PlatinumCollection />
+      <GoldJewellery />
+      <OurCollection />
+      <OneDayShipping />
+      <ShopByGender />
+      <NewArrivals />
+      <GiftingPage />
+      <AboutPage />
+      
+      <Footer />
     </div>
   )
 }
