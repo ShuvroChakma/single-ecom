@@ -43,7 +43,7 @@ jobs:
     - name: Build Admin
       working-directory: ./admin
       env:
-        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        API_URL: ${{ secrets.VITE_API_URL }}
       run: npm run build
 
     # ============ DEPLOY TO SERVER ============
