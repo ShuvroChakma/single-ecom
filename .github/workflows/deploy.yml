@@ -2,111 +2,108 @@ name: Deploy Frontend, Admin & Backend
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: ["dev"]
   workflow_dispatch:
 
 env:
-  DEPLOY_PATH: /var/www/single-ecom  # Update this to your server path
+  DEPLOY_PATH: /var/www/single-ecom
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    # -------------------- CHECKOUT --------------------
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    # ============ BUILD FRONTEND & ADMIN ============
+    # -------------------- NODE SETUP --------------------
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: '**/package-lock.json'
+        node-version: 20
+        cache: npm
+        cache-dependency-path: |
+          frontend/package-lock.json
+          admin/package-lock.json
 
-    # Build Frontend with env
-    - name: Install Frontend Dependencies
-      working-directory: ./frontend
+    # -------------------- BUILD FRONTEND --------------------
+    - name: Install Frontend deps
+      working-directory: frontend
       run: npm ci
 
     - name: Build Frontend
-      working-directory: ./frontend
+      working-directory: frontend
       env:
         VITE_API_URL: ${{ secrets.VITE_API_URL }}
       run: npm run build
 
-    # Build Admin with env
-    - name: Install Admin Dependencies
-      working-directory: ./admin
+    # -------------------- BUILD ADMIN --------------------
+    - name: Install Admin deps
+      working-directory: admin
       run: npm ci
 
     - name: Build Admin
-      working-directory: ./admin
+      working-directory: admin
       env:
         API_URL: ${{ secrets.VITE_API_URL }}
       run: npm run build
 
-    # ============ DEPLOY TO SERVER ============
-    # Deploy Frontend & Admin build artifacts
-    - name: Deploy Frontend & Admin via SCP
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT }}
-        source: "frontend/.output,admin/.output"
-        target: ${{ env.DEPLOY_PATH }}
-        strip_components: 0
+    # -------------------- SSH SETUP --------------------
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
-    # Deploy Backend code
-    - name: Deploy Backend via SCP
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT }}
-        source: "backend/"
-        target: ${{ env.DEPLOY_PATH }}
-        strip_components: 0
+    # -------------------- DEPLOY FRONTEND --------------------
+    - name: Deploy Frontend build
+      run: |
+        rsync -az --delete \
+          frontend/.output/ \
+          ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ env.DEPLOY_PATH }}/frontend/.output/
 
-    # ============ CREATE ENV FILES & RESTART SERVICES ============
-    - name: Setup Environment & Restart Services
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT }}
-        script: |
-          # Create backend .env file from secrets
-          cat > ${{ env.DEPLOY_PATH }}/backend/.env << 'EOF'
-          ${{ secrets.BACKEND_ENV }}
-          EOF
-          
-          # Create frontend .env file (optional, for runtime if needed)
-          cat > ${{ env.DEPLOY_PATH }}/frontend/.env << 'EOF'
-          ${{ secrets.FRONTEND_ENV }}
-          EOF
-          
-          # Create admin .env file (optional, for runtime if needed)
-          cat > ${{ env.DEPLOY_PATH }}/admin/.env << 'EOF'
-          ${{ secrets.ADMIN_ENV }}
-          EOF
-          
-          cd ${{ env.DEPLOY_PATH }}/backend
-          
-          # Install/update dependencies using uv
-          uv sync --frozen --no-install-project
-          
-          # Run database migrations
-          uv run alembic upgrade head
-          
-          # Restart systemd services
-          echo "Restarting services..."
-          sudo systemctl restart single-ecom-backend.service
-          sudo systemctl restart single-ecom-frontend.service
-          sudo systemctl restart single-ecom-admin.service
-          
-          echo "Deployment complete!"
+    # -------------------- DEPLOY ADMIN --------------------
+    - name: Deploy Admin build
+      run: |
+        rsync -az --delete \
+          admin/.output/ \
+          ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ env.DEPLOY_PATH }}/admin/.output/
+
+    # -------------------- DEPLOY BACKEND CODE --------------------
+    - name: Deploy Backend code
+      run: |
+        rsync -az --delete \
+          --exclude=venv \
+          backend/ \
+          ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ env.DEPLOY_PATH }}/backend/
+
+    # -------------------- FINALIZE ON SERVER --------------------
+    - name: Configure env, migrate DB, restart services
+      run: |
+        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+        set -e
+
+        BASE="${{ env.DEPLOY_PATH }}"
+
+        echo "🔐 Writing backend .env"
+        install -m 600 /dev/null $BASE/backend/.env
+        cat << 'ENVEOF' > $BASE/backend/.env
+        ${{ secrets.BACKEND_ENV }}
+        ENVEOF
+
+        echo "📦 Sync backend dependencies"
+        cd $BASE/backend
+        uv sync --frozen --no-install-project
+
+        echo "🗄️ Running database migrations"
+        uv run alembic upgrade head
+
+        echo "🔄 Restarting services"
+        sudo systemctl restart single-ecom-backend.service
+        sudo systemctl restart single-ecom-frontend.service
+        sudo systemctl restart single-ecom-admin.service
+
+        echo "✅ Deployment complete"
+        EOF
