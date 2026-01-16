@@ -1,0 +1,1 @@
+export const LOGIN_BTN_TEXT = "Login Now"
