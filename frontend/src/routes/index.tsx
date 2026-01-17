@@ -42,7 +42,6 @@ function App() {
       <NewArrivals />
       <GiftingPage />
       <AboutPage />
-      
       <Footer />
     </div>
   )

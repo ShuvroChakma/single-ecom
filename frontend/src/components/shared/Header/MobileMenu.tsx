@@ -23,18 +23,18 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   if (!isOpen) return null
 
   const categories = [
-    { name: 'Diamond', path: '/category/diamond' },
-    { name: 'Gold', path: '/category/gold' },
-    { name: 'Gemstone', path: '/category/gemstone' },
-    { name: 'Uncut Diamond', path: '/category/uncut-diamond' },
-    { name: 'Platinum', path: '/category/platinum' },
-    { name: 'Gold Coins', path: '/category/gold-coins' },
-    { name: 'Silver', path: '/category/silver' },
-    { name: 'Watches', path: '/category/watches' },
-    { name: 'Gifts', path: '/category/gifts' },
-    { name: 'Jewellery', path: '/category/jewellery' },
-    { name: 'Gift Cards', path: '/category/gift-cards' },
-    { name: 'Gold Rate', path: '/gold-rate' },
+    { name: 'Diamond', path: '/categories/diamond' },
+    { name: 'Gold', path: '/categories/gold' },
+    { name: 'Gemstone', path: '/categories/gemstone' },
+    { name: 'Uncut Diamond', path: '/categories/uncut-diamond' },
+    { name: 'Platinum', path: '/categories/platinum' },
+    { name: 'Gold Coins', path: '/categories/gold-coins' },
+    { name: 'Silver', path: '/categories/silver' },
+    { name: 'Watches', path: '/categories/watches' },
+    { name: 'Gifts', path: '/categories/gifts' },
+    { name: 'Jewellery', path: '/categories/jewellery' },
+    { name: 'Gift Cards', path: '/categories/gift-cards' },
+    { name: 'Gold Rate', path: '/categories/gold-rate' },
   ]
 
   return (
@@ -47,7 +47,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       />
 
       {/* Menu Panel */}
-      <div className="absolute left-0 top-0 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+      <div className="absolute left-0 top-12 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
         {/* Categories List */}
         <div className="flex-1  bg-white overflow-y-auto">
           <nav className="py-10">
@@ -78,14 +78,14 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             <Link
               to="/profile"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-[#A01873] active:bg-[#8B1464] transition-colors shadow-sm"
+              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-header active:bg-header transition-colors shadow-sm"
             >
               Login
             </Link>
             <Link
               to="/profile"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-[#A01873] active:bg-[#8B1464] transition-colors shadow-sm"
+              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-header active:bg-header transition-colors shadow-sm"
             >
               Sign Up
             </Link>

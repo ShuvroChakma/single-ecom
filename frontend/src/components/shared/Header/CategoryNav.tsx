@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link, useRouter } from "@tanstack/react-router"
 
 // Define types for better type safety
 type CategorySlug = "diamond" | "gold" | "gemstone"
@@ -111,20 +112,21 @@ const categoryData: Record<CategorySlug, CategoryDropdownData> = {
 
 const CategoryNav = () => {
   const [hoveredCategory, setHoveredCategory] = useState<CategorySlug | null>(null)
+  
 
   const categories = [
-    { name: "DIAMOND", slug: "diamond" as CategorySlug, hasDropdown: true },
-    { name: "GOLD", slug: "gold" as CategorySlug, hasDropdown: true },
-    { name: "GEMSTONE", slug: "gemstone" as CategorySlug, hasDropdown: true },
-    { name: "UNCUT DIAMOND", slug: "uncut-diamond", hasDropdown: false },
-    { name: "PLATINUM", slug: "platinum", hasDropdown: false },
-    { name: "GOLD COINS", slug: "gold-coins", hasDropdown: false },
-    { name: "SILVER", slug: "silver", hasDropdown: false },
-    { name: "WATCHES", slug: "watches", hasDropdown: false },
-    { name: "GIFTS", slug: "gifts", hasDropdown: false },
-    { name: "JEWELLERY", slug: "jewellery", hasDropdown: false },
-    { name: "GIFT CARDS", slug: "gift-cards", hasDropdown: false },
-    { name: "GOLD RATE", slug: "gold-rate", hasDropdown: false },
+    { name: "DIAMOND", slug: "diamond" as CategorySlug, hasDropdown: true, path:'/categories/diamond' },
+    { name: "GOLD", slug: "gold" as CategorySlug, hasDropdown: true, path:'/categories/gold' },
+    { name: "GEMSTONE", slug: "gemstone" as CategorySlug, hasDropdown: true, path:'/categories/gemstone' },
+    { name: "UNCUT DIAMOND", slug: "uncut-diamond", hasDropdown: false, path:'/categories/uncut-diamond' },
+    { name: "PLATINUM", slug: "platinum", hasDropdown: false, path:'/categories/platinum' },
+    { name: "GOLD COINS", slug: "gold-coins", hasDropdown: false, path:'/categories/gold-coins' },
+    { name: "SILVER", slug: "silver", hasDropdown: false, path:'/categories/silver' },
+    { name: "WATCHES", slug: "watches", hasDropdown: false, path:'/categories/watches' },
+    { name: "GIFTS", slug: "gifts", hasDropdown: false, path:'/categories/gifts' },
+    { name: "JEWELLERY", slug: "jewellery", hasDropdown: false, path:'/categories/jewellery' },
+    { name: "GIFT CARDS", slug: "gift-cards", hasDropdown: false, path:'/categories/gift-cards' },
+    { name: "GOLD RATE", slug: "gold-rate", hasDropdown: false, path:'/categories/gold-rate' },
   ]
 
   return (
@@ -145,9 +147,12 @@ const CategoryNav = () => {
                   }
                   onMouseLeave={() => setHoveredCategory(null)}
                 >
-                  <span className="px-2 xl:px-3 py-4 text-xs xl:text-sm font-medium text-gray-700 hover:text-header transition-colors border-b-2 border-transparent hover:border-header inline-block cursor-pointer whitespace-nowrap">
+                  <Link
+                    to={category.path}
+                    className="px-2 xl:px-3 py-4 text-xs xl:text-sm font-medium text-gray-700 hover:text-header transition-colors border-b-2 border-transparent hover:border-header inline-block cursor-pointer whitespace-nowrap"
+                  >
                     {category.name}
-                  </span>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -168,9 +173,9 @@ const CategoryNav = () => {
               <div className="w-full lg:w-48 lg:pr-8 lg:border-r-2 border-gray-200">
                 <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1">
                   {categoryData[hoveredCategory].leftMenu.map((item, index) => (
-                    <a
+                    <Link
                       key={item}
-                      href={`/${hoveredCategory}/${item
+                      to={`/categories/${hoveredCategory}/${item
                         .toLowerCase()
                         .replace(/\s+/g, "-")}`}
                       className={`block px-3 py-2.5 text-sm text-gray-700 hover:text-header hover:bg-header/5 hover:border-l-4 hover:border-header transition-all font-medium ${
@@ -181,7 +186,7 @@ const CategoryNav = () => {
                       }`}
                     >
                       {item}
-                    </a>
+                    </Link>
                   ))}
                 </nav>
               </div>
@@ -196,13 +201,16 @@ const CategoryNav = () => {
                       </h3>
                       <div className="space-y-2">
                         {column.items.map((item) => (
-                          <div
+                          <Link
                             key={item.name}
+                            to={`/categories/${hoveredCategory}/${item.name
+                              .toLowerCase()
+                              .replace(/\s+/g, "-")}`}
                             className="flex items-center gap-2 text-sm text-gray-600 hover:text-header cursor-pointer"
                           >
                             <span className="text-lg">{item.icon}</span>
                             <span>{item.name}</span>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     </div>
