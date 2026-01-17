@@ -37,7 +37,6 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: Home,
-      isActive: true, // Keep active to visually indicate we start here, or remove if dynamic
     },
     {
       title: "Products",
