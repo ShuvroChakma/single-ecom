@@ -1,5 +1,6 @@
 import { Brand, deleteBrand, getBrands } from "@/api/brands"
 import { BrandDialog } from "@/components/shared/brand-dialog"
+import { getImageUrl } from "@/lib/utils"
 import { DataTable } from "@/components/shared/data-table"
 import {
   AlertDialog,
@@ -84,7 +85,7 @@ function BrandsPage() {
         <div className="flex items-center gap-3">
           {row.original.logo && (
             <img
-              src={row.original.logo}
+              src={getImageUrl(row.original.logo)}
               alt={row.original.name}
               className="h-8 w-8 rounded object-cover"
             />
