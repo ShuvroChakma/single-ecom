@@ -26,6 +26,7 @@ import { Route as DashboardUsersAdminsIndexRouteImport } from './routes/dashboar
 import { Route as DashboardProductsRatesIndexRouteImport } from './routes/dashboard/products/rates/index'
 import { Route as DashboardProductsMetalsIndexRouteImport } from './routes/dashboard/products/metals/index'
 import { Route as DashboardProductsCreateIndexRouteImport } from './routes/dashboard/products/create/index'
+import { Route as DashboardProductsCollectionsIndexRouteImport } from './routes/dashboard/products/collections/index'
 import { Route as DashboardProductsCategoriesIndexRouteImport } from './routes/dashboard/products/categories/index'
 import { Route as DashboardProductsBrandsIndexRouteImport } from './routes/dashboard/products/brands/index'
 import { Route as DashboardProductsProductIdIndexRouteImport } from './routes/dashboard/products/$productId/index'
@@ -128,6 +129,12 @@ const DashboardProductsCreateIndexRoute =
     path: '/products/create/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardProductsCollectionsIndexRoute =
+  DashboardProductsCollectionsIndexRouteImport.update({
+    id: '/products/collections/',
+    path: '/products/collections/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardProductsCategoriesIndexRoute =
   DashboardProductsCategoriesIndexRouteImport.update({
     id: '/products/categories/',
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/products/$productId': typeof DashboardProductsProductIdIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/collections': typeof DashboardProductsCollectionsIndexRoute
   '/dashboard/products/create': typeof DashboardProductsCreateIndexRoute
   '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
   '/dashboard/products/rates': typeof DashboardProductsRatesIndexRoute
@@ -207,6 +215,7 @@ export interface FileRoutesByTo {
   '/dashboard/products/$productId': typeof DashboardProductsProductIdIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/collections': typeof DashboardProductsCollectionsIndexRoute
   '/dashboard/products/create': typeof DashboardProductsCreateIndexRoute
   '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
   '/dashboard/products/rates': typeof DashboardProductsRatesIndexRoute
@@ -233,6 +242,7 @@ export interface FileRoutesById {
   '/dashboard/products/$productId/': typeof DashboardProductsProductIdIndexRoute
   '/dashboard/products/brands/': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories/': typeof DashboardProductsCategoriesIndexRoute
+  '/dashboard/products/collections/': typeof DashboardProductsCollectionsIndexRoute
   '/dashboard/products/create/': typeof DashboardProductsCreateIndexRoute
   '/dashboard/products/metals/': typeof DashboardProductsMetalsIndexRoute
   '/dashboard/products/rates/': typeof DashboardProductsRatesIndexRoute
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/$productId'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
+    | '/dashboard/products/collections'
     | '/dashboard/products/create'
     | '/dashboard/products/metals'
     | '/dashboard/products/rates'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/$productId'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
+    | '/dashboard/products/collections'
     | '/dashboard/products/create'
     | '/dashboard/products/metals'
     | '/dashboard/products/rates'
@@ -309,6 +321,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/$productId/'
     | '/dashboard/products/brands/'
     | '/dashboard/products/categories/'
+    | '/dashboard/products/collections/'
     | '/dashboard/products/create/'
     | '/dashboard/products/metals/'
     | '/dashboard/products/rates/'
@@ -443,6 +456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProductsCreateIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/products/collections/': {
+      id: '/dashboard/products/collections/'
+      path: '/products/collections'
+      fullPath: '/dashboard/products/collections'
+      preLoaderRoute: typeof DashboardProductsCollectionsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/products/categories/': {
       id: '/dashboard/products/categories/'
       path: '/products/categories'
@@ -504,6 +524,7 @@ interface DashboardRouteRouteChildren {
   DashboardProductsProductIdIndexRoute: typeof DashboardProductsProductIdIndexRoute
   DashboardProductsBrandsIndexRoute: typeof DashboardProductsBrandsIndexRoute
   DashboardProductsCategoriesIndexRoute: typeof DashboardProductsCategoriesIndexRoute
+  DashboardProductsCollectionsIndexRoute: typeof DashboardProductsCollectionsIndexRoute
   DashboardProductsCreateIndexRoute: typeof DashboardProductsCreateIndexRoute
   DashboardProductsMetalsIndexRoute: typeof DashboardProductsMetalsIndexRoute
   DashboardProductsRatesIndexRoute: typeof DashboardProductsRatesIndexRoute
@@ -528,6 +549,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardProductsProductIdIndexRoute: DashboardProductsProductIdIndexRoute,
   DashboardProductsBrandsIndexRoute: DashboardProductsBrandsIndexRoute,
   DashboardProductsCategoriesIndexRoute: DashboardProductsCategoriesIndexRoute,
+  DashboardProductsCollectionsIndexRoute:
+    DashboardProductsCollectionsIndexRoute,
   DashboardProductsCreateIndexRoute: DashboardProductsCreateIndexRoute,
   DashboardProductsMetalsIndexRoute: DashboardProductsMetalsIndexRoute,
   DashboardProductsRatesIndexRoute: DashboardProductsRatesIndexRoute,
