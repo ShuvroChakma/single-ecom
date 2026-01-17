@@ -10,6 +10,15 @@ import {
 import { getCategories, Category } from "@/api/categories"
 import { getBrands, Brand } from "@/api/brands"
 import { getMetals, Metal, Purity } from "@/api/metals"
+import {
+  getAttributeGroups,
+  getProductAttributes,
+  setProductAttribute,
+  deleteProductAttribute,
+  AttributeGroupWithAttributes,
+  Attribute,
+  ProductAttributeValue,
+} from "@/api/attributes"
 import { getImageUrl } from "@/lib/utils"
 import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
@@ -93,6 +102,8 @@ function EditProductPage() {
   const [images, setImages] = useState<string[]>([])
   const [variants, setVariants] = useState<VariantFormData[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
+  const [attributeValues, setAttributeValues] = useState<Record<string, string>>({})
+  const [originalAttributeValues, setOriginalAttributeValues] = useState<Record<string, string>>({})
 
   // Fetch product data
   const { data: productData, isLoading: isLoadingProduct } = useQuery({
@@ -101,6 +112,13 @@ function EditProductPage() {
   })
 
   const product = productData?.success ? productData.data : null
+
+  // Fetch product attributes
+  const { data: productAttributesData } = useQuery({
+    queryKey: ["product-attributes", product?.id],
+    queryFn: () => getProductAttributes({ data: { productId: product!.id } }),
+    enabled: !!product?.id,
+  })
 
   // Fetch categories for combobox
   const fetchCategories = useCallback(async (query: string) => {
@@ -139,12 +157,61 @@ function EditProductPage() {
 
   const metals = metalsData?.success ? metalsData.data : []
 
+  // Fetch attribute groups
+  const { data: attributeGroupsData } = useQuery({
+    queryKey: ["attribute-groups"],
+    queryFn: () => getAttributeGroups(),
+  })
+
+  const attributeGroups: AttributeGroupWithAttributes[] = attributeGroupsData?.success
+    ? attributeGroupsData.data
+    : []
+
   const updateMutation = useMutation({
-    mutationFn: (data: { id: string; product: Partial<ProductPayload> }) =>
-      updateProduct({ data }),
+    mutationFn: async (data: { id: string; product: Partial<ProductPayload> }) => {
+      // Update product first
+      const result = await updateProduct({ data })
+      if (!result.success) throw new Error("Failed to update product")
+
+      // Handle attribute changes
+      const productId = data.id
+
+      // Find changed/new attributes
+      const attrPromises: Promise<any>[] = []
+
+      for (const [attributeId, value] of Object.entries(attributeValues)) {
+        const originalValue = originalAttributeValues[attributeId]
+
+        if (value.trim() !== "" && value !== originalValue) {
+          // Set/update attribute
+          attrPromises.push(
+            setProductAttribute({
+              data: {
+                productId,
+                attribute: { attribute_id: attributeId, value },
+              },
+            })
+          )
+        } else if (value.trim() === "" && originalValue && originalValue.trim() !== "") {
+          // Delete attribute if cleared
+          attrPromises.push(
+            deleteProductAttribute({
+              data: { productId, attributeId },
+            })
+          )
+        }
+      }
+
+      if (attrPromises.length > 0) {
+        await Promise.all(attrPromises)
+      }
+
+      return result
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] })
       queryClient.invalidateQueries({ queryKey: ["product", productId] })
+      queryClient.invalidateQueries({ queryKey: ["product-attributes"] })
       toast.success("Product updated successfully")
       navigate({ to: "/dashboard/products" })
     },
@@ -239,6 +306,18 @@ function EditProductPage() {
     }
   }, [product, isInitialized])
 
+  // Initialize attribute values
+  useEffect(() => {
+    if (productAttributesData?.success && productAttributesData.data) {
+      const attrValues: Record<string, string> = {}
+      productAttributesData.data.forEach((pav: ProductAttributeValue) => {
+        attrValues[pav.attribute_id] = pav.value
+      })
+      setAttributeValues(attrValues)
+      setOriginalAttributeValues(attrValues)
+    }
+  }, [productAttributesData])
+
   const handleAddImage = (url: string) => {
     setImages((prev) => [...prev, url])
     setIsGalleryOpen(false)
@@ -286,6 +365,79 @@ function EditProductPage() {
   const getPuritiesForMetal = (metalCode: string): Purity[] => {
     const metal = metals.find((m: Metal) => m.code === metalCode)
     return metal?.purities || []
+  }
+
+  const handleAttributeChange = (attributeId: string, value: string) => {
+    setAttributeValues((prev) => ({
+      ...prev,
+      [attributeId]: value,
+    }))
+  }
+
+  const renderAttributeInput = (attribute: Attribute) => {
+    const value = attributeValues[attribute.id] || ""
+
+    switch (attribute.type) {
+      case "SELECT":
+        return (
+          <Select value={value} onValueChange={(v) => handleAttributeChange(attribute.id, v)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={`Select ${attribute.name.toLowerCase()}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {attribute.options?.map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+      case "MULTI_SELECT":
+        return (
+          <Select value={value} onValueChange={(v) => handleAttributeChange(attribute.id, v)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={`Select ${attribute.name.toLowerCase()}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {attribute.options?.map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+      case "BOOLEAN":
+        return (
+          <Select value={value} onValueChange={(v) => handleAttributeChange(attribute.id, v)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
+        )
+      case "NUMBER":
+        return (
+          <Input
+            type="number"
+            placeholder={`Enter ${attribute.name.toLowerCase()}`}
+            value={value}
+            onChange={(e) => handleAttributeChange(attribute.id, e.target.value)}
+          />
+        )
+      default:
+        return (
+          <Input
+            placeholder={`Enter ${attribute.name.toLowerCase()}`}
+            value={value}
+            onChange={(e) => handleAttributeChange(attribute.id, e.target.value)}
+          />
+        )
+    }
   }
 
   const isPending = updateMutation.isPending
@@ -558,6 +710,40 @@ function EditProductPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Attributes */}
+          {attributeGroups.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Attributes</CardTitle>
+                <CardDescription>
+                  Set product attributes for filtering and display
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {attributeGroups.map((group) => (
+                  <div key={group.id} className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                      {group.name}
+                    </h4>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {group.attributes
+                        .filter((attr) => attr.is_active)
+                        .map((attribute) => (
+                          <div key={attribute.id} className="space-y-2">
+                            <Label>
+                              {attribute.name}
+                              {attribute.is_required && " *"}
+                            </Label>
+                            {renderAttributeInput(attribute)}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -620,7 +806,7 @@ function EditProductPage() {
                       value={field.state.value}
                       onValueChange={(value) => field.handleChange(value as Gender)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -654,7 +840,7 @@ function EditProductPage() {
                         field.handleChange(value as MakingChargeType)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
