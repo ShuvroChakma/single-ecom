@@ -171,3 +171,62 @@ export const deleteAttribute = createServerFn({ method: "POST" })
             token
         );
     });
+
+// ============ PRODUCT ATTRIBUTE VALUE ============
+
+export interface ProductAttributeValue {
+    id: string;
+    product_id: string;
+    attribute_id: string;
+    value: string;
+    attribute?: Attribute;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ProductAttributeValuePayload {
+    attribute_id: string;
+    value: string;
+}
+
+// Get product attributes
+export const getProductAttributes = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data: { productId: string } }) => {
+        const token = getCookie("access_token");
+        if (!token) throw new Error("Not authenticated");
+
+        return apiRequest<ApiResponse<ProductAttributeValue[]>>(
+            `/products/products/${data.productId}/attributes`,
+            { method: "GET" },
+            token
+        );
+    });
+
+// Set product attribute value
+export const setProductAttribute = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data: { productId: string; attribute: ProductAttributeValuePayload } }) => {
+        const token = getCookie("access_token");
+        if (!token) throw new Error("Not authenticated");
+
+        return apiRequest<ApiResponse<ProductAttributeValue>>(
+            `/products/admin/products/${data.productId}/attributes`,
+            {
+                method: "POST",
+                body: JSON.stringify(data.attribute),
+            },
+            token
+        );
+    });
+
+// Delete product attribute value
+export const deleteProductAttribute = createServerFn({ method: "POST" })
+    .handler(async ({ data }: { data: { productId: string; attributeId: string } }) => {
+        const token = getCookie("access_token");
+        if (!token) throw new Error("Not authenticated");
+
+        return apiRequest<ApiResponse<null>>(
+            `/products/admin/products/${data.productId}/attributes/${data.attributeId}`,
+            { method: "DELETE" },
+            token
+        );
+    });

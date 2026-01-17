@@ -2,10 +2,8 @@
  * API Client Base Utilities with Token Refresh Support
  */
 
-// Base API configuration - works in both server (process.env) and browser (import.meta.env)
-export const API_URL = (typeof process !== 'undefined' && process.env?.API_URL)
-    || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
-    || "http://localhost:8000/api/v1";
+// Base API configuration
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
 // API Response types
 export interface ApiResponse<T> {

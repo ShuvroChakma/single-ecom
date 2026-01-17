@@ -22,9 +22,24 @@ export {
 
 // Products
 export {
-    createProduct, deleteProduct, getProduct,
-    getProductById, getProducts, toggleProductActive, updateProduct, type Product,
-    type ProductVariant
+    createProduct,
+    createVariant,
+    deleteProduct,
+    deleteVariant,
+    getAdminProducts,
+    getProductById,
+    getProductBySlug,
+    getProducts,
+    updateProduct,
+    updateVariant,
+    type Gender,
+    type MakingChargeType,
+    type Product,
+    type ProductListParams,
+    type ProductListResponse,
+    type ProductPayload,
+    type ProductVariant,
+    type ProductVariantPayload
 } from "./products";
 
 // Orders
