@@ -16,6 +16,8 @@ const Diamond = () => {
     { id: 6, img: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/thumbnail/433x/0dc2d03fe217f8c83829496872af24a0/o/b/obzol10031.jpg', price: 62890, oldPrice: 67200, sku: 'OBZOL10031', discount: '20% OFF' },
     { id: 7, img: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/thumbnail/433x/0dc2d03fe217f8c83829496872af24a0/f/r/frzol10069.jpg', price: 38450, oldPrice: 39800, sku: 'FRZOL10069', discount: '10% OFF' },
     { id: 8, img: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/thumbnail/433x/0dc2d03fe217f8c83829496872af24a0/e/r/erzol10056.jpg', price: 55670, oldPrice: 59200, sku: 'ERZOL10056', discount: '15% OFF' },
+    { id: 9, img: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/thumbnail/433x/0dc2d03fe217f8c83829496872af24a0/o/b/obstr10005_c.jpg', price: 52217, oldPrice: 53017, sku: 'OBSTR10005', discount: '10% OFF' },
+
   ];
 
   const toggleFavorite = (id: number) => {
@@ -62,9 +64,9 @@ const Diamond = () => {
   const FilterModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
       <div className="bg-white w-full md:max-w-3xl lg:max-w-5xl h-full overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-4 sm:px-6 py-4 flex justify-between items-center z-10">
+        <div className="sticky top-20 bg-white border-b px-4 sm:px-6 py-7 flex justify-between items-center z-10">
           <h2 className="text-lg sm:text-xl font-semibold">FILTER BY</h2>
-          <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={() => setShowFilters(false)} className="p-0 hover:bg-gray-100 rounded">
             <X size={24} />
           </button>
         </div>
@@ -235,9 +237,9 @@ const Diamond = () => {
           alt="Diamond Jewellery"
           className="w-full h-auto sm:h-40 md:h-48 lg:h-56 object-cover"
         />
-        <div className="absolute inset-0 flex items-center justify-end px-4 sm:px-8 md:pr-12 lg:pr-20">
+        <div className="absolute inset-0 flex items-center justify-end px-2 sm:px-8 md:pr-4 lg:pr-16">
           <div className="text-right">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-light text-gray-800">Diamond Jewellery Designs for Women</h1>
+            <h1 className="text-md sm:text-md md:text-2xl lg:text-3xl font-light text-header">Jewellery Designs for Women</h1>
             
           </div>
         </div>
@@ -356,7 +358,7 @@ const Diamond = () => {
               </div>
               <div className="p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg sm:text-xl font-semibold text-purple-900">₹ {product.price.toLocaleString()}</span>
+                  <span className="text-lg sm:text-xl font-semibold text-header">₹ {product.price.toLocaleString()}</span>
                   <span className="text-xs sm:text-sm text-gray-400 line-through">₹ {product.oldPrice.toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-gray-600 mb-1">SKU : {product.sku}</div>
@@ -369,7 +371,7 @@ const Diamond = () => {
         {/* Loading Indicator */}
         {loading && (
           <div className="flex justify-center items-center py-8 sm:py-12">
-            <Loader2 className="animate-spin text-purple-900" size={40} />
+            <Loader2 className="animate-spin text-header" size={40} />
           </div>
         )}
 
@@ -378,7 +380,7 @@ const Diamond = () => {
           <div className="flex justify-center mt-8 sm:mt-12">
             <button 
               onClick={handleShowMore}
-              className="px-6 sm:px-8 py-2.5 sm:py-3 border-2 border-purple-900 text-purple-900 rounded-lg hover:bg-purple-900 hover:text-white transition-colors font-medium text-sm sm:text-base"
+              className="px-6 sm:px-8 py-2.5 sm:py-3 border-2 border-header text-header rounded-lg hover:bg-header/90 hover:text-white transition-colors font-medium text-sm sm:text-base"
             >
               SHOW MORE
             </button>

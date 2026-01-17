@@ -64,7 +64,7 @@ const NavIcons = () => {
       <div className="flex items-center gap-4 md:gap-10 lg:gap-14">
 
         {/* === LG+ ONLY ICONS === */}
-        <div className="hidden lg:flex items-center gap-12">
+        <div className="hidden lg:flex items-center gap-14">
           <NavIcon
             to="/stores"
             icon={<MapPin className="w-7 h-7" />}

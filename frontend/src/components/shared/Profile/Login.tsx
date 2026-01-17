@@ -1,12 +1,27 @@
+/**
+ * Login Component with Authentication
+ * Path: src/components/shared/Profile/Login.tsx
+ * Following admin structure pattern
+ */
 import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
+import { useAuth } from '@/hooks/useAuth'
+import * as authApi from '@/api/auth'
+import { getErrorMessage } from '@/api/client'
 
 const Login = () => {
+  const navigate = useNavigate()
+  const { login } = useAuth()
+
   const [activeTab, setActiveTab] = useState('login')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('')
@@ -24,48 +39,144 @@ const Login = () => {
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('')
 
-  const handleLogin = () => {
-    console.log('Login submitted', { loginEmail, loginPassword })
-    // Add your login logic here
+  const handleLogin = async () => {
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      if (!loginEmail || !loginPassword) {
+        setError('Please fill in all fields')
+        return
+      }
+
+      await login(loginEmail, loginPassword)
+
+      // Redirect to profile after successful login
+      navigate({ to: '/profile' })
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleRegister = () => {
-    console.log('Register submitted', {
-      title,
-      firstName,
-      lastName,
-      registerEmail,
-      phone,
-      registerPassword,
-      confirmPassword,
-    })
-    // Add your register logic here
+  const handleRegister = async () => {
+    setError(null)
+    setSuccessMessage(null)
+    setIsLoading(true)
+
+    try {
+      // Validation
+      if (
+        !title ||
+        !firstName ||
+        !lastName ||
+        !registerEmail ||
+        !phone ||
+        !registerPassword ||
+        !confirmPassword
+      ) {
+        setError('Please fill in all fields')
+        return
+      }
+
+      if (registerPassword !== confirmPassword) {
+        setError('Passwords do not match')
+        return
+      }
+
+      if (registerPassword.length < 8) {
+        setError('Password must be at least 8 characters long')
+        return
+      }
+
+      const response = await authApi.register({
+        title,
+        first_name: firstName,
+        last_name: lastName,
+        email: registerEmail,
+        phone,
+        password: registerPassword,
+      })
+
+      if (response.success) {
+        setSuccessMessage(
+          response.message || 'Registration successful! Please login.'
+        )
+        // Clear form
+        setTitle('Mr')
+        setFirstName('')
+        setLastName('')
+        setRegisterEmail('')
+        setPhone('')
+        setRegisterPassword('')
+        setConfirmPassword('')
+
+        // Switch to login tab after 2 seconds
+        setTimeout(() => {
+          setActiveTab('login')
+          setSuccessMessage(null)
+        }, 2000)
+      }
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleForgotPassword = () => {
-    console.log('Forgot password clicked')
+    setError(null)
     setShowForgotPassword(true)
   }
 
-  const handleForgotPasswordSubmit = () => {
-    console.log('Forgot password submitted', { forgotEmail })
-    // Add your forgot password logic here
+  const handleForgotPasswordSubmit = async () => {
+    setError(null)
+    setSuccessMessage(null)
+    setIsLoading(true)
+
+    try {
+      if (!forgotEmail) {
+        setError('Please enter your email address')
+        return
+      }
+
+      // Call resend OTP endpoint
+      const response = await authApi.resendOTP(forgotEmail)
+
+      if (response.success) {
+        setSuccessMessage(
+          response.message || 'Password reset link sent to your email!'
+        )
+        setForgotEmail('')
+      }
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleBackToLogin = () => {
     setShowForgotPassword(false)
     setActiveTab('login')
+    setError(null)
+    setSuccessMessage(null)
   }
 
   return (
-    <div className=" bg-gray-50 flex items-center justify-center p-4">
+    <div className="bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-white shadow-md rounded-md overflow-hidden">
         {!showForgotPassword ? (
           <>
             {/* Tab Headers */}
             <div className="flex relative">
               <button
-                onClick={() => setActiveTab('login')}
+                onClick={() => {
+                  setActiveTab('login')
+                  setError(null)
+                  setSuccessMessage(null)
+                }}
                 className={`flex-1 py-6 text-center font-semibold text-lg transition-colors relative ${
                   activeTab === 'login'
                     ? 'bg-header text-white'
@@ -75,7 +186,11 @@ const Login = () => {
                 Login
               </button>
               <button
-                onClick={() => setActiveTab('register')}
+                onClick={() => {
+                  setActiveTab('register')
+                  setError(null)
+                  setSuccessMessage(null)
+                }}
                 className={`flex-1 py-6 text-center font-semibold text-lg transition-colors relative ${
                   activeTab === 'register'
                     ? 'bg-header text-white'
@@ -92,6 +207,20 @@ const Login = () => {
               ></div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="mx-8 mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {successMessage && (
+              <div className="mx-8 mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-green-600 text-sm">{successMessage}</p>
+              </div>
+            )}
+
             {/* Login Form */}
             {activeTab === 'login' && (
               <div className="p-8 md:p-12 min-h-[500px] md:min-h-[600px]">
@@ -107,6 +236,7 @@ const Login = () => {
                       onChange={(e) => setLoginEmail(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -120,13 +250,16 @@ const Login = () => {
                         type={showPassword ? 'text' : 'password'}
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                         className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                         required
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium hover:text-gray-700"
+                        disabled={isLoading}
                       >
                         {showPassword ? 'HIDE' : 'SHOW'}
                       </button>
@@ -138,9 +271,10 @@ const Login = () => {
                 <div className="flex justify-center mb-4 lg:mt-15">
                   <button
                     onClick={handleLogin}
-                    className="bg-linear-to-r from-header to-header/80 text-white font-semibold py-3 px-20 rounded shadow-lg hover:shadow-xl hover:scale-102 transition-all duration-300"
+                    disabled={isLoading}
+                    className="bg-linear-to-r from-header to-header/80 text-white font-semibold py-3 px-20 rounded shadow-lg hover:shadow-xl hover:scale-102 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    LOGIN TO CONTINUE
+                    {isLoading ? 'LOGGING IN...' : 'LOGIN TO CONTINUE'}
                   </button>
                 </div>
 
@@ -150,6 +284,7 @@ const Login = () => {
                     type="button"
                     onClick={handleForgotPassword}
                     className="text-header font-medium hover:underline"
+                    disabled={isLoading}
                   >
                     Forgot Password?
                   </button>
@@ -161,6 +296,7 @@ const Login = () => {
                     type="button"
                     onClick={() => setActiveTab('register')}
                     className="text-header font-medium hover:underline"
+                    disabled={isLoading}
                   >
                     Create New Account
                   </button>
@@ -186,6 +322,7 @@ const Login = () => {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         className="px-3 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
+                        disabled={isLoading}
                       >
                         <option value="Mr">Mr</option>
                         <option value="Mrs">Mrs</option>
@@ -198,6 +335,7 @@ const Login = () => {
                         onChange={(e) => setFirstName(e.target.value)}
                         className="flex-1 px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -213,6 +351,7 @@ const Login = () => {
                       onChange={(e) => setLastName(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -227,6 +366,7 @@ const Login = () => {
                       onChange={(e) => setRegisterEmail(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -235,7 +375,6 @@ const Login = () => {
                     <label className="block text-gray-700 font-medium mb-2">
                       Mobile No<span className="text-header">*</span>
                     </label>
-
                     <PhoneInput
                       country="bd"
                       value={phone}
@@ -245,6 +384,7 @@ const Login = () => {
                       buttonClass="!border-gray-300"
                       dropdownClass="z-[9999]"
                       inputProps={{ required: true }}
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -260,11 +400,13 @@ const Login = () => {
                         onChange={(e) => setRegisterPassword(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                         required
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium hover:text-gray-700"
+                        disabled={isLoading}
                       >
                         {showPassword ? 'HIDE' : 'SHOW'}
                       </button>
@@ -283,6 +425,7 @@ const Login = () => {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                         required
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
@@ -290,6 +433,7 @@ const Login = () => {
                           setShowConfirmPassword(!showConfirmPassword)
                         }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium hover:text-gray-700"
+                        disabled={isLoading}
                       >
                         {showConfirmPassword ? 'HIDE' : 'SHOW'}
                       </button>
@@ -301,9 +445,10 @@ const Login = () => {
                 <div className="flex justify-center mb-4 mt-8">
                   <button
                     onClick={handleRegister}
-                    className="bg-linear-to-r from-header to-header/80 text-white font-semibold py-3 px-20 rounded shadow-lg hover:shadow-xl hover:scale-103 transition-all duration-300"
+                    disabled={isLoading}
+                    className="bg-linear-to-r from-header to-header/80 text-white font-semibold py-3 px-20 rounded shadow-lg hover:shadow-xl hover:scale-103 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    REGISTER TO CONTINUE
+                    {isLoading ? 'REGISTERING...' : 'REGISTER TO CONTINUE'}
                   </button>
                 </div>
 
@@ -315,6 +460,7 @@ const Login = () => {
                   <button
                     onClick={() => setActiveTab('login')}
                     className="text-header font-medium hover:underline"
+                    disabled={isLoading}
                   >
                     Log In!
                   </button>
@@ -339,6 +485,20 @@ const Login = () => {
               </p>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {successMessage && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-green-600 text-sm">{successMessage}</p>
+              </div>
+            )}
+
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">
                 Email Address<span className="text-header">*</span>
@@ -349,6 +509,7 @@ const Login = () => {
                 onChange={(e) => setForgotEmail(e.target.value)}
                 className="w-full max-w-md px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -358,6 +519,7 @@ const Login = () => {
               <button
                 onClick={handleBackToLogin}
                 className="text-gray-700 hover:text-header font-medium"
+                disabled={isLoading}
               >
                 &lt; Back to Login
               </button>
@@ -366,9 +528,10 @@ const Login = () => {
             <div>
               <button
                 onClick={handleForgotPasswordSubmit}
-                className="bg-linear-to-r from-header to-header/80 text-white font-semibold py-3 px-12 rounded shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                disabled={isLoading}
+                className="bg-linear-to-r from-header to-header/80 text-white font-semibold py-3 px-12 rounded shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isLoading ? 'SENDING...' : 'Submit'}
               </button>
             </div>
           </div>
