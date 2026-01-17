@@ -46,7 +46,7 @@ jobs:
     - name: Build Admin
       working-directory: admin
       env:
-        API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
       run: npm run build
 
     # -------------------- SSH SETUP --------------------
