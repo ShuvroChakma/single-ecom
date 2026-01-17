@@ -1,249 +1,286 @@
 /**
- * API Client Base Utilities (Enhanced for Client-Side)
- * Path: src/api/client.ts
+ * API Client Base Utilities with Token Refresh Support
+ * Uses server-side fetch for security (tokens in HttpOnly cookies)
  */
-import axios from 'axios'
-import type { AxiosError } from 'axios';
 
+// Base API configuration - works in both server (process.env) and browser (import.meta.env)
+export const API_URL = (typeof process !== 'undefined' && process.env?.VITE_API_URL)
+    || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+    || "http://localhost:8000";
 
-// Base API configuration
-export const API_URL =
-  import.meta.env.VITE_API_URL || 'https://dev-api.nazumeahjewellers.com/api'
+export const API_BASE = `${API_URL}/api/v1`;
 
 // API Response types
 export interface ApiResponse<T> {
-  success: boolean
-  message: string
-  data: T
+  success: boolean;
+  message: string;
+  data: T;
 }
 
 // Backend error response format
 export interface ApiErrorResponse {
-  success: false
-  error: {
-    code: string
-    message: string
-    field: string | null
-  }
-  errors?: Array<{
-    code: string
-    message: string
-    field: string | null
-  }>
-  details?: Record<string, any>
+    success: false;
+    error: {
+        code: string;
+        message: string;
+      field: string | null;
+  };
+    errors?: Array<{
+        code: string;
+        message: string;
+        field: string | null;
+    }>;
+    details?: Record<string, any>;
 }
 
 export interface PaginatedResponse<T> {
-  items: Array<T>
-  total: number
-  page: number
-  limit: number
-  pages: number
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+// Token refresh callback type
+type TokenRefreshCallback = () => Promise<{
+    access_token: string;
+    refresh_token: string;
+} | null>;
+
+// Store refresh callback (set from auth module)
+let tokenRefreshCallback: TokenRefreshCallback | null = null;
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+/**
+ * Set the token refresh callback function
+ */
+export function setTokenRefreshCallback(callback: TokenRefreshCallback) {
+    tokenRefreshCallback = callback;
 }
 
 /**
- * Custom error class for API errors with detailed info
+ * Refresh token and return new access token
  */
-export class ApiError extends Error {
-  code: string
-  field: string | null
-  statusCode: number
-  details?: Record<string, any>
-  errors?: Array<{ code: string; message: string; field: string | null }>
+async function refreshToken(): Promise<string | null> {
+    // If already refreshing, wait for that to complete
+    if (isRefreshing && refreshPromise) {
+        return refreshPromise;
+    }
 
-  constructor(
-    message: string,
-    code: string,
-    statusCode: number,
-    field: string | null = null,
-    details?: Record<string, any>,
-    errors?: Array<{ code: string; message: string; field: string | null }>
-  ) {
-    super(message)
-    this.name = 'ApiError'
-    this.code = code
-    this.statusCode = statusCode
-    this.field = field
-    this.details = details
-    this.errors = errors
-  }
-}
+    if (!tokenRefreshCallback) {
+        return null;
+    }
 
-/**
- * Custom error for authentication failures
- */
-export class AuthenticationError extends ApiError {
-  constructor(message: string, code = 'AUTH_FAILED') {
-    super(message, code, 401)
-    this.name = 'AuthenticationError'
-  }
+    isRefreshing = true;
+    refreshPromise = (async () => {
+        try {
+            const result = await tokenRefreshCallback!();
+            if (result) {
+                return result.access_token;
+            }
+            return null;
+        } catch {
+            return null;
+        } finally {
+            isRefreshing = false;
+            refreshPromise = null;
+        }
+    })();
+
+    return refreshPromise;
 }
 
 /**
  * Extract detailed error message from API error response
  */
 function extractErrorMessage(errorData: ApiErrorResponse): string {
-  // Check for validation errors array (most detailed)
-  if (errorData.errors && errorData.errors.length > 0) {
-    const messages = errorData.errors.map((err) => {
-      if (err.field) {
-        return `${err.field}: ${err.message}`
-      }
-      return err.message
-    })
-    return messages.join('. ')
-  }
+    // Check for validation errors array (most detailed)
+    if (errorData.errors && errorData.errors.length > 0) {
+        const messages = errorData.errors.map((err) => {
+            if (err.field) {
+                return `${err.field}: ${err.message}`;
+            }
+            return err.message;
+        });
+        return messages.join(". ");
+    }
 
-  // Use main error message
-  if (errorData.error?.message) {
-    return errorData.error.message
-  }
+    // Use main error message
+    if (errorData.error?.message) {
+        return errorData.error.message;
+    }
 
-  return 'An error occurred'
+    return "An error occurred";
+}
+
+/**
+ * Custom error class for API errors with detailed info
+ */
+export class ApiError extends Error {
+    code: string;
+    field: string | null;
+    statusCode: number;
+    details?: Record<string, any>;
+    errors?: Array<{ code: string; message: string; field: string | null }>;
+
+    constructor(
+        message: string,
+        code: string,
+        statusCode: number,
+        field: string | null = null,
+        details?: Record<string, any>,
+        errors?: Array<{ code: string; message: string; field: string | null }>
+    ) {
+        super(message);
+        this.name = "ApiError";
+        this.code = code;
+        this.statusCode = statusCode;
+        this.field = field;
+        this.details = details;
+        this.errors = errors;
+    }
+}
+
+/**
+ * Custom error for authentication failures
+ */
+export class AuthenticationError extends ApiError {
+    constructor(message: string, code = "AUTH_FAILED") {
+        super(message, code, 401);
+        this.name = "AuthenticationError";
+    }
 }
 
 /**
  * Helper to extract error message from any error type
  */
 export const getErrorMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const apiError = error.response?.data as ApiErrorResponse
-
-    // Check for validation errors array
-    if (apiError?.errors && apiError.errors.length > 0) {
-      return apiError.errors
-        .map((err) => (err.field ? `${err.field}: ${err.message}` : err.message))
-        .join('. ')
+    if (error instanceof ApiError) {
+        return error.message;
     }
-
-    // Use main error message
-    if (apiError?.error?.message) {
-      return apiError.error.message
+    if (error instanceof Error) {
+        return error.message;
     }
-
-    return error.message || 'An error occurred'
-  }
-
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return 'An unknown error occurred'
+    return "An unknown error occurred";
 }
-
-// Create axios instance
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: false, // Set to true if using cookies
-})
-
-// Flag to prevent multiple refresh attempts
-let isRefreshing = false
-let refreshPromise: Promise<string | null> | null = null
 
 /**
- * Refresh token and return new access token
+ * Extract field-specific errors from API error
+ * Returns a map of field name to error message
  */
-async function refreshAccessToken(): Promise<string | null> {
-  // If already refreshing, wait for that to complete
-  if (isRefreshing && refreshPromise) {
-    return refreshPromise
-  }
+export const getFieldErrors = (error: unknown): Record<string, string> => {
+    const fieldErrors: Record<string, string> = {};
 
-  const refreshToken = localStorage.getItem('refresh_token')
-  if (!refreshToken) {
-    return null
-  }
-
-  isRefreshing = true
-  refreshPromise = (async () => {
-    try {
-      const response = await axios.post<ApiResponse<{
-        access_token: string
-        refresh_token: string
-      }>>(
-        `${API_URL}/auth/refresh`,
-        { refresh_token: refreshToken }
-      )
-
-      if (response.data.success) {
-        const { access_token, refresh_token: new_refresh_token } = response.data.data
-        localStorage.setItem('access_token', access_token)
-        localStorage.setItem('refresh_token', new_refresh_token)
-        return access_token
-      }
-
-      return null
-    } catch (error) {
-      // Refresh failed, clear tokens
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      return null
-    } finally {
-      isRefreshing = false
-      refreshPromise = null
+    if (error instanceof ApiError) {
+        // Check for multiple errors array
+        if (error.errors && error.errors.length > 0) {
+            for (const err of error.errors) {
+                if (err.field) {
+                    fieldErrors[err.field] = err.message;
+                }
+            }
+        }
+        // Check for single field error
+        else if (error.field) {
+            fieldErrors[error.field] = error.message;
+        }
     }
-  })()
 
-  return refreshPromise
+    return fieldErrors;
 }
 
-// Request interceptor to add token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+/**
+ * Check if error has field-specific errors
+ */
+export const hasFieldErrors = (error: unknown): boolean => {
+    if (error instanceof ApiError) {
+        if (error.errors && error.errors.some(e => e.field)) {
+            return true;
+        }
+        if (error.field) {
+            return true;
+        }
     }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
+    return false;
+}
 
-// Response interceptor for token refresh and error handling
-api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError<ApiErrorResponse>) => {
-    const originalRequest = error.config as any
+/**
+ * Generic server-side API fetch function with automatic token refresh
+ */
+export async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {},
+    token?: string,
+    retryOnUnauthorized = true
+): Promise<T> {
+  const headers: Record<string, string> = {
+      ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+      credentials: "include", // Include cookies for HttpOnly refresh token
+  });
 
     // Handle 401 Unauthorized - try to refresh token
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+    if (response.status === 401 && retryOnUnauthorized && token) {
+        const newToken = await refreshToken();
 
-      const newToken = await refreshAccessToken()
+        if (newToken) {
+            // Retry request with new token
+            return apiRequest<T>(endpoint, options, newToken, false);
+        }
 
-      if (newToken) {
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
-        return api(originalRequest)
-      }
-
-      // Refresh failed - redirect to login
-      if (typeof window !== 'undefined') {
-        window.location.href = '/profile'
-      }
+        // Refresh failed - throw auth error
+        throw new AuthenticationError("Session expired. Please login again.");
     }
 
-    // Transform error to ApiError
-    if (error.response?.data) {
-      const errorData = error.response.data
-      const message = extractErrorMessage(errorData)
+  if (!response.ok) {
+      const errorData: ApiErrorResponse = await response.json().catch(() => ({
+          success: false,
+          error: {
+              code: "UNKNOWN_ERROR",
+              message: response.statusText || `HTTP ${response.status}`,
+              field: null,
+          },
+    }));
+
+      // Extract detailed error message
+      const message = extractErrorMessage(errorData);
 
       throw new ApiError(
-        message,
-        errorData.error?.code || 'UNKNOWN_ERROR',
-        error.response.status,
-        errorData.error?.field || null,
-        errorData.details,
-        errorData.errors
-      )
-    }
-
-    return Promise.reject(error)
+          message,
+          errorData.error?.code || "UNKNOWN_ERROR",
+          response.status,
+          errorData.error?.field || null,
+          errorData.details,
+          errorData.errors
+      );
   }
-)
 
-export default api
+  return response.json();
+}
+
+/**
+ * Helper function to get full image URL
+ * In development, prepends backend URL. In production, nginx handles it.
+ */
+export function getImageUrl(url: string): string {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  // In development, prepend backend URL
+  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+    return `${API_URL}${url}`
+  }
+  // In production, nginx handles /uploads/* paths
+  return url
+}

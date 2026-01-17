@@ -1,9 +1,8 @@
 /**
  * Authentication Context Provider
- * Path: src/contexts/AuthContext.tsx
- * Following admin structure pattern
+ * Uses server functions for security (tokens in HttpOnly cookies)
  */
-import React, { createContext, useEffect, useState } from 'react'
+import React, { createContext, useEffect, useState, useCallback } from 'react'
 
 import type { UserProfile } from '@/api/auth'
 import * as authApi from '@/api/auth'
@@ -25,37 +24,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Fetch user profile
-  const fetchUser = async () => {
-    if (!authApi.isAuthenticated()) {
-      setIsLoading(false)
-      return
-    }
-
+  // Fetch user profile using server function
+  const fetchUser = useCallback(async () => {
     try {
       const response = await authApi.getMe()
-      if (response.success) {
-        setUser(response.data)
+      if (response.success && response.data) {
+        // Reject admin users - this is customer frontend only
+        if (response.data.user_type === 'ADMIN') {
+          await authApi.logout()
+          setUser(null)
+        } else {
+          setUser(response.data)
+        }
+      } else {
+        setUser(null)
       }
     } catch (error) {
       console.error('Failed to fetch user:', error)
-      // Token might be invalid, clear it
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
       setUser(null)
     } finally {
       setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchUser()
   }, [])
 
+  // Check auth status on mount
+  useEffect(() => {
+    fetchUser()
+  }, [fetchUser])
+
   const login = async (email: string, password: string) => {
-    const response = await authApi.loginCustomer(email, password)
+    const response = await authApi.loginCustomer({ data: { email, password } })
     if (response.success) {
-      await fetchUser()
+      // Fetch user profile to check user type
+      const userResponse = await authApi.getMe()
+
+      if (userResponse.success && userResponse.data) {
+        // Reject admin users - this is customer frontend only
+        if (userResponse.data.user_type === 'ADMIN') {
+          // Logout immediately to clear tokens
+          await authApi.logout()
+          throw new Error('Admin users cannot login here. Please use the admin panel.')
+        }
+        setUser(userResponse.data)
+      } else {
+        throw new Error('Failed to fetch user profile')
+      }
     } else {
       throw new Error(response.message || 'Login failed')
     }
@@ -67,6 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   const refetchUser = async () => {
+    setIsLoading(true)
     await fetchUser()
   }
 
