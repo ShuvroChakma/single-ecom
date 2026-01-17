@@ -70,8 +70,11 @@ export {
 
 // Promo Codes
 export {
-    createPromoCode, deletePromoCode, getPromoCode, getPromoCodes, getPromoStats, updatePromoCode, validatePromoCode, type PromoCode,
-    type PromoDiscountType,
+    createPromoCode, deletePromoCode, getPromoCode, getPromoCodes, getPromoCodeStats, updatePromoCode, validatePromoCode,
+    type DiscountType,
+    type PromoCode,
+    type PromoCodePayload,
+    type PromoCodeStats,
     type PromoValidationResult
 } from "./promo";
 
