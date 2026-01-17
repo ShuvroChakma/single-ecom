@@ -2,100 +2,160 @@
  * Promo Codes API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
 
-export type PromoDiscountType = "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_SHIPPING";
+export type DiscountType = "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_SHIPPING";
 
 export interface PromoCode {
   id: string;
   code: string;
   description: string | null;
-  discount_type: PromoDiscountType;
+  discount_type: DiscountType;
   discount_value: number;
-  max_discount_amount: number | null;
+  max_discount: number | null;
   min_order_amount: number | null;
-  usage_limit: number | null;
-  usage_count: number;
-  per_user_limit: number | null;
+  max_total_uses: number | null;
+  max_uses_per_user: number;
+  current_uses: number;
+  starts_at: string;
+  expires_at: string;
   first_order_only: boolean;
   is_active: boolean;
-  valid_from: string | null;
-  valid_until: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+export interface PromoCodePayload {
+  code: string;
+  description?: string;
+  discount_type: DiscountType;
+  discount_value: number;
+  max_discount?: number;
+  min_order_amount?: number;
+  max_total_uses?: number;
+  max_uses_per_user?: number;
+  starts_at: string;
+  expires_at: string;
+  first_order_only?: boolean;
+  is_active?: boolean;
 }
 
 export interface PromoValidationResult {
   valid: boolean;
-  message: string;
+  code: string;
+  discount_type: DiscountType | null;
+  discount_value: number | null;
   discount_amount: number | null;
+  message: string;
+  new_total: number | null;
   free_shipping: boolean;
-  promo_code: string | null;
 }
 
-export const validatePromoCode = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { code: string; order_amount: number; token: string } }) => {
-    return apiRequest<ApiResponse<PromoValidationResult>>(
-      "/promo/validate",
-      {
-        method: "POST",
-        body: JSON.stringify({ code: data.code, order_amount: data.order_amount }),
-      },
-      data.token
+export interface PromoCodeStats {
+  total_uses: number;
+  total_discount_given: number;
+  unique_customers: number;
+}
+
+// Admin: Get all promo codes
+export const getPromoCodes = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    return apiRequest<ApiResponse<PromoCode[]>>(
+      "/promo/admin?include_inactive=true",
+      {},
+      token
     );
   });
 
-export const getPromoCodes = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    return apiRequest<ApiResponse<PromoCode[]>>("/promo/admin", {}, data.token);
-  });
+// Admin: Get single promo code
+export const getPromoCode = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
 
-export const getPromoCode = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
     return apiRequest<ApiResponse<PromoCode>>(
       `/promo/admin/${data.id}`,
       {},
-      data.token
+      token
     );
   });
 
+// Admin: Create promo code
 export const createPromoCode = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { promo: Partial<PromoCode>; token: string } }) => {
+  .handler(async ({ data }: { data: PromoCodePayload }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<PromoCode>>(
       "/promo/admin",
       {
         method: "POST",
-        body: JSON.stringify(data.promo),
+        body: JSON.stringify(data),
       },
-      data.token
+      token
     );
   });
 
-export const updatePromoCode = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { id: string; promo: Partial<PromoCode>; token: string } }) => {
+// Admin: Update promo code
+export const updatePromoCode = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { promo: Partial<PromoCodePayload>; id: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    const { id, promo } = data;
+
     return apiRequest<ApiResponse<PromoCode>>(
-      `/promo/admin/${data.id}`,
+      `/promo/admin/${id}`,
       {
         method: "PUT",
-        body: JSON.stringify(data.promo),
+        body: JSON.stringify(promo),
       },
-      data.token
+      token
     );
   });
 
-export const deletePromoCode = createServerFn({ method: "DELETE" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
+// Admin: Delete promo code
+export const deletePromoCode = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<{ deleted: boolean }>>(
       `/promo/admin/${data.id}`,
       { method: "DELETE" },
-      data.token
+      token
     );
   });
 
-export const getPromoStats = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
-    return apiRequest<ApiResponse<any>>(
+// Admin: Get promo code stats
+export const getPromoCodeStats = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    return apiRequest<ApiResponse<PromoCodeStats>>(
       `/promo/admin/${data.id}/stats`,
       {},
-      data.token
+      token
+    );
+  });
+
+// Customer: Validate promo code
+export const validatePromoCode = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { code: string; order_amount: number } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    return apiRequest<ApiResponse<PromoValidationResult>>(
+      "/promo/validate",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      token
     );
   });
