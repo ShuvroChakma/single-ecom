@@ -54,6 +54,7 @@ export interface Order {
   promo_code: string | null;
   payment_method: string;
   payment_status: PaymentStatus;
+  payment_transaction_id: string | null;
   paid_at: string | null;
   status: OrderStatus;
   customer_notes: string | null;

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Eye, MoreHorizontal, Package, RefreshCw } from "lucide-react"
+import { CreditCard, Eye, MoreHorizontal, Package, RefreshCw } from "lucide-react"
 import { useState } from "react"
 
 import { Order, OrderListItem, OrderStatus, getOrder, getOrders } from "@/api/orders"
@@ -236,22 +236,44 @@ function OrdersPage() {
                             {/* Order Info */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Status</p>
+                                    <p className="text-sm text-muted-foreground">Order Status</p>
                                     <Badge variant={statusColors[selectedOrder.status]}>{selectedOrder.status}</Badge>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Payment</p>
-                                    <Badge variant={selectedOrder.payment_status === "PAID" ? "default" : "secondary"}>
-                                        {selectedOrder.payment_status}
-                                    </Badge>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Date</p>
+                                    <p className="text-sm text-muted-foreground">Order Date</p>
                                     <p className="font-medium">{format(new Date(selectedOrder.created_at), "PPP p")}</p>
                                 </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Payment Method</p>
-                                    <p className="font-medium">{selectedOrder.payment_method}</p>
+                            </div>
+
+                            {/* Payment Info */}
+                            <div className="rounded-lg border p-4 bg-muted/30">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                    <h3 className="font-semibold">Payment Information</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Payment Status</p>
+                                        <Badge variant={selectedOrder.payment_status === "PAID" ? "default" : selectedOrder.payment_status === "FAILED" ? "destructive" : "secondary"}>
+                                            {selectedOrder.payment_status}
+                                        </Badge>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Payment Method</p>
+                                        <p className="font-medium uppercase">{selectedOrder.payment_method}</p>
+                                    </div>
+                                    {selectedOrder.payment_transaction_id && (
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Transaction ID</p>
+                                            <p className="font-mono text-sm">{selectedOrder.payment_transaction_id}</p>
+                                        </div>
+                                    )}
+                                    {selectedOrder.paid_at && (
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Paid At</p>
+                                            <p className="font-medium">{format(new Date(selectedOrder.paid_at), "PPP p")}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

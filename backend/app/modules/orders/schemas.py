@@ -129,8 +129,9 @@ class OrderResponse(BaseModel):
     # Payment
     payment_method: str
     payment_status: PaymentStatus
+    payment_transaction_id: Optional[str]
     paid_at: Optional[datetime]
-    
+
     # Status
     status: OrderStatus
     

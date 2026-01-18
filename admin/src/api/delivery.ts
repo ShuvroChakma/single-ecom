@@ -2,9 +2,10 @@
  * Delivery Zones API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
 
-export type ChargeType = "FIXED" | "WEIGHT_BASED" | "FREE_ABOVE";
+export type ChargeType = "FIXED" | "WEIGHT_BASED";
 
 export interface DeliveryZone {
   id: string;
@@ -13,10 +14,26 @@ export interface DeliveryZone {
   charge_type: ChargeType;
   base_charge: number;
   per_kg_charge: number | null;
-  free_above_amount: number | null;
-  min_delivery_days: number;
-  max_delivery_days: number;
+  free_above: number | null;
+  min_days: number;
+  max_days: number;
   is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeliveryZonePayload {
+  name: string;
+  districts: string[];
+  charge_type: ChargeType;
+  base_charge: number;
+  per_kg_charge?: number | null;
+  free_above?: number | null;
+  min_days: number;
+  max_days: number;
+  is_active?: boolean;
+  display_order?: number;
 }
 
 export interface DeliveryChargeResult {
@@ -25,10 +42,12 @@ export interface DeliveryChargeResult {
   base_charge: number;
   weight_charge: number;
   total_charge: number;
-  free_shipping_applied: boolean;
+  is_free: boolean;
+  free_above: number | null;
   estimated_days: string;
 }
 
+// Public: Calculate delivery charge
 export const calculateDeliveryCharge = createServerFn({ method: "GET" })
   .handler(async ({ data }: { data: { district: string; order_amount: number; weight_kg?: number } }) => {
     const query = new URLSearchParams();
@@ -41,44 +60,60 @@ export const calculateDeliveryCharge = createServerFn({ method: "GET" })
     );
   });
 
+// Admin: Get all delivery zones
 export const getDeliveryZones = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string } }) => {
+  .handler(async () => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<DeliveryZone[]>>(
       "/delivery/admin/zones",
       {},
-      data.token
+      token
     );
   });
 
+// Admin: Create delivery zone
 export const createDeliveryZone = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { zone: Partial<DeliveryZone>; token: string } }) => {
+  .handler(async ({ data }: { data: DeliveryZonePayload }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<DeliveryZone>>(
       "/delivery/admin/zones",
       {
         method: "POST",
-        body: JSON.stringify(data.zone),
+        body: JSON.stringify(data),
       },
-      data.token
+      token
     );
   });
 
-export const updateDeliveryZone = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { id: string; zone: Partial<DeliveryZone>; token: string } }) => {
+// Admin: Update delivery zone
+export const updateDeliveryZone = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string; zone: Partial<DeliveryZonePayload> } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<DeliveryZone>>(
       `/delivery/admin/zones/${data.id}`,
       {
         method: "PUT",
         body: JSON.stringify(data.zone),
       },
-      data.token
+      token
     );
   });
 
-export const deleteDeliveryZone = createServerFn({ method: "DELETE" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
+// Admin: Delete delivery zone
+export const deleteDeliveryZone = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
     return apiRequest<ApiResponse<{ deleted: boolean }>>(
       `/delivery/admin/zones/${data.id}`,
       { method: "DELETE" },
-      data.token
+      token
     );
   });

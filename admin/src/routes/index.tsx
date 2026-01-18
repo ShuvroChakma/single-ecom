@@ -92,6 +92,12 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
           const userResponse = await getMe({ data: { token } });
 
           if (userResponse.success) {
+            // Check if user is an ADMIN - only admins can access admin panel
+            if (userResponse.data.user_type !== 'ADMIN') {
+              setEmailError("Only admin users can access the admin panel.");
+              return;
+            }
+
             // Login with access token only (refresh token is in HttpOnly cookie)
             login(
               response.data.access_token,

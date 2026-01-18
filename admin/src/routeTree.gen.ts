@@ -23,6 +23,7 @@ import { Route as DashboardOrdersOrderListRouteImport } from './routes/dashboard
 import { Route as DashboardCustomersCustomerListRouteImport } from './routes/dashboard/customers/customerList'
 import { Route as DashboardUsersCustomersIndexRouteImport } from './routes/dashboard/users/customers/index'
 import { Route as DashboardUsersAdminsIndexRouteImport } from './routes/dashboard/users/admins/index'
+import { Route as DashboardSettingsPaymentsIndexRouteImport } from './routes/dashboard/settings/payments/index'
 import { Route as DashboardProductsRatesIndexRouteImport } from './routes/dashboard/products/rates/index'
 import { Route as DashboardProductsMetalsIndexRouteImport } from './routes/dashboard/products/metals/index'
 import { Route as DashboardProductsCreateIndexRouteImport } from './routes/dashboard/products/create/index'
@@ -32,6 +33,7 @@ import { Route as DashboardProductsBrandsIndexRouteImport } from './routes/dashb
 import { Route as DashboardProductsProductIdIndexRouteImport } from './routes/dashboard/products/$productId/index'
 import { Route as DashboardMarketingSlidesIndexRouteImport } from './routes/dashboard/marketing/slides/index'
 import { Route as DashboardMarketingPromoCodesIndexRouteImport } from './routes/dashboard/marketing/promo-codes/index'
+import { Route as DashboardDeliveryZonesIndexRouteImport } from './routes/dashboard/delivery/zones/index'
 import { Route as DashboardCatalogAttributesIndexRouteImport } from './routes/dashboard/catalog/attributes/index'
 import { Route as DashboardProductsProductIdEditIndexRouteImport } from './routes/dashboard/products/$productId/edit/index'
 
@@ -112,6 +114,12 @@ const DashboardUsersAdminsIndexRoute =
     path: '/users/admins/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardSettingsPaymentsIndexRoute =
+  DashboardSettingsPaymentsIndexRouteImport.update({
+    id: '/settings/payments/',
+    path: '/settings/payments/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardProductsRatesIndexRoute =
   DashboardProductsRatesIndexRouteImport.update({
     id: '/products/rates/',
@@ -166,6 +174,12 @@ const DashboardMarketingPromoCodesIndexRoute =
     path: '/marketing/promo-codes/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardDeliveryZonesIndexRoute =
+  DashboardDeliveryZonesIndexRouteImport.update({
+    id: '/delivery/zones/',
+    path: '/delivery/zones/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardCatalogAttributesIndexRoute =
   DashboardCatalogAttributesIndexRouteImport.update({
     id: '/catalog/attributes/',
@@ -193,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/products': typeof DashboardProductsIndexRoute
   '/dashboard/roles': typeof DashboardRolesIndexRoute
   '/dashboard/catalog/attributes': typeof DashboardCatalogAttributesIndexRoute
+  '/dashboard/delivery/zones': typeof DashboardDeliveryZonesIndexRoute
   '/dashboard/marketing/promo-codes': typeof DashboardMarketingPromoCodesIndexRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/$productId': typeof DashboardProductsProductIdIndexRoute
@@ -202,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/products/create': typeof DashboardProductsCreateIndexRoute
   '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
   '/dashboard/products/rates': typeof DashboardProductsRatesIndexRoute
+  '/dashboard/settings/payments': typeof DashboardSettingsPaymentsIndexRoute
   '/dashboard/users/admins': typeof DashboardUsersAdminsIndexRoute
   '/dashboard/users/customers': typeof DashboardUsersCustomersIndexRoute
   '/dashboard/products/$productId/edit': typeof DashboardProductsProductIdEditIndexRoute
@@ -219,6 +235,7 @@ export interface FileRoutesByTo {
   '/dashboard/products': typeof DashboardProductsIndexRoute
   '/dashboard/roles': typeof DashboardRolesIndexRoute
   '/dashboard/catalog/attributes': typeof DashboardCatalogAttributesIndexRoute
+  '/dashboard/delivery/zones': typeof DashboardDeliveryZonesIndexRoute
   '/dashboard/marketing/promo-codes': typeof DashboardMarketingPromoCodesIndexRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/$productId': typeof DashboardProductsProductIdIndexRoute
@@ -228,6 +245,7 @@ export interface FileRoutesByTo {
   '/dashboard/products/create': typeof DashboardProductsCreateIndexRoute
   '/dashboard/products/metals': typeof DashboardProductsMetalsIndexRoute
   '/dashboard/products/rates': typeof DashboardProductsRatesIndexRoute
+  '/dashboard/settings/payments': typeof DashboardSettingsPaymentsIndexRoute
   '/dashboard/users/admins': typeof DashboardUsersAdminsIndexRoute
   '/dashboard/users/customers': typeof DashboardUsersCustomersIndexRoute
   '/dashboard/products/$productId/edit': typeof DashboardProductsProductIdEditIndexRoute
@@ -247,6 +265,7 @@ export interface FileRoutesById {
   '/dashboard/products/': typeof DashboardProductsIndexRoute
   '/dashboard/roles/': typeof DashboardRolesIndexRoute
   '/dashboard/catalog/attributes/': typeof DashboardCatalogAttributesIndexRoute
+  '/dashboard/delivery/zones/': typeof DashboardDeliveryZonesIndexRoute
   '/dashboard/marketing/promo-codes/': typeof DashboardMarketingPromoCodesIndexRoute
   '/dashboard/marketing/slides/': typeof DashboardMarketingSlidesIndexRoute
   '/dashboard/products/$productId/': typeof DashboardProductsProductIdIndexRoute
@@ -256,6 +275,7 @@ export interface FileRoutesById {
   '/dashboard/products/create/': typeof DashboardProductsCreateIndexRoute
   '/dashboard/products/metals/': typeof DashboardProductsMetalsIndexRoute
   '/dashboard/products/rates/': typeof DashboardProductsRatesIndexRoute
+  '/dashboard/settings/payments/': typeof DashboardSettingsPaymentsIndexRoute
   '/dashboard/users/admins/': typeof DashboardUsersAdminsIndexRoute
   '/dashboard/users/customers/': typeof DashboardUsersCustomersIndexRoute
   '/dashboard/products/$productId/edit/': typeof DashboardProductsProductIdEditIndexRoute
@@ -276,6 +296,7 @@ export interface FileRouteTypes {
     | '/dashboard/products'
     | '/dashboard/roles'
     | '/dashboard/catalog/attributes'
+    | '/dashboard/delivery/zones'
     | '/dashboard/marketing/promo-codes'
     | '/dashboard/marketing/slides'
     | '/dashboard/products/$productId'
@@ -285,6 +306,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/create'
     | '/dashboard/products/metals'
     | '/dashboard/products/rates'
+    | '/dashboard/settings/payments'
     | '/dashboard/users/admins'
     | '/dashboard/users/customers'
     | '/dashboard/products/$productId/edit'
@@ -302,6 +324,7 @@ export interface FileRouteTypes {
     | '/dashboard/products'
     | '/dashboard/roles'
     | '/dashboard/catalog/attributes'
+    | '/dashboard/delivery/zones'
     | '/dashboard/marketing/promo-codes'
     | '/dashboard/marketing/slides'
     | '/dashboard/products/$productId'
@@ -311,6 +334,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/create'
     | '/dashboard/products/metals'
     | '/dashboard/products/rates'
+    | '/dashboard/settings/payments'
     | '/dashboard/users/admins'
     | '/dashboard/users/customers'
     | '/dashboard/products/$productId/edit'
@@ -329,6 +353,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/'
     | '/dashboard/roles/'
     | '/dashboard/catalog/attributes/'
+    | '/dashboard/delivery/zones/'
     | '/dashboard/marketing/promo-codes/'
     | '/dashboard/marketing/slides/'
     | '/dashboard/products/$productId/'
@@ -338,6 +363,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/create/'
     | '/dashboard/products/metals/'
     | '/dashboard/products/rates/'
+    | '/dashboard/settings/payments/'
     | '/dashboard/users/admins/'
     | '/dashboard/users/customers/'
     | '/dashboard/products/$productId/edit/'
@@ -448,6 +474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardUsersAdminsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/settings/payments/': {
+      id: '/dashboard/settings/payments/'
+      path: '/settings/payments'
+      fullPath: '/dashboard/settings/payments'
+      preLoaderRoute: typeof DashboardSettingsPaymentsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/products/rates/': {
       id: '/dashboard/products/rates/'
       path: '/products/rates'
@@ -511,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMarketingPromoCodesIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/delivery/zones/': {
+      id: '/dashboard/delivery/zones/'
+      path: '/delivery/zones'
+      fullPath: '/dashboard/delivery/zones'
+      preLoaderRoute: typeof DashboardDeliveryZonesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/catalog/attributes/': {
       id: '/dashboard/catalog/attributes/'
       path: '/catalog/attributes'
@@ -540,6 +580,7 @@ interface DashboardRouteRouteChildren {
   DashboardProductsIndexRoute: typeof DashboardProductsIndexRoute
   DashboardRolesIndexRoute: typeof DashboardRolesIndexRoute
   DashboardCatalogAttributesIndexRoute: typeof DashboardCatalogAttributesIndexRoute
+  DashboardDeliveryZonesIndexRoute: typeof DashboardDeliveryZonesIndexRoute
   DashboardMarketingPromoCodesIndexRoute: typeof DashboardMarketingPromoCodesIndexRoute
   DashboardMarketingSlidesIndexRoute: typeof DashboardMarketingSlidesIndexRoute
   DashboardProductsProductIdIndexRoute: typeof DashboardProductsProductIdIndexRoute
@@ -549,6 +590,7 @@ interface DashboardRouteRouteChildren {
   DashboardProductsCreateIndexRoute: typeof DashboardProductsCreateIndexRoute
   DashboardProductsMetalsIndexRoute: typeof DashboardProductsMetalsIndexRoute
   DashboardProductsRatesIndexRoute: typeof DashboardProductsRatesIndexRoute
+  DashboardSettingsPaymentsIndexRoute: typeof DashboardSettingsPaymentsIndexRoute
   DashboardUsersAdminsIndexRoute: typeof DashboardUsersAdminsIndexRoute
   DashboardUsersCustomersIndexRoute: typeof DashboardUsersCustomersIndexRoute
   DashboardProductsProductIdEditIndexRoute: typeof DashboardProductsProductIdEditIndexRoute
@@ -566,6 +608,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardProductsIndexRoute: DashboardProductsIndexRoute,
   DashboardRolesIndexRoute: DashboardRolesIndexRoute,
   DashboardCatalogAttributesIndexRoute: DashboardCatalogAttributesIndexRoute,
+  DashboardDeliveryZonesIndexRoute: DashboardDeliveryZonesIndexRoute,
   DashboardMarketingPromoCodesIndexRoute:
     DashboardMarketingPromoCodesIndexRoute,
   DashboardMarketingSlidesIndexRoute: DashboardMarketingSlidesIndexRoute,
@@ -577,6 +620,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardProductsCreateIndexRoute: DashboardProductsCreateIndexRoute,
   DashboardProductsMetalsIndexRoute: DashboardProductsMetalsIndexRoute,
   DashboardProductsRatesIndexRoute: DashboardProductsRatesIndexRoute,
+  DashboardSettingsPaymentsIndexRoute: DashboardSettingsPaymentsIndexRoute,
   DashboardUsersAdminsIndexRoute: DashboardUsersAdminsIndexRoute,
   DashboardUsersCustomersIndexRoute: DashboardUsersCustomersIndexRoute,
   DashboardProductsProductIdEditIndexRoute:
