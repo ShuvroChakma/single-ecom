@@ -24,13 +24,17 @@ export interface RegisterPayload {
 export interface UserProfile {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  phone_number: string | null;
-  user_type: string;
+  is_active: boolean;
   is_verified: boolean;
+  user_type: string;
+  // Customer-specific fields
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string | null;
+  // Admin-specific fields
+  role_name?: string;
+  permissions?: string[];
   created_at: string;
-  updated_at: string;
 }
 
 export interface ChangePasswordPayload {

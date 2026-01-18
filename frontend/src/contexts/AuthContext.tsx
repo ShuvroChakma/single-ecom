@@ -53,24 +53,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [fetchUser])
 
   const login = async (email: string, password: string) => {
+    // This will throw ApiError if login fails (including EMAIL_NOT_VERIFIED)
     const response = await authApi.loginCustomer({ data: { email, password } })
-    if (response.success) {
-      // Fetch user profile to check user type
-      const userResponse = await authApi.getMe()
 
-      if (userResponse.success && userResponse.data) {
-        // Reject admin users - this is customer frontend only
-        if (userResponse.data.user_type === 'ADMIN') {
-          // Logout immediately to clear tokens
-          await authApi.logout()
-          throw new Error('Admin users cannot login here. Please use the admin panel.')
-        }
-        setUser(userResponse.data)
-      } else {
-        throw new Error('Failed to fetch user profile')
-      }
-    } else {
+    if (!response.success) {
       throw new Error(response.message || 'Login failed')
+    }
+
+    // Fetch user profile to check user type
+    const userResponse = await authApi.getMe()
+
+    if (userResponse.success && userResponse.data) {
+      // Reject admin users - this is customer frontend only
+      if (userResponse.data.user_type === 'ADMIN') {
+        // Logout immediately to clear tokens
+        await authApi.logout()
+        throw new Error('Admin users cannot login here. Please use the admin panel.')
+      }
+      setUser(userResponse.data)
+    } else {
+      throw new Error('Failed to fetch user profile')
     }
   }
 

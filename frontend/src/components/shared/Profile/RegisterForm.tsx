@@ -11,10 +11,9 @@ import { FieldError } from './FieldError'
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void
-  onSuccess: (message: string) => void
+  onSuccess: (email: string, message: string) => void
   error: string | null
   setError: (error: string | null) => void
-  successMessage: string | null
 }
 
 export function RegisterForm({
@@ -22,7 +21,6 @@ export function RegisterForm({
   onSuccess,
   error,
   setError,
-  successMessage,
 }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -54,14 +52,11 @@ export function RegisterForm({
         })
 
         if (response.success) {
+          // Redirect to OTP verification with email
           onSuccess(
-            response.message ||
-              'Registration successful! Please check your email to verify.'
+            value.email,
+            response.message || 'Registration successful! Please verify your email.'
           )
-          form.reset()
-          setTimeout(() => {
-            onSwitchToLogin()
-          }, 2000)
         }
       } catch (err) {
         if (hasFieldErrors(err)) {
@@ -87,12 +82,6 @@ export function RegisterForm({
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-green-600 text-sm">{successMessage}</p>
         </div>
       )}
 

@@ -88,10 +88,15 @@ class UserResponse(BaseModel):
     is_active: bool
     is_verified: bool
     user_type: str
+    # Customer-specific fields (populated for customers)
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    # Admin-specific fields
     role_name: Optional[str] = None
     permissions: Optional[list[str]] = None
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

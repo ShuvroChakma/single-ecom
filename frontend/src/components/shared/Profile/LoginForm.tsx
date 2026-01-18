@@ -5,21 +5,25 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { useAuth } from '@/hooks/useAuth'
-import { getErrorMessage, getFieldErrors, hasFieldErrors } from '@/api/client'
+import { ApiError, getErrorMessage, getFieldErrors, hasFieldErrors } from '@/api/client'
 import { FieldError } from './FieldError'
 
 interface LoginFormProps {
   onForgotPassword: () => void
   onSwitchToRegister: () => void
+  onEmailNotVerified: (email: string) => void
   error: string | null
   setError: (error: string | null) => void
+  successMessage: string | null
 }
 
 export function LoginForm({
   onForgotPassword,
   onSwitchToRegister,
+  onEmailNotVerified,
   error,
   setError,
+  successMessage,
 }: LoginFormProps) {
   const navigate = useNavigate()
   const { login } = useAuth()
@@ -37,11 +41,20 @@ export function LoginForm({
       try {
         await login(value.email, value.password)
         navigate({ to: '/profile' })
-      } catch (err) {
+      } catch (err: unknown) {
+        // Check if email not verified error (AUTH_002 is the backend error code)
+        const errorCode = err instanceof ApiError ? err.code : (err as { code?: string })?.code
+        const errorMessage = getErrorMessage(err)
+
+        if (errorCode === 'AUTH_002' || errorMessage.includes('verify your email')) {
+          onEmailNotVerified(value.email)
+          return
+        }
+
         if (hasFieldErrors(err)) {
           setFieldErrors(getFieldErrors(err))
         } else {
-          setError(getErrorMessage(err))
+          setError(errorMessage)
         }
       }
     },
@@ -61,6 +74,12 @@ export function LoginForm({
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
+          <p className="text-green-600 text-sm">{successMessage}</p>
         </div>
       )}
 

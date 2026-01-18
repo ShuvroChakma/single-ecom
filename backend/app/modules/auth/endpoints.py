@@ -374,33 +374,42 @@ async def get_current_user_info(
 ):
     """
     Get current authenticated user information.
-    
+
     - Requires valid access token
     - Requires verified email
     - Returns user profile data (including permissions for admins)
     """
     user_data = UserResponse.model_validate(current_user)
-    
+
+    # If user is customer, fetch customer-specific data
+    if current_user.user_type == UserType.CUSTOMER:
+        from app.modules.users.repository import CustomerRepository
+        customer_repo = CustomerRepository(db)
+        customer = await customer_repo.get_by_user_id(current_user.id)
+        if customer:
+            user_data.first_name = customer.first_name
+            user_data.last_name = customer.last_name
+            user_data.phone_number = customer.phone_number
+
     # If user is admin, fetch role name and permissions
-    from app.constants.enums import UserType
-    if current_user.user_type == UserType.ADMIN:
+    elif current_user.user_type == UserType.ADMIN:
         # Get permissions
         from app.core.permissions import get_user_permissions
         permissions = await get_user_permissions(current_user, db)
         user_data.permissions = permissions
-        
+
         # Get role name
         from app.modules.users.repository import AdminRepository
         from app.modules.roles.repository import RoleRepository
         admin_repo = AdminRepository(db)
         role_repo = RoleRepository(db)
-        
+
         admin = await admin_repo.get_by_user_id(current_user.id)
         if admin:
             role = await role_repo.get(admin.role_id)
             if role:
                 user_data.role_name = role.name
-    
+
     return SuccessResponse(
         message="User retrieved successfully",
         data=user_data.model_dump(exclude_none=True)

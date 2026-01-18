@@ -64,13 +64,6 @@ function RouteComponent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title
-                </label>
-                <p className="text-gray-900 font-semibold">{user?.title}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
                 </label>
                 <p className="text-gray-900 font-semibold">
@@ -89,7 +82,9 @@ function RouteComponent() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Phone
                 </label>
-                <p className="text-gray-900 font-semibold">{user?.phone}</p>
+                <p className="text-gray-900 font-semibold">
+                  {user?.phone_number || '-'}
+                </p>
               </div>
 
               <div>
