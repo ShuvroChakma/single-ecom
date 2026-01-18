@@ -1,5 +1,4 @@
 import {
-  CreditCard,
   GalleryVerticalEnd,
   Gift,
   Home,
@@ -126,17 +125,6 @@ const data = {
       ],
     },
     {
-      title: "Payments",
-      url: "#",
-      icon: CreditCard,
-      items: [
-        {
-          title: "Payment Gateways",
-          url: "/dashboard/payments/gateways",
-        },
-      ],
-    },
-    {
       title: "Roles & Permissions",
       url: "#",
       icon: Shield,
@@ -163,6 +151,10 @@ const data = {
         {
           title: "Store Info",
           url: "/dashboard/settings/store",
+        },
+        {
+          title: "Payment Gateways",
+          url: "/dashboard/settings/payments",
         },
         {
           title: "Appearance",

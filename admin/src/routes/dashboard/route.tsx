@@ -22,16 +22,16 @@ export const Route = createFileRoute('/dashboard')({
 })
 
 function RouteComponent() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Redirect to login if not authenticated after loading
+  // Redirect to login if not authenticated or not an admin after loading
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && (!isAuthenticated || (user && user.user_type !== 'ADMIN'))) {
       navigate({ to: '/' })
     }
-  }, [isLoading, isAuthenticated, navigate])
+  }, [isLoading, isAuthenticated, user, navigate])
 
   // Show loading while checking auth
   if (isLoading) {
@@ -45,8 +45,8 @@ function RouteComponent() {
     )
   }
 
-  // Don't render if not authenticated
-  if (!isAuthenticated) {
+  // Don't render if not authenticated or not an admin
+  if (!isAuthenticated || (user && user.user_type !== 'ADMIN')) {
     return null
   }
 
