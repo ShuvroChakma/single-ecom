@@ -31,6 +31,7 @@ import { Route as DashboardProductsCollectionsIndexRouteImport } from './routes/
 import { Route as DashboardProductsCategoriesIndexRouteImport } from './routes/dashboard/products/categories/index'
 import { Route as DashboardProductsBrandsIndexRouteImport } from './routes/dashboard/products/brands/index'
 import { Route as DashboardProductsProductIdIndexRouteImport } from './routes/dashboard/products/$productId/index'
+import { Route as DashboardOrdersPosIndexRouteImport } from './routes/dashboard/orders/pos/index'
 import { Route as DashboardMarketingSlidesIndexRouteImport } from './routes/dashboard/marketing/slides/index'
 import { Route as DashboardMarketingPromoCodesIndexRouteImport } from './routes/dashboard/marketing/promo-codes/index'
 import { Route as DashboardDeliveryZonesIndexRouteImport } from './routes/dashboard/delivery/zones/index'
@@ -162,6 +163,11 @@ const DashboardProductsProductIdIndexRoute =
     path: '/products/$productId/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardOrdersPosIndexRoute = DashboardOrdersPosIndexRouteImport.update({
+  id: '/orders/pos/',
+  path: '/orders/pos/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardMarketingSlidesIndexRoute =
   DashboardMarketingSlidesIndexRouteImport.update({
     id: '/marketing/slides/',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/delivery/zones': typeof DashboardDeliveryZonesIndexRoute
   '/dashboard/marketing/promo-codes': typeof DashboardMarketingPromoCodesIndexRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/orders/pos': typeof DashboardOrdersPosIndexRoute
   '/dashboard/products/$productId': typeof DashboardProductsProductIdIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/dashboard/delivery/zones': typeof DashboardDeliveryZonesIndexRoute
   '/dashboard/marketing/promo-codes': typeof DashboardMarketingPromoCodesIndexRoute
   '/dashboard/marketing/slides': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/orders/pos': typeof DashboardOrdersPosIndexRoute
   '/dashboard/products/$productId': typeof DashboardProductsProductIdIndexRoute
   '/dashboard/products/brands': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories': typeof DashboardProductsCategoriesIndexRoute
@@ -268,6 +276,7 @@ export interface FileRoutesById {
   '/dashboard/delivery/zones/': typeof DashboardDeliveryZonesIndexRoute
   '/dashboard/marketing/promo-codes/': typeof DashboardMarketingPromoCodesIndexRoute
   '/dashboard/marketing/slides/': typeof DashboardMarketingSlidesIndexRoute
+  '/dashboard/orders/pos/': typeof DashboardOrdersPosIndexRoute
   '/dashboard/products/$productId/': typeof DashboardProductsProductIdIndexRoute
   '/dashboard/products/brands/': typeof DashboardProductsBrandsIndexRoute
   '/dashboard/products/categories/': typeof DashboardProductsCategoriesIndexRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/dashboard/delivery/zones'
     | '/dashboard/marketing/promo-codes'
     | '/dashboard/marketing/slides'
+    | '/dashboard/orders/pos'
     | '/dashboard/products/$productId'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/dashboard/delivery/zones'
     | '/dashboard/marketing/promo-codes'
     | '/dashboard/marketing/slides'
+    | '/dashboard/orders/pos'
     | '/dashboard/products/$productId'
     | '/dashboard/products/brands'
     | '/dashboard/products/categories'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/dashboard/delivery/zones/'
     | '/dashboard/marketing/promo-codes/'
     | '/dashboard/marketing/slides/'
+    | '/dashboard/orders/pos/'
     | '/dashboard/products/$productId/'
     | '/dashboard/products/brands/'
     | '/dashboard/products/categories/'
@@ -530,6 +542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProductsProductIdIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/orders/pos/': {
+      id: '/dashboard/orders/pos/'
+      path: '/orders/pos'
+      fullPath: '/dashboard/orders/pos'
+      preLoaderRoute: typeof DashboardOrdersPosIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/marketing/slides/': {
       id: '/dashboard/marketing/slides/'
       path: '/marketing/slides'
@@ -583,6 +602,7 @@ interface DashboardRouteRouteChildren {
   DashboardDeliveryZonesIndexRoute: typeof DashboardDeliveryZonesIndexRoute
   DashboardMarketingPromoCodesIndexRoute: typeof DashboardMarketingPromoCodesIndexRoute
   DashboardMarketingSlidesIndexRoute: typeof DashboardMarketingSlidesIndexRoute
+  DashboardOrdersPosIndexRoute: typeof DashboardOrdersPosIndexRoute
   DashboardProductsProductIdIndexRoute: typeof DashboardProductsProductIdIndexRoute
   DashboardProductsBrandsIndexRoute: typeof DashboardProductsBrandsIndexRoute
   DashboardProductsCategoriesIndexRoute: typeof DashboardProductsCategoriesIndexRoute
@@ -612,6 +632,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardMarketingPromoCodesIndexRoute:
     DashboardMarketingPromoCodesIndexRoute,
   DashboardMarketingSlidesIndexRoute: DashboardMarketingSlidesIndexRoute,
+  DashboardOrdersPosIndexRoute: DashboardOrdersPosIndexRoute,
   DashboardProductsProductIdIndexRoute: DashboardProductsProductIdIndexRoute,
   DashboardProductsBrandsIndexRoute: DashboardProductsBrandsIndexRoute,
   DashboardProductsCategoriesIndexRoute: DashboardProductsCategoriesIndexRoute,
