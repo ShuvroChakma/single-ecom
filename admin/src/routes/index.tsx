@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Validate email
   const validateEmail = (value: string): string | null => {
@@ -222,27 +224,41 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
                     >
                       Password
                     </label>
-                    <Input
-                      id={field.name}
-                      type="password"
-                      value={field.state.value}
-                      onChange={(e) => {
-                        const newValue = e.target.value;
-                        field.handleChange(newValue);
-                        // Only validate if there's already an error showing
-                        if (passwordError) {
-                          setPasswordError(validatePassword(newValue));
-                        }
-                      }}
-                      onBlur={field.handleBlur}
-                      disabled={isLoading}
-                      aria-invalid={!!passwordError}
-                      className={
-                        passwordError
-                          ? "border-red-500 focus-visible:border-red-500"
-                          : ""
-                      }
-                    />
+                    <div className="relative">
+                      <Input
+                        id={field.name}
+                        type={showPassword ? "text" : "password"}
+                        value={field.state.value}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          field.handleChange(newValue);
+                          // Only validate if there's already an error showing
+                          if (passwordError) {
+                            setPasswordError(validatePassword(newValue));
+                          }
+                        }}
+                        onBlur={field.handleBlur}
+                        disabled={isLoading}
+                        aria-invalid={!!passwordError}
+                        className={`pr-10 ${
+                          passwordError
+                            ? "border-red-500 focus-visible:border-red-500"
+                            : ""
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                     {passwordError && (
                       <p className="text-sm text-red-500">{passwordError}</p>
                     )}
