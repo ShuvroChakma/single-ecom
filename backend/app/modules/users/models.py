@@ -43,6 +43,7 @@ class Customer(SQLModel, table=True):
 
     # Relationships
     user: User = Relationship(back_populates="customer")
+    wishlist_items: list["WishlistItem"] = Relationship(back_populates="customer")
 
 
 class Admin(SQLModel, table=True):
@@ -67,3 +68,4 @@ class Admin(SQLModel, table=True):
 # Import to avoid circular dependency
 from app.modules.roles.models import Role  # noqa: E402
 from app.modules.auth.token_models import RefreshToken  # noqa: E402
+from app.modules.wishlist.models import WishlistItem  # noqa: E402

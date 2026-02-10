@@ -61,7 +61,14 @@ class ErrorCode:
     CATEGORY_DUPLICATE_SLUG = "CAT_003"
     CATEGORY_HAS_CHILDREN = "CAT_004"
     CATEGORY_INVALID_PARENT = "CAT_005"
-    
+
+    # Product errors (PROD_xxx)
+    PRODUCT_NOT_FOUND = "PROD_001"
+    VARIANT_NOT_FOUND = "PROD_002"
+
+    # Generic item errors (ITEM_xxx)
+    ITEM_NOT_FOUND = "ITEM_001"
+
     # Server errors (SRV_xxx)
     INTERNAL_ERROR = "SRV_001"
     DATABASE_ERROR = "SRV_002"

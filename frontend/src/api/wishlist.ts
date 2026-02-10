@@ -3,19 +3,41 @@
  */
 import { apiClient } from '@/utils/api-client'
 import type { APIResponse } from '@/types/api.types'
-import type { Product } from './categories'
+
+// Product info in wishlist
+export interface WishlistProductInfo {
+  id: string
+  name: string
+  slug: string
+  image: string | null
+}
+
+// Variant info in wishlist
+export interface WishlistVariantInfo {
+  id: string
+  sku: string
+  metal_type: string
+  metal_purity: string
+  metal_color: string
+  size: string | null
+  calculated_price: number | null
+}
 
 export interface WishlistItem {
   id: string
-  product_id: string
-  variant_id: string | null
-  product: Product
+  product: WishlistProductInfo
+  variant: WishlistVariantInfo | null
   added_at: string
 }
 
 export interface Wishlist {
   items: WishlistItem[]
   total: number
+}
+
+export interface WishlistCheckResponse {
+  in_wishlist: boolean
+  item_id: string | null
 }
 
 /**
@@ -35,22 +57,22 @@ export async function addToWishlist(productId: string, variantId?: string): Prom
 /**
  * Remove product from wishlist
  */
-export async function removeFromWishlist(itemId: string): Promise<APIResponse<{ success: boolean }>> {
-  return apiClient.delete<{ success: boolean }>(`/wishlist/${itemId}`)
+export async function removeFromWishlist(itemId: string): Promise<APIResponse<{ removed: boolean }>> {
+  return apiClient.delete<{ removed: boolean }>(`/wishlist/${itemId}`)
 }
 
 /**
  * Check if product is in wishlist
  */
-export async function isInWishlist(productId: string): Promise<APIResponse<{ in_wishlist: boolean; item_id: string | null }>> {
-  return apiClient.get<{ in_wishlist: boolean; item_id: string | null }>(`/wishlist/check/${productId}`)
+export async function isInWishlist(productId: string): Promise<APIResponse<WishlistCheckResponse>> {
+  return apiClient.get<WishlistCheckResponse>(`/wishlist/check/${productId}`)
 }
 
 /**
  * Clear entire wishlist
  */
-export async function clearWishlist(): Promise<APIResponse<{ success: boolean }>> {
-  return apiClient.delete<{ success: boolean }>('/wishlist')
+export async function clearWishlist(): Promise<APIResponse<{ cleared: boolean }>> {
+  return apiClient.delete<{ cleared: boolean }>('/wishlist')
 }
 
 /**

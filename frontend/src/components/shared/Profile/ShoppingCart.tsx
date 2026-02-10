@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Phone, Tag, X, Minus, Plus, Loader2 } from 'lucide-react';
+import { Phone, Tag, X, Minus, Plus, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCart, updateCartItem, removeFromCart, applyPromoCode, type Cart } from '@/api/cart';
+import { getCart, updateCartItem, removeFromCart, validatePromoCode, type Cart, type PromoValidationResult } from '@/api/cart';
 
 export default function ShoppingCart() {
   const [showProductDetails, setShowProductDetails] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState('');
+  const [promoResult, setPromoResult] = useState<PromoValidationResult | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -27,19 +28,24 @@ export default function ShoppingCart() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
-  const applyPromoMutation = useMutation({
-    mutationFn: applyPromoCode,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      setPromoCode('');
+  const validatePromoMutation = useMutation({
+    mutationFn: (code: string) => validatePromoCode(code, cart?.subtotal || 0),
+    onSuccess: (response) => {
+      if (response.data) {
+        setPromoResult(response.data);
+        if (response.data.valid) {
+          setPromoCode('');
+        }
+      }
     },
   });
 
   const cart = cartResponse?.data;
   const cartItems = cart?.items || [];
   const subtotal = cart?.subtotal || 0;
-  const discount = cart?.discount || 0;
-  const total = cart?.total || 0;
+  const taxAmount = cart?.tax_amount || 0;
+  const discount = promoResult?.valid ? promoResult.discount_amount : 0;
+  const total = subtotal + taxAmount - discount;
 
   const promiseFeatures = [
     { 
@@ -144,18 +150,26 @@ export default function ShoppingCart() {
                   <div key={item.id} className="border rounded-lg p-4">
                     <div className="flex gap-4">
                       <img
-                        src={item.product_image || '/placeholder-product.jpg'}
-                        alt={item.product_name}
+                        src={item.product.image || '/placeholder-product.jpg'}
+                        alt={item.product.name}
                         className="w-24 h-24 object-contain bg-white rounded"
                       />
                       <div className="flex-1">
                         <div className="flex justify-between">
                           <div>
-                            <h3 className="font-semibold text-lg mb-1">{item.product_name}</h3>
-                            <p className="text-sm text-gray-500 mb-3">SKU: {item.variant_sku}</p>
+                            <h3 className="font-semibold text-lg mb-1">{item.product.name}</h3>
+                            <p className="text-sm text-gray-500 mb-3">SKU: {item.variant.sku}</p>
 
-                            {item.variant_info && (
-                              <p className="text-sm text-gray-600 mb-2">{item.variant_info}</p>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {item.variant.metal_type} {item.variant.metal_purity} - {item.variant.metal_color}
+                              {item.variant.size && ` - Size ${item.variant.size}`}
+                            </p>
+
+                            {item.price_changed && (
+                              <p className="text-xs text-amber-600 flex items-center gap-1 mb-2">
+                                <AlertCircle className="w-3 h-3" />
+                                Price changed since adding to cart
+                              </p>
                             )}
 
                             <div className="flex items-center gap-3 mt-3">
@@ -181,7 +195,7 @@ export default function ShoppingCart() {
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            <span className="font-semibold text-lg">৳ {(item.unit_price * item.quantity).toLocaleString('en-BD')}</span>
+                            <span className="font-semibold text-lg">৳ {item.line_total.toLocaleString('en-BD')}</span>
                             <button
                               onClick={() => removeItemMutation.mutate(item.id)}
                               disabled={removeItemMutation.isPending}
@@ -243,18 +257,27 @@ export default function ShoppingCart() {
                   <input
                     type="text"
                     value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
+                    onChange={(e) => {
+                      setPromoCode(e.target.value);
+                      setPromoResult(null);
+                    }}
                     className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
                     placeholder="Enter coupon code"
                   />
                   <button
-                    onClick={() => promoCode && applyPromoMutation.mutate(promoCode)}
-                    disabled={!promoCode || applyPromoMutation.isPending}
+                    onClick={() => promoCode && validatePromoMutation.mutate(promoCode)}
+                    disabled={!promoCode || validatePromoMutation.isPending}
                     className="bg-header text-white px-6 py-2 rounded font-medium hover:opacity-90 disabled:opacity-50"
                   >
-                    {applyPromoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                    {validatePromoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
                   </button>
                 </div>
+                {promoResult && (
+                  <div className={`mt-2 text-sm flex items-center gap-1 ${promoResult.valid ? 'text-green-600' : 'text-red-600'}`}>
+                    {promoResult.valid ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    {promoResult.message}
+                  </div>
+                )}
               </div>
 
               <h3 className="font-semibold text-lg mb-4">Order Summary</h3>
@@ -308,14 +331,14 @@ export default function ShoppingCart() {
           <div key={item.id} className="bg-white mt-2 p-4">
             <div className="flex gap-3 mb-3">
               <img
-                src={item.product_image || '/placeholder-product.jpg'}
-                alt={item.product_name}
+                src={item.product.image || '/placeholder-product.jpg'}
+                alt={item.product.name}
                 className="w-24 h-24 object-contain rounded"
               />
               <div className="flex-1">
-                <h3 className="font-semibold mb-1">{item.product_name}</h3>
-                <p className="text-xs text-gray-500 mb-2">{item.variant_sku}</p>
-                <p className="text-lg font-semibold">৳ {(item.unit_price * item.quantity).toLocaleString('en-BD')}</p>
+                <h3 className="font-semibold mb-1">{item.product.name}</h3>
+                <p className="text-xs text-gray-500 mb-2">{item.variant.sku}</p>
+                <p className="text-lg font-semibold">৳ {item.line_total.toLocaleString('en-BD')}</p>
               </div>
             </div>
 
@@ -349,19 +372,34 @@ export default function ShoppingCart() {
               </button>
             </div>
 
-            {item.variant_info && (
-              <button
-                onClick={() => setShowProductDetails(showProductDetails === item.id ? null : item.id)}
-                className="w-full bg-gray-100 py-3 rounded text-sm text-header font-medium flex items-center justify-center gap-2"
-              >
-                {showProductDetails === item.id ? 'Hide' : 'Show'} Details
-                <span className="transform transition-transform" style={{transform: showProductDetails === item.id ? 'rotate(180deg)' : 'rotate(0)'}}>▼</span>
-              </button>
-            )}
+            <button
+              onClick={() => setShowProductDetails(showProductDetails === item.id ? null : item.id)}
+              className="w-full bg-gray-100 py-3 rounded text-sm text-header font-medium flex items-center justify-center gap-2"
+            >
+              {showProductDetails === item.id ? 'Hide' : 'Show'} Details
+              <span className="transform transition-transform" style={{transform: showProductDetails === item.id ? 'rotate(180deg)' : 'rotate(0)'}}>▼</span>
+            </button>
 
-            {showProductDetails === item.id && item.variant_info && (
-              <div className="mt-4 border-t pt-4">
-                <p className="text-sm text-gray-600">{item.variant_info}</p>
+            {showProductDetails === item.id && (
+              <div className="mt-4 border-t pt-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Metal:</span>
+                  <span>{item.variant.metal_type} {item.variant.metal_purity}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Color:</span>
+                  <span>{item.variant.metal_color}</span>
+                </div>
+                {item.variant.size && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Size:</span>
+                    <span>{item.variant.size}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Weight:</span>
+                  <span>{item.variant.net_weight}g</span>
+                </div>
               </div>
             )}
           </div>
@@ -377,18 +415,27 @@ export default function ShoppingCart() {
             <input
               type="text"
               value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
+              onChange={(e) => {
+                setPromoCode(e.target.value);
+                setPromoResult(null);
+              }}
               className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none"
               placeholder="Enter coupon code"
             />
             <button
-              onClick={() => promoCode && applyPromoMutation.mutate(promoCode)}
-              disabled={!promoCode || applyPromoMutation.isPending}
+              onClick={() => promoCode && validatePromoMutation.mutate(promoCode)}
+              disabled={!promoCode || validatePromoMutation.isPending}
               className="bg-header text-white px-6 py-2 rounded font-medium disabled:opacity-50"
             >
-              Apply
+              {validatePromoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
             </button>
           </div>
+          {promoResult && (
+            <div className={`mt-2 text-sm flex items-center gap-1 ${promoResult.valid ? 'text-green-600' : 'text-red-600'}`}>
+              {promoResult.valid ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+              {promoResult.message}
+            </div>
+          )}
         </div>
 
         {/* Order Summary */}

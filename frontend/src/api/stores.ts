@@ -23,16 +23,12 @@ export interface Store {
   updated_at: string
 }
 
-export interface StoreListResponse {
-  items: Store[]
-  total: number
-}
-
 /**
- * Get all stores
+ * Get all active stores
  */
-export async function getStores(): Promise<APIResponse<Store[]>> {
-  return apiClient.get<Store[]>('/stores')
+export async function getStores(city?: string): Promise<APIResponse<Store[]>> {
+  const url = city ? `/stores?city=${encodeURIComponent(city)}` : '/stores'
+  return apiClient.get<Store[]>(url)
 }
 
 /**
@@ -50,8 +46,8 @@ export async function findNearbyStores(lat: number, lng: number, radiusKm: numbe
 }
 
 /**
- * Search stores by city
+ * Search stores by city (alias for getStores with city param)
  */
 export async function searchStoresByCity(city: string): Promise<APIResponse<Store[]>> {
-  return apiClient.get<Store[]>(`/stores?city=${encodeURIComponent(city)}`)
+  return getStores(city)
 }
