@@ -1,65 +1,42 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { getHomeCarouselSlides, type Slide as ApiSlide } from '@/api/slides'
 
-interface Slide {
-  id: number
-  image: string
-  alt: string
-}
-
-const SLIDES: Array<Slide> = [
+// Fallback slides for when API fails or no slides configured
+const FALLBACK_SLIDES = [
   {
-    id: 1,
-    image:
-      'https://static.malabargoldanddiamonds.com/media/bsimages/boi-offer-web-final.jpg',
-    alt: 'Slide 1',
+    id: '1',
+    image_url: 'https://static.malabargoldanddiamonds.com/media/bsimages/boi-offer-web-final.jpg',
+    title: 'Special Offer',
   },
   {
-    id: 2,
-    image:
-      'https://static.malabargoldanddiamonds.com/media/bsimages/Men-In-Platinum-web.jpg',
-    alt: 'Slide 2',
+    id: '2',
+    image_url: 'https://static.malabargoldanddiamonds.com/media/bsimages/Men-In-Platinum-web.jpg',
+    title: 'Men In Platinum',
   },
   {
-    id: 3,
-    image:
-      'https://static.malabargoldanddiamonds.com/media/bsimages/vyana-web.jpg',
-    alt: 'Slide 3',
-  },
-  {
-    id: 4,
-    image:
-      'https://static.malabargoldanddiamonds.com/media/bsimages/Nuwa-web-banner.jpg',
-    alt: 'Slide 4',
-  },
-  {
-    id: 5,
-    image:
-      'https://static.malabargoldanddiamonds.com/media/bsimages/Tanvika-Collection-web.jpg',
-    alt: 'Slide 5',
-  },
-  {
-    id: 6,
-    image:
-      'https://static.malabargoldanddiamonds.com/media/bsimages/Diamond-Jewellery-web1.jpg',
-    alt: 'Slide 6',
-  },
-  {
-    id: 7,
-    image:
-      'https://static.malabargoldanddiamonds.com/media/bsimages/Gold-Chain-web-24092024.jpg',
-    alt: 'Slide 7',
+    id: '3',
+    image_url: 'https://static.malabargoldanddiamonds.com/media/bsimages/vyana-web.jpg',
+    title: 'Vyana Collection',
   },
 ]
 
 export default function Carousel() {
+  const { data: slidesResponse, isLoading } = useQuery({
+    queryKey: ['home-carousel-slides'],
+    queryFn: getHomeCarouselSlides,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+
+  const slides = slidesResponse?.data?.length ? slidesResponse.data : FALLBACK_SLIDES
   const [index, setIndex] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [currentX, setCurrentX] = useState(0)
   const [offsetX, setOffsetX] = useState(0)
 
-  const slideCount = SLIDES.length
+  const slideCount = slides.length
   const dragThreshold = 40
   const isFirstSlide = index === 0
   const isLastSlide = index === slideCount - 1
@@ -173,11 +150,11 @@ export default function Carousel() {
             willChange: 'transform',
           }}
         >
-          {SLIDES.map((slide) => (
+          {slides.map((slide) => (
             <div key={slide.id} className="w-screen h-full shrink-0">
               <img
-                src={slide.image}
-                alt={slide.alt}
+                src={slide.image_url}
+                alt={slide.title}
                 draggable={false}
                 className="w-full h-full object-fill select-none"
                 style={{
@@ -229,7 +206,7 @@ export default function Carousel() {
 
       {/* PAGINATION DOTS - OUTSIDE BELOW CAROUSEL */}
       <div className="flex justify-center items-center gap-1.5 py-4 bg-white">
-        {SLIDES.map((_, i) => (
+        {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => setIndex(i)}

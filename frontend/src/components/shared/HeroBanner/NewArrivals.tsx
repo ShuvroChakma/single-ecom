@@ -1,12 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-
-interface Product {
-  id: number;
-  name: string;
-  code: string;
-  price: string;
-  image: string;
-}
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { getNewArrivals } from '@/api/products';
 
 const NewArrivals: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,64 +11,26 @@ const NewArrivals: React.FC = () => {
   const [dragStart, setDragStart] = useState(0);
   const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
 
-  const products: Array<Product> = [
-    {
-      id: 1,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL46067",
-      price: "₹ 125,286",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl46067_4.jpg"
-    },
-    {
-      id: 2,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL46066",
-      price: "₹ 101,235",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl46066_4.jpg"
-    },
-    {
-      id: 3,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL46064",
-      price: "₹ 178,396",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl46064_4.jpg"
-    },
-    {
-      id: 4,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL45836",
-      price: "₹ 145,250",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl45836_4.jpg"
-    },
-    {
-      id: 5,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL46073",
-      price: "₹ 132,580",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl46073_4.jpg"
-    },
-    {
-      id: 6,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL46072",
-      price: "₹ 158,490",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl46072_4.jpg"
-    },
-    {
-      id: 7,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL46071",
-      price: "₹ 142,360",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl46071_4.jpg"
-    },
-    {
-      id: 8,
-      name: "Callesta Gold Oval Bangle",
-      code: "BNDZL46069",
-      price: "₹ 131,453",
-      image: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/b/n/bndzl46069_4.jpg"
-    }
-  ];
+  const { data: productsResponse, isLoading } = useQuery({
+    queryKey: ['new-arrivals'],
+    queryFn: () => getNewArrivals(8),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Transform API products to display format
+  const products = useMemo(() => {
+    if (!productsResponse?.data?.items) return [];
+    return productsResponse.data.items.map(product => ({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      code: product.variants?.[0]?.sku || product.id.substring(0, 10),
+      price: product.variants?.[0]?.calculated_price
+        ? `৳ ${product.variants[0].calculated_price.toLocaleString('en-BD')}`
+        : 'Price on request',
+      image: product.images?.[0] || '/placeholder-product.jpg',
+    }));
+  }, [productsResponse]);
 
   const itemsPerView = typeof window !== 'undefined' && window.innerWidth >= 768 ? 4 : 1;
   const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
@@ -182,46 +139,66 @@ const NewArrivals: React.FC = () => {
                 transform: `translateX(-${currentIndex * 100}%)`
               }}
             >
-              {Array.from({ length: Math.ceil(products.length / itemsPerView) }).map((_, slideIndex) => (
-                <div
-                  key={slideIndex}
-                  className="w-full shrink-0 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-4"
-                >
-                  {products
-                    .slice(slideIndex * itemsPerView, (slideIndex + 1) * itemsPerView)
-                    .map((product) => (
-                      <div
-                        key={product.id}
-                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
-                      >
-                        <div className="aspect-square bg-white flex items-center justify-center p-1">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-contain"
-                            draggable="false"
-                          />
-                        </div>
-                        <div className="p-2 text-center">
-                          <h3 className="text-sm md:text-base font-medium text-gray-800 mb-1">
-                            {product.name}
-                          </h3>
-                          <p className="text-sm text-gray-500 mb-2">{product.code}</p>
-                          <p className="text-lg font-semibold text-top_bar">{product.price}</p>
-                        </div>
+              {isLoading ? (
+                <div className="w-full shrink-0 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                      <div className="aspect-square bg-gray-200" />
+                      <div className="p-2 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto" />
+                        <div className="h-5 bg-gray-200 rounded w-2/3 mx-auto" />
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                Array.from({ length: Math.ceil(products.length / itemsPerView) }).map((_, slideIndex) => (
+                  <div
+                    key={slideIndex}
+                    className="w-full shrink-0 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-4"
+                  >
+                    {products
+                      .slice(slideIndex * itemsPerView, (slideIndex + 1) * itemsPerView)
+                      .map((product) => (
+                        <Link
+                          key={product.id}
+                          to="/products/$slug"
+                          params={{ slug: product.slug }}
+                          className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                        >
+                          <div className="aspect-square bg-white flex items-center justify-center p-1">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-contain"
+                              draggable="false"
+                            />
+                          </div>
+                          <div className="p-2 text-center">
+                            <h3 className="text-sm md:text-base font-medium text-gray-800 mb-1">
+                              {product.name}
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-2">{product.code}</p>
+                            <p className="text-lg font-semibold text-top_bar">{product.price}</p>
+                          </div>
+                        </Link>
+                      ))}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* View All Button */}
         <div className="text-center">
-          <button className="bg-header text-white font-medium px-8 py-3 rounded transition-colors duration-300 cursor-pointer">
+          <Link
+            to="/products"
+            className="inline-block bg-header text-white font-medium px-8 py-3 rounded transition-colors duration-300 cursor-pointer hover:opacity-90"
+          >
             VIEW ALL PRODUCTS
-          </button>
+          </Link>
         </div>
       </div>
     </div>

@@ -1,5 +1,9 @@
 import React, { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Loader2 } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createOrder, type CreateOrderRequest } from '@/api/orders'
+import { getCart } from '@/api/cart'
 
 /* =======================
    COUNTRY CODES (REAL FLAGS)
@@ -78,11 +82,32 @@ const PaymentOption = ({
 )
 
 const Checkout = () => {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [currentStep, setCurrentStep] = useState(1)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [isGiftOpen, setIsGiftOpen] = useState(false)
   const [countryCode, setCountryCode] = useState('+880')
   const [activePayment, setActivePayment] = useState<string | null>(null)
+  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string } | null>(null)
+
+  const { data: cartResponse } = useQuery({
+    queryKey: ['cart'],
+    queryFn: getCart,
+    staleTime: 60 * 1000,
+  })
+
+  const cart = cartResponse?.data
+
+  const createOrderMutation = useMutation({
+    mutationFn: createOrder,
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] })
+      if (response.data) {
+        setOrderSuccess({ orderNumber: response.data.order_number })
+      }
+    },
+  })
 
   const [formData, setFormData] = useState({
     title: 'Mr',
@@ -127,7 +152,49 @@ const Checkout = () => {
   }
 
   const placeOrder = () => {
-    alert('✅ Your order has been placed successfully!')
+    const orderData: CreateOrderRequest = {
+      shipping_address: {
+        full_name: `${formData.title} ${formData.firstName} ${formData.lastName}`.trim(),
+        phone: `${countryCode}${formData.telephone}`,
+        email: '', // Would need an email field
+        address_line1: formData.address,
+        address_line2: formData.landmark || undefined,
+        city: formData.city,
+        postal_code: formData.zipCode,
+        country: 'Bangladesh',
+      },
+      payment_method: activePayment || 'cod',
+      notes: formData.giftMessage || undefined,
+    }
+    createOrderMutation.mutate(orderData)
+  }
+
+  // Order success view
+  if (orderSuccess) {
+    return (
+      <div className="bg-gray-50 py-12">
+        <div className="max-w-lg mx-auto px-4 text-center">
+          <div className="bg-white rounded-lg shadow p-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">✓</span>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Order Placed Successfully!</h2>
+            <p className="text-gray-600 mb-4">
+              Your order number is: <strong>{orderSuccess.orderNumber}</strong>
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              We'll send you updates about your order via SMS and email.
+            </p>
+            <button
+              onClick={() => navigate({ to: '/' })}
+              className="bg-header text-white px-8 py-3 rounded font-semibold hover:opacity-90"
+            >
+              Continue Shopping
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -350,17 +417,31 @@ const Checkout = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-between mt-8">
               <button
                 onClick={() => setCurrentStep(1)}
-                className="px-8 py-3 border rounded"
+                disabled={createOrderMutation.isPending}
+                className="px-8 py-3 border rounded disabled:opacity-50"
               >
                 Back
               </button>
               <button
                 onClick={placeOrder}
-                className="px-8 py-3 bg-header text-white rounded"
+                disabled={!activePayment || createOrderMutation.isPending}
+                className="px-8 py-3 bg-header text-white rounded disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Place Order
+                {createOrderMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Place Order'
+                )}
               </button>
             </div>
+            {createOrderMutation.isError && (
+              <p className="text-red-500 text-sm mt-4 text-center">
+                Failed to place order. Please try again.
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -1,26 +1,45 @@
 import { useState } from 'react';
-import { Phone, Tag, X } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
+import { Phone, Tag, X, Minus, Plus, Loader2 } from 'lucide-react';
+import { useNavigate, Link } from '@tanstack/react-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCart, updateCartItem, removeFromCart, applyPromoCode, type Cart } from '@/api/cart';
 
 export default function ShoppingCart() {
-  const [showProductDetails, setShowProductDetails] = useState(false);
+  const [showProductDetails, setShowProductDetails] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState('');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // These values will come from backend/props
-  const cartData = {
-    productName: "Malabar Gold Bracelet BRDZL40932",
-    productCode: "BRDZL40932",
-    price: 20819,
-    quantity: "1N",
-    size: "6.5 INCHES (16.51 cm)",
-    goldColour: "Rose",
-    makingCharges: 4170,
-    goldPurity: "18 KT (750)",
-    dispatchDate: "Monday, Dec 22, 25",
-    productImage: "https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/thumbnail/105x/9df78eab33525d08d6e5fb8d27136e95/b/r/brdzl40932.jpg"
-  };
-  
-  const { price, makingCharges } = cartData;
+  const { data: cartResponse, isLoading } = useQuery({
+    queryKey: ['cart'],
+    queryFn: getCart,
+    staleTime: 60 * 1000, // 1 minute
+  });
+
+  const updateItemMutation = useMutation({
+    mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
+      updateCartItem(itemId, quantity),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: removeFromCart,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
+  });
+
+  const applyPromoMutation = useMutation({
+    mutationFn: applyPromoCode,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      setPromoCode('');
+    },
+  });
+
+  const cart = cartResponse?.data;
+  const cartItems = cart?.items || [];
+  const subtotal = cart?.subtotal || 0;
+  const discount = cart?.discount || 0;
+  const total = cart?.total || 0;
 
   const promiseFeatures = [
     { 
@@ -82,6 +101,28 @@ export default function ShoppingCart() {
     navigate({ to: '/checkout' });
   };
 
+  if (isLoading) {
+    return (
+      <div className="w-full bg-gray-50 min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-header" />
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="w-full bg-gray-50 min-h-screen flex flex-col items-center justify-center p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold mb-4">Your Cart is Empty</h1>
+          <p className="text-gray-600 mb-6">Add some items to get started</p>
+          <Link to="/products" className="bg-header text-white px-6 py-3 rounded font-medium hover:opacity-90">
+            Continue Shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-gray-50">
       {/* Desktop Layout */}
@@ -93,51 +134,67 @@ export default function ShoppingCart() {
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-semibold">Shopping Cart</h1>
-                <span className="text-lg font-medium">₹ {price.toLocaleString('en-IN')}</span>
+                <span className="text-lg font-medium">৳ {total.toLocaleString('en-BD')}</span>
               </div>
-              <p className="text-gray-600 mb-4">Total (1 Item)</p>
-              
-              {/* Cart Item */}
-              <div className="border rounded-lg p-4">
-                <div className="flex gap-4">
-                  <img 
-                    src={cartData.productImage}
-                    alt={cartData.productName}
-                    className="w-24 h-24 object-contain bg-white rounded"
-                  />
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg mb-1">{cartData.productName}</h3>
-                        <p className="text-sm text-gray-500 mb-3">Product Code: {cartData.productCode}</p>
-                        
-                        <div className="flex items-center gap-4 text-sm mb-2">
-                          <span>Size: <span className="font-medium">{cartData.size}</span></span>
-                          <span>Quantity: <span className="font-medium">{cartData.quantity}</span></span>
+              <p className="text-gray-600 mb-4">Total ({cartItems.length} {cartItems.length === 1 ? 'Item' : 'Items'})</p>
+
+              {/* Cart Items */}
+              <div className="space-y-4">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="border rounded-lg p-4">
+                    <div className="flex gap-4">
+                      <img
+                        src={item.product_image || '/placeholder-product.jpg'}
+                        alt={item.product_name}
+                        className="w-24 h-24 object-contain bg-white rounded"
+                      />
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <div>
+                            <h3 className="font-semibold text-lg mb-1">{item.product_name}</h3>
+                            <p className="text-sm text-gray-500 mb-3">SKU: {item.variant_sku}</p>
+
+                            {item.variant_info && (
+                              <p className="text-sm text-gray-600 mb-2">{item.variant_info}</p>
+                            )}
+
+                            <div className="flex items-center gap-3 mt-3">
+                              <span className="text-sm text-gray-600">Qty:</span>
+                              <div className="flex items-center border rounded">
+                                <button
+                                  onClick={() => updateItemMutation.mutate({ itemId: item.id, quantity: item.quantity - 1 })}
+                                  disabled={item.quantity <= 1 || updateItemMutation.isPending}
+                                  className="p-1 hover:bg-gray-100 disabled:opacity-50"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+                                <span className="px-3 py-1 font-medium">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateItemMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                                  disabled={updateItemMutation.isPending}
+                                  className="p-1 hover:bg-gray-100 disabled:opacity-50"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-2">
+                            <span className="font-semibold text-lg">৳ {(item.unit_price * item.quantity).toLocaleString('en-BD')}</span>
+                            <button
+                              onClick={() => removeItemMutation.mutate(item.id)}
+                              disabled={removeItemMutation.isPending}
+                              className="text-sm border border-gray-300 px-4 py-1 rounded hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
-                        
-                        <div className="flex gap-4 text-sm text-gray-600 mb-2">
-                          <span>Gold Colour: <span className="font-medium">{cartData.goldColour}</span></span>
-                          <span>Size: <span className="font-medium">{cartData.size}</span></span>
-                          <span>Making Charges: <span className="font-medium">₹ {cartData.makingCharges.toLocaleString('en-IN')}</span></span>
-                        </div>
-                        
-                        <div className="text-sm text-gray-600">
-                          <span>Gold Purity: <span className="font-medium">{cartData.goldPurity}</span></span>
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 mt-3">Dispatch by: {cartData.dispatchDate}</p>
-                      </div>
-                      
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="font-semibold text-lg">₹ {cartData.price.toLocaleString('en-IN')}</span>
-                        <button className="text-sm border border-gray-300 px-4 py-1 rounded hover:bg-gray-50">
-                          Remove
-                        </button>
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -183,28 +240,40 @@ export default function ShoppingCart() {
                   <span className="font-medium">Apply Coupon Code</span>
                 </div>
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
                     className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
                     placeholder="Enter coupon code"
                   />
-                  <button className="bg-header text-white px-6 py-2 rounded font-medium hover:opacity-90">
-                    Apply
+                  <button
+                    onClick={() => promoCode && applyPromoMutation.mutate(promoCode)}
+                    disabled={!promoCode || applyPromoMutation.isPending}
+                    className="bg-header text-white px-6 py-2 rounded font-medium hover:opacity-90 disabled:opacity-50"
+                  >
+                    {applyPromoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
                   </button>
                 </div>
               </div>
 
               <h3 className="font-semibold text-lg mb-4">Order Summary</h3>
-              
+
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal :</span>
-                  <span className="font-medium">₹ {price.toLocaleString('en-IN')}</span>
+                  <span className="font-medium">৳ {subtotal.toLocaleString('en-BD')}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount :</span>
+                    <span className="font-medium">-৳ {discount.toLocaleString('en-BD')}</span>
+                  </div>
+                )}
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold">
                     <span>TOTAL :</span>
-                    <span>₹ {price.toLocaleString('en-IN')}</span>
+                    <span>৳ {total.toLocaleString('en-BD')}</span>
                   </div>
                   <p className="text-xs text-gray-500 text-right mt-1">(Inclusive of all taxes)</p>
                 </div>
@@ -224,71 +293,79 @@ export default function ShoppingCart() {
         <div className="bg-white p-4 shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <h1 className="text-lg font-semibold">Shopping Cart</h1>
-            <X className="w-6 h-6" />
+            <Link to="/">
+              <X className="w-6 h-6" />
+            </Link>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Total (1 Item)</span>
-            <span className="text-lg font-semibold">₹ {price.toLocaleString('en-IN')}</span>
+            <span className="text-sm text-gray-600">Total ({cartItems.length} {cartItems.length === 1 ? 'Item' : 'Items'})</span>
+            <span className="text-lg font-semibold">৳ {total.toLocaleString('en-BD')}</span>
           </div>
         </div>
 
-        {/* Mobile Cart Item */}
-        <div className="bg-white mt-2 p-4">
-          <div className="flex gap-3 mb-3">
-            <img 
-              src={cartData.productImage}
-              alt={cartData.productName}
-              className="w-24 h-24 object-contain rounded"
-            />
-            <div className="flex-1">
-              <h3 className="font-semibold mb-1">{cartData.productName}</h3>
-              <p className="text-xs text-gray-500 mb-2">{cartData.productCode}</p>
-              <p className="text-lg font-semibold">₹ {cartData.price.toLocaleString('en-IN')}</p>
+        {/* Mobile Cart Items */}
+        {cartItems.map((item) => (
+          <div key={item.id} className="bg-white mt-2 p-4">
+            <div className="flex gap-3 mb-3">
+              <img
+                src={item.product_image || '/placeholder-product.jpg'}
+                alt={item.product_name}
+                className="w-24 h-24 object-contain rounded"
+              />
+              <div className="flex-1">
+                <h3 className="font-semibold mb-1">{item.product_name}</h3>
+                <p className="text-xs text-gray-500 mb-2">{item.variant_sku}</p>
+                <p className="text-lg font-semibold">৳ {(item.unit_price * item.quantity).toLocaleString('en-BD')}</p>
+              </div>
             </div>
-          </div>
-          
-          <p className="text-sm text-gray-600 mb-3">Dispatch by: <span className="font-medium">{cartData.dispatchDate}</span></p>
-          
-          <div className="flex gap-6 text-sm mb-3">
-            <div>
-              <p className="text-gray-600 mb-1">Quantity</p>
-              <p className="font-medium">{cartData.quantity}</p>
-            </div>
-            <div>
-              <p className="text-gray-600 mb-1">Size</p>
-              <p className="font-medium">{cartData.size}</p>
-            </div>
-          </div>
 
-          <button 
-            onClick={() => setShowProductDetails(!showProductDetails)}
-            className="w-full bg-gray-100 py-3 rounded text-sm text-header font-medium flex items-center justify-center gap-2"
-          >
-            {showProductDetails ? 'Hide' : 'Show'} Product Details
-            <span className="transform transition-transform" style={{transform: showProductDetails ? 'rotate(180deg)' : 'rotate(0)'}}>▼</span>
-          </button>
-
-          {showProductDetails && (
-            <div className="mt-4 border-t pt-4 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Gold Colour:</span>
-                <span className="font-medium">{cartData.goldColour}</span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Qty:</span>
+                <div className="flex items-center border rounded">
+                  <button
+                    onClick={() => updateItemMutation.mutate({ itemId: item.id, quantity: item.quantity - 1 })}
+                    disabled={item.quantity <= 1 || updateItemMutation.isPending}
+                    className="p-2 hover:bg-gray-100 disabled:opacity-50"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="px-3 py-1 font-medium">{item.quantity}</span>
+                  <button
+                    onClick={() => updateItemMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                    disabled={updateItemMutation.isPending}
+                    className="p-2 hover:bg-gray-100 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Size:</span>
-                <span className="font-medium">{cartData.size}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Making Charges:</span>
-                <span className="font-medium">₹ {cartData.makingCharges.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Gold Purity:</span>
-                <span className="font-medium">{cartData.goldPurity}</span>
-              </div>
+              <button
+                onClick={() => removeItemMutation.mutate(item.id)}
+                disabled={removeItemMutation.isPending}
+                className="text-sm text-red-500 hover:text-red-700"
+              >
+                Remove
+              </button>
             </div>
-          )}
-        </div>
+
+            {item.variant_info && (
+              <button
+                onClick={() => setShowProductDetails(showProductDetails === item.id ? null : item.id)}
+                className="w-full bg-gray-100 py-3 rounded text-sm text-header font-medium flex items-center justify-center gap-2"
+              >
+                {showProductDetails === item.id ? 'Hide' : 'Show'} Details
+                <span className="transform transition-transform" style={{transform: showProductDetails === item.id ? 'rotate(180deg)' : 'rotate(0)'}}>▼</span>
+              </button>
+            )}
+
+            {showProductDetails === item.id && item.variant_info && (
+              <div className="mt-4 border-t pt-4">
+                <p className="text-sm text-gray-600">{item.variant_info}</p>
+              </div>
+            )}
+          </div>
+        ))}
 
         {/* Coupon Section */}
         <div className="bg-white mt-2 p-4">
@@ -297,12 +374,18 @@ export default function ShoppingCart() {
             <span className="font-medium">Apply Coupon Code</span>
           </div>
           <div className="flex gap-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
               className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none"
               placeholder="Enter coupon code"
             />
-            <button className="bg-header text-white px-6 py-2 rounded font-medium">
+            <button
+              onClick={() => promoCode && applyPromoMutation.mutate(promoCode)}
+              disabled={!promoCode || applyPromoMutation.isPending}
+              className="bg-header text-white px-6 py-2 rounded font-medium disabled:opacity-50"
+            >
               Apply
             </button>
           </div>
@@ -314,11 +397,17 @@ export default function ShoppingCart() {
           <div className="space-y-2 mb-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal :</span>
-              <span className="font-medium">₹ {price.toLocaleString('en-IN')}</span>
+              <span className="font-medium">৳ {subtotal.toLocaleString('en-BD')}</span>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Discount :</span>
+                <span className="font-medium">-৳ {discount.toLocaleString('en-BD')}</span>
+              </div>
+            )}
             <div className="flex justify-between font-semibold">
               <span>TOTAL :</span>
-              <span>₹ {price.toLocaleString('en-IN')}</span>
+              <span>৳ {total.toLocaleString('en-BD')}</span>
             </div>
             <p className="text-xs text-gray-500 text-right">(Inclusive of all taxes)</p>
           </div>
