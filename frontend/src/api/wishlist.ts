@@ -68,6 +68,9 @@ export async function isInWishlist(productId: string): Promise<APIResponse<Wishl
   return apiClient.get<WishlistCheckResponse>(`/wishlist/check/${productId}`)
 }
 
+// Alias for checkWishlist
+export const checkWishlist = isInWishlist
+
 /**
  * Clear entire wishlist
  */

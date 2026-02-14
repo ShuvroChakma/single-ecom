@@ -111,6 +111,13 @@ export async function getProductBySlug(slug: string): Promise<APIResponse<Produc
 }
 
 /**
+ * Get single product by ID
+ */
+export async function getProductById(id: string): Promise<APIResponse<Product>> {
+  return apiClient.get<Product>(`/products/id/${id}`)
+}
+
+/**
  * Find category by slug from category tree
  */
 export function findCategoryBySlug(categories: Category[], slug: string): Category | null {

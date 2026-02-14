@@ -78,6 +78,19 @@ async def list_products(
     )
 
 
+@router.get("/id/{product_id}", response_model=SuccessResponse[ProductWithVariantsResponse])
+async def get_product_by_id(
+    product_id: UUID,
+    service: ProductService = Depends(get_product_service)
+):
+    """Get product by ID with variants (public)."""
+    product = await service.get_product(product_id)
+    return create_success_response(
+        message="Product retrieved successfully",
+        data=ProductWithVariantsResponse.model_validate(product)
+    )
+
+
 @router.get("/{slug}", response_model=SuccessResponse[ProductWithVariantsResponse])
 async def get_product_by_slug(
     slug: str,

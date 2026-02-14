@@ -413,7 +413,7 @@ function ProductCard({
   return (
     <div className="group relative">
       {/* Image */}
-      <Link to={`/products/${product.slug}`} className="block">
+      <Link to={`/products/${product.slug}-${product.id}`} className="block">
         <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
           <img
             src={getImageUrl(product.images?.[0])}
@@ -446,7 +446,7 @@ function ProductCard({
 
       {/* Details */}
       <div className="mt-3">
-        <Link to={`/products/${product.slug}`}>
+        <Link to={`/products/${product.slug}-${product.id}`}>
           <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-header transition-colors">
             {product.name}
           </h3>

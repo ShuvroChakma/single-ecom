@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,34 +13,95 @@ import {
   Minus,
   Plus,
   Check,
+  Loader2,
 } from "lucide-react"
 import Header from "@/components/shared/Header/Header"
 import Footer from "@/components/shared/Footer/Footer"
-import { getProductBySlug, getProducts, type Product, type ProductVariant } from "@/api/categories"
+import { getProductById, getProductBySlug, getProducts, type Product, type ProductVariant } from "@/api/categories"
+import { addToCart } from "@/api/cart"
+import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
 
 export const Route = createFileRoute("/products/$slug")({
   component: ProductPage,
 })
 
+// UUID regex pattern
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Parse magic URL to extract product ID
+ * URL pattern: /products/product-name-here-550e8400-e29b-41d4-a716-446655440000
+ * The last 36 characters (UUID format) are the ID, rest is the slug for SEO
+ */
+function parseProductUrl(urlSlug: string): { id: string | null; slugPart: string } {
+  // Check if the URL ends with a UUID (36 chars: 8-4-4-4-12)
+  if (urlSlug.length > 37) {
+    const possibleId = urlSlug.slice(-36)
+    if (UUID_REGEX.test(possibleId)) {
+      // Extract slug part (everything before the UUID, minus the trailing hyphen)
+      const slugPart = urlSlug.slice(0, -37) // -36 for UUID, -1 for hyphen
+      return { id: possibleId, slugPart }
+    }
+  }
+
+  // Check if the whole thing is a UUID
+  if (UUID_REGEX.test(urlSlug)) {
+    return { id: urlSlug, slugPart: '' }
+  }
+
+  // No UUID found, treat as regular slug (backwards compatible)
+  return { id: null, slugPart: urlSlug }
+}
+
+/**
+ * Generate canonical URL for a product
+ */
+function generateProductUrl(product: Product): string {
+  return `/products/${product.slug}-${product.id}`
+}
+
 function ProductPage() {
-  const { slug } = Route.useParams()
+  const { slug: urlSlug } = Route.useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [selectedImage, setSelectedImage] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [quantity, setQuantity] = useState(1)
-  const [isWishlisted, setIsWishlisted] = useState(false)
 
-  // Fetch product data
+  // Parse URL to extract ID
+  const { id: productId, slugPart } = parseProductUrl(urlSlug)
+
+  // Fetch product data - by ID if available, otherwise by slug
   const { data: productResponse, isLoading, error } = useQuery({
-    queryKey: ["product", slug],
-    queryFn: () => getProductBySlug(slug),
+    queryKey: ["product", productId || urlSlug],
+    queryFn: () => productId ? getProductById(productId) : getProductBySlug(urlSlug),
     staleTime: 5 * 60 * 1000,
   })
 
   const product = productResponse?.success ? productResponse.data : null
+
+  // Check if product is in wishlist
+  const { data: wishlistCheck } = useQuery({
+    queryKey: ["wishlist-check", product?.id],
+    queryFn: () => checkWishlist(product!.id),
+    enabled: !!product?.id,
+  })
+
+  const isInWishlist = wishlistCheck?.success ? wishlistCheck.data.in_wishlist : false
+
+  // Redirect to canonical URL if slug doesn't match
+  useEffect(() => {
+    if (product && productId) {
+      const expectedSlug = `${product.slug}-${product.id}`
+      if (urlSlug !== expectedSlug) {
+        // Redirect to canonical URL without adding to history
+        navigate({ to: `/products/${expectedSlug}`, replace: true })
+      }
+    }
+  }, [product, productId, urlSlug, navigate])
 
   // Set default variant when product loads
   useMemo(() => {
@@ -62,6 +123,23 @@ function ProductPage() {
     ? relatedResponse.data.items.filter((p) => p.id !== product?.id).slice(0, 4)
     : []
 
+  // Add to cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart(data.variant_id, data.quantity),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] })
+    },
+  })
+
+  // Wishlist mutations
+  const addWishlistMutation = useMutation({
+    mutationFn: (data: { product_id: string; variant_id?: string }) => addToWishlist(data.product_id, data.variant_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist-check", product?.id] })
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] })
+    },
+  })
+
   // Get image URL helper
   const getImageUrl = (path: string | null) => {
     if (!path) return "/placeholder-product.jpg"
@@ -72,7 +150,6 @@ function ProductPage() {
   // Calculate price from variant
   const calculatePrice = (variant: ProductVariant | null) => {
     if (!variant) return 0
-    // Price calculation based on weight - adjust as needed
     return variant.net_weight * 100
   }
 
@@ -97,13 +174,21 @@ function ProductPage() {
   }
 
   const handleAddToCart = () => {
-    // TODO: Add to cart API call
-    console.log("Add to cart:", { product, variant: selectedVariant, quantity })
+    if (!selectedVariant) return
+    addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
   }
 
   const handleBuyNow = () => {
     handleAddToCart()
     navigate({ to: "/cart" })
+  }
+
+  const handleToggleWishlist = () => {
+    if (!product) return
+    addWishlistMutation.mutate({
+      product_id: product.id,
+      variant_id: selectedVariant?.id
+    })
   }
 
   // Loading state
@@ -155,7 +240,7 @@ function ProductPage() {
             Home
           </Link>
           <span>/</span>
-          <Link to="/categories" className="hover:text-header">
+          <Link to="/products" className="hover:text-header">
             Products
           </Link>
           <span>/</span>
@@ -170,16 +255,26 @@ function ProductPage() {
               <div className="relative bg-gray-50 rounded-xl overflow-hidden aspect-square">
                 {/* Wishlist button */}
                 <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className="absolute top-4 right-4 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
+                  onClick={handleToggleWishlist}
+                  disabled={addWishlistMutation.isPending}
+                  className="absolute top-4 right-4 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform disabled:opacity-50"
                 >
-                  <Heart
-                    className={`w-5 h-5 ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"}`}
-                  />
+                  {addWishlistMutation.isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Heart
+                      className={`w-5 h-5 ${isInWishlist ? "fill-red-500 text-red-500" : "text-gray-600"}`}
+                    />
+                  )}
                 </button>
 
                 {/* Share button */}
-                <button className="absolute top-4 right-16 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href)
+                  }}
+                  className="absolute top-4 right-16 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
+                >
                   <Share2 className="w-5 h-5 text-gray-600" />
                 </button>
 
@@ -263,8 +358,6 @@ function ProductPage() {
               {/* Price */}
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl lg:text-4xl font-bold text-header">{formattedPrice}</span>
-                {/* Original price if discounted */}
-                {/* <span className="text-lg text-gray-400 line-through">৳ 50,000</span> */}
               </div>
 
               {/* Stock Status */}
@@ -341,11 +434,17 @@ function ProductPage() {
               <div className="flex gap-4">
                 <button
                   onClick={handleAddToCart}
-                  disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
+                  disabled={!selectedVariant || selectedVariant.stock_quantity === 0 || addToCartMutation.isPending}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 border-2 border-header text-header rounded-lg font-semibold hover:bg-header/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <ShoppingCart className="w-5 h-5" />
-                  Add to Cart
+                  {addToCartMutation.isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-5 h-5" />
+                      Add to Cart
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={handleBuyNow}
@@ -355,6 +454,13 @@ function ProductPage() {
                   Buy Now
                 </button>
               </div>
+
+              {/* Success message */}
+              {addToCartMutation.isSuccess && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                  Added to cart successfully!
+                </div>
+              )}
 
               {/* Features */}
               <div className="grid grid-cols-3 gap-4 pt-4 border-t">
@@ -456,7 +562,7 @@ function ProductPage() {
               {relatedProducts.map((relatedProduct) => (
                 <Link
                   key={relatedProduct.id}
-                  to={`/products/${relatedProduct.slug}`}
+                  to={`/products/${relatedProduct.slug}-${relatedProduct.id}`}
                   className="group bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
                 >
                   <div className="aspect-square bg-gray-50 overflow-hidden">
