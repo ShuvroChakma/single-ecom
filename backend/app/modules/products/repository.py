@@ -3,12 +3,15 @@ Repository for Product and ProductVariant database operations.
 """
 from typing import Optional, List, Tuple
 from uuid import UUID
+from decimal import Decimal
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy import and_, or_, exists
 from datetime import datetime
 
 from app.modules.products.models import Product, ProductVariant, MetalType
+from app.modules.products.schemas import ProductListParams
 
 
 class ProductRepository:
@@ -51,6 +54,147 @@ class ProductRepository:
     
     async def list_with_filters(
         self,
+        params: ProductListParams
+    ) -> Tuple[List[Product], int]:
+        """List products with advanced filters and pagination."""
+        query = select(Product).options(selectinload(Product.variants))
+        filters = []
+
+        # ===== ID FILTERS =====
+        if params.ids:
+            filters.append(Product.id.in_(params.ids))
+
+        if params.exclude_ids:
+            filters.append(Product.id.notin_(params.exclude_ids))
+
+        # ===== CATEGORY FILTERS =====
+        if params.category_id:
+            filters.append(Product.category_id == params.category_id)
+        elif params.category_ids:
+            filters.append(Product.category_id.in_(params.category_ids))
+
+        # ===== BRAND FILTERS =====
+        if params.brand_id:
+            filters.append(Product.brand_id == params.brand_id)
+        elif params.brand_ids:
+            filters.append(Product.brand_id.in_(params.brand_ids))
+
+        # ===== COLLECTION FILTERS =====
+        if params.collection_id:
+            filters.append(Product.collection_id == params.collection_id)
+        elif params.collection_ids:
+            filters.append(Product.collection_id.in_(params.collection_ids))
+
+        # ===== GENDER FILTERS =====
+        if params.gender:
+            filters.append(Product.gender == params.gender)
+        elif params.genders:
+            filters.append(Product.gender.in_(params.genders))
+
+        # ===== STATUS FILTERS =====
+        if params.is_featured is not None:
+            filters.append(Product.is_featured == params.is_featured)
+
+        if params.is_active is not None:
+            filters.append(Product.is_active == params.is_active)
+
+        # ===== SEARCH =====
+        if params.search:
+            search_filter = f"%{params.search}%"
+            filters.append(
+                or_(
+                    Product.name.ilike(search_filter),
+                    Product.sku_base.ilike(search_filter),
+                    Product.description.ilike(search_filter)
+                )
+            )
+
+        # ===== VARIANT-BASED FILTERS (metal, purity, size, stock, weight) =====
+        variant_filters = []
+
+        # Metal type filter
+        if params.metal_type:
+            variant_filters.append(ProductVariant.metal_type == params.metal_type)
+        elif params.metal_types:
+            variant_filters.append(ProductVariant.metal_type.in_(params.metal_types))
+
+        # Metal purity filter
+        if params.metal_purity:
+            variant_filters.append(ProductVariant.metal_purity == params.metal_purity)
+        elif params.metal_purities:
+            variant_filters.append(ProductVariant.metal_purity.in_(params.metal_purities))
+
+        # Size filter
+        if params.size:
+            variant_filters.append(ProductVariant.size == params.size)
+        elif params.sizes:
+            variant_filters.append(ProductVariant.size.in_(params.sizes))
+
+        # In-stock filter
+        if params.in_stock is True:
+            variant_filters.append(ProductVariant.stock_quantity > 0)
+        elif params.in_stock is False:
+            variant_filters.append(ProductVariant.stock_quantity == 0)
+
+        # Weight range filter
+        if params.min_weight is not None:
+            variant_filters.append(ProductVariant.net_weight >= params.min_weight)
+        if params.max_weight is not None:
+            variant_filters.append(ProductVariant.net_weight <= params.max_weight)
+
+        # If we have variant filters, add EXISTS subquery
+        if variant_filters:
+            variant_subquery = (
+                select(ProductVariant.product_id)
+                .where(
+                    and_(
+                        ProductVariant.product_id == Product.id,
+                        ProductVariant.is_active == True,
+                        *variant_filters
+                    )
+                )
+            )
+            filters.append(exists(variant_subquery))
+
+        # Apply all filters
+        if filters:
+            query = query.where(and_(*filters))
+
+        # ===== COUNT QUERY =====
+        count_query = select(func.count(Product.id))
+        if filters:
+            count_query = count_query.where(and_(*filters))
+
+        total_result = await self.session.execute(count_query)
+        total = total_result.scalar() or 0
+
+        # ===== SORTING =====
+        sort_by = params.sort_by or "newest"
+        if sort_by == "newest":
+            query = query.order_by(Product.created_at.desc())
+        elif sort_by == "oldest":
+            query = query.order_by(Product.created_at.asc())
+        elif sort_by == "name_asc":
+            query = query.order_by(Product.name.asc())
+        elif sort_by == "name_desc":
+            query = query.order_by(Product.name.desc())
+        elif sort_by == "featured":
+            query = query.order_by(Product.is_featured.desc(), Product.created_at.desc())
+        else:
+            # Default to newest
+            query = query.order_by(Product.created_at.desc())
+
+        # ===== PAGINATION =====
+        offset = (params.page - 1) * params.per_page
+        query = query.offset(offset).limit(params.per_page)
+
+        result = await self.session.execute(query)
+        products = list(result.scalars().all())
+
+        return products, total
+
+    async def list_with_filters_legacy(
+        self,
         category_id: Optional[UUID] = None,
         brand_id: Optional[UUID] = None,
         collection_id: Optional[UUID] = None,
@@ -62,52 +206,21 @@ class ProductRepository:
         page: int = 1,
         per_page: int = 20
     ) -> Tuple[List[Product], int]:
-        """List products with filters and pagination."""
-        query = select(Product).options(selectinload(Product.variants))
-        count_query = select(func.count(Product.id))
-        
-        # Apply filters
-        if category_id:
-            query = query.where(Product.category_id == category_id)
-            count_query = count_query.where(Product.category_id == category_id)
-        
-        if brand_id:
-            query = query.where(Product.brand_id == brand_id)
-            count_query = count_query.where(Product.brand_id == brand_id)
-        
-        if collection_id:
-            query = query.where(Product.collection_id == collection_id)
-            count_query = count_query.where(Product.collection_id == collection_id)
-        
-        if gender:
-            query = query.where(Product.gender == gender)
-            count_query = count_query.where(Product.gender == gender)
-        
-        if is_featured is not None:
-            query = query.where(Product.is_featured == is_featured)
-            count_query = count_query.where(Product.is_featured == is_featured)
-        
-        if is_active is not None:
-            query = query.where(Product.is_active == is_active)
-            count_query = count_query.where(Product.is_active == is_active)
-        
-        if search:
-            search_filter = f"%{search}%"
-            query = query.where(Product.name.ilike(search_filter))
-            count_query = count_query.where(Product.name.ilike(search_filter))
-        
-        # Get total count
-        total_result = await self.session.execute(count_query)
-        total = total_result.scalar() or 0
-        
-        # Apply pagination
-        offset = (page - 1) * per_page
-        query = query.offset(offset).limit(per_page).order_by(Product.created_at.desc())
-        
-        result = await self.session.execute(query)
-        products = list(result.scalars().all())
-        
-        return products, total
+        """Legacy method - converts to new params and calls new method."""
+        from app.modules.products.models import Gender
+        params = ProductListParams(
+            category_id=category_id,
+            brand_id=brand_id,
+            collection_id=collection_id,
+            gender=Gender(gender) if gender else None,
+            metal_type=metal_type,
+            is_featured=is_featured,
+            is_active=is_active,
+            search=search,
+            page=page,
+            per_page=per_page
+        )
+        return await self.list_with_filters(params)
     
     async def create(self, product: Product) -> Product:
         """Create a new product."""

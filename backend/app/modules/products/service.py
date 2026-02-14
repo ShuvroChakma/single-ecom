@@ -32,19 +32,8 @@ class ProductService:
     async def list_products(
         self, params: ProductListParams
     ) -> Tuple[List[Product], int]:
-        """List products with filters."""
-        return await self.repository.list_with_filters(
-            category_id=params.category_id,
-            brand_id=params.brand_id,
-            collection_id=params.collection_id,
-            gender=params.gender.value if params.gender else None,
-            metal_type=params.metal_type,
-            is_featured=params.is_featured,
-            is_active=params.is_active,
-            search=params.search,
-            page=params.page,
-            per_page=params.per_page
-        )
+        """List products with advanced filters."""
+        return await self.repository.list_with_filters(params)
     
     async def get_product(self, product_id: UUID) -> Product:
         """Get product by ID with variants."""

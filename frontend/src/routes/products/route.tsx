@@ -1,20 +1,55 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Search, SlidersHorizontal, Grid, List, ChevronDown, Heart, ShoppingCart } from 'lucide-react'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { Search, SlidersHorizontal, Grid, List, ChevronDown, Heart, ShoppingCart, Loader2 } from 'lucide-react'
 import Header from '@/components/shared/Header/Header'
 import Footer from '@/components/shared/Footer/Footer'
 import { getProducts } from '@/api/categories'
+import { addToWishlist } from '@/api/wishlist'
+
+// Search params type
+type ProductsSearch = {
+  q?: string
+}
 
 export const Route = createFileRoute('/products')({
   component: ProductsPage,
+  validateSearch: (search: Record<string, unknown>): ProductsSearch => {
+    return {
+      q: typeof search.q === 'string' ? search.q : undefined,
+    }
+  },
 })
 
 function ProductsPage() {
   const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
+  const queryClient = useQueryClient()
+  const { q } = Route.useSearch()
+  const [searchQuery, setSearchQuery] = useState(q || '')
   const [sortBy, setSortBy] = useState('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null)
+
+  // Sync URL query param with local state
+  useEffect(() => {
+    if (q !== undefined) {
+      setSearchQuery(q)
+    }
+  }, [q])
+
+  // Add to wishlist mutation
+  const addWishlistMutation = useMutation({
+    mutationFn: (productId: string) => addToWishlist(productId),
+    onMutate: (productId) => {
+      setAddingToWishlist(productId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] })
+    },
+    onSettled: () => {
+      setAddingToWishlist(null)
+    },
+  })
 
   // Fetch products with infinite query
   const {
@@ -217,11 +252,17 @@ function ProductsPage() {
                       <button
                         onClick={(e) => {
                           e.preventDefault()
-                          // TODO: Add to wishlist
+                          e.stopPropagation()
+                          addWishlistMutation.mutate(product.id)
                         }}
-                        className="p-2 bg-white rounded-full shadow hover:bg-gray-50"
+                        disabled={addingToWishlist === product.id}
+                        className="p-2 bg-white rounded-full shadow hover:bg-gray-50 disabled:opacity-50"
                       >
-                        <Heart className="w-4 h-4 text-gray-600" />
+                        {addingToWishlist === product.id ? (
+                          <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
+                        ) : (
+                          <Heart className="w-4 h-4 text-gray-600 hover:text-red-500 hover:fill-red-500" />
+                        )}
                       </button>
                     </div>
                   </div>

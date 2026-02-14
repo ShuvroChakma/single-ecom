@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import type { ChangeEvent } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { submitCustomJewelleryRequest } from '@/api/inquiries'
 
 interface FormData {
   name: string
   mobile: string
   email: string
-  address: string
+  metalType: string
+  budgetRange: string
   designChoice: 'upload' | 'collection'
   comments: string
   captcha: string
@@ -13,12 +17,16 @@ interface FormData {
   uploadedFile: File | null
 }
 
+const METAL_TYPES = ['Gold', 'Silver', 'Platinum', 'Diamond', 'White Gold', 'Rose Gold']
+const BUDGET_RANGES = ['Under ৳50,000', '৳50,000 - ৳1,00,000', '৳1,00,000 - ৳2,00,000', '৳2,00,000 - ৳5,00,000', 'Above ৳5,00,000']
+
 export default function CustomJewelleryForm() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     mobile: '',
     email: '',
-    address: '',
+    metalType: '',
+    budgetRange: '',
     designChoice: 'upload',
     comments: '',
     captcha: '',
@@ -27,7 +35,9 @@ export default function CustomJewelleryForm() {
   })
 
   const [fileName, setFileName] = useState<string>('')
-  const [captchaCode] = useState<string>(generateCaptcha())
+  const [captchaCode, setCaptchaCode] = useState<string>(generateCaptcha())
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   function generateCaptcha(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -38,11 +48,51 @@ export default function CustomJewelleryForm() {
     return result
   }
 
+  const submitMutation = useMutation({
+    mutationFn: () => submitCustomJewelleryRequest({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.mobile,
+      metal_type: formData.metalType,
+      budget_range: formData.budgetRange,
+      message: formData.comments,
+      design_image: formData.uploadedFile || undefined,
+    }),
+    onSuccess: (response) => {
+      if (response.success) {
+        setSubmitStatus('success')
+        // Reset form
+        setFormData({
+          name: '',
+          mobile: '',
+          email: '',
+          metalType: '',
+          budgetRange: '',
+          designChoice: 'upload',
+          comments: '',
+          captcha: '',
+          termsAccepted: false,
+          uploadedFile: null,
+        })
+        setFileName('')
+        setCaptchaCode(generateCaptcha())
+      } else {
+        setSubmitStatus('error')
+        setErrorMessage(response.message || 'Failed to submit request')
+      }
+    },
+    onError: (error: any) => {
+      setSubmitStatus('error')
+      setErrorMessage(error.message || 'Failed to submit request. Please try again.')
+    },
+  })
+
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const target = e.target as HTMLInputElement
-    const { name, value, type, checked } = target
+    const { name, value, type } = target
+    const checked = type === 'checkbox' ? (target as HTMLInputElement).checked : false
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -58,28 +108,41 @@ export default function CustomJewelleryForm() {
   }
 
   const handleSubmit = () => {
-    if (
-      !formData.name ||
-      !formData.mobile ||
-      !formData.email ||
-      !formData.address
-    ) {
-      alert('Please fill in all required fields')
+    setSubmitStatus('idle')
+    setErrorMessage('')
+
+    if (!formData.name || !formData.mobile || !formData.email) {
+      setSubmitStatus('error')
+      setErrorMessage('Please fill in all required fields')
+      return
+    }
+
+    if (!formData.metalType || !formData.budgetRange) {
+      setSubmitStatus('error')
+      setErrorMessage('Please select metal type and budget range')
+      return
+    }
+
+    if (!formData.comments) {
+      setSubmitStatus('error')
+      setErrorMessage('Please provide your design requirements or instructions')
       return
     }
 
     if (formData.captcha !== captchaCode) {
-      alert('Captcha does not match. Please try again.')
+      setSubmitStatus('error')
+      setErrorMessage('Captcha does not match. Please try again.')
+      setCaptchaCode(generateCaptcha())
       return
     }
 
     if (!formData.termsAccepted) {
-      alert('Please accept the terms and conditions')
+      setSubmitStatus('error')
+      setErrorMessage('Please accept the terms and conditions')
       return
     }
 
-    alert('Order submitted successfully! We will contact you soon.')
-    console.log('Form data:', formData)
+    submitMutation.mutate()
   }
 
   return (
@@ -96,6 +159,25 @@ export default function CustomJewelleryForm() {
       {/* Form Container */}
       <div className="max-w-6xl mx-auto px-4 pb-12">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Success Message */}
+          {submitStatus === 'success' && (
+            <div className="p-4 bg-green-50 border-l-4 border-green-500 flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-500" />
+              <div>
+                <p className="font-semibold text-green-800">Request Submitted Successfully!</p>
+                <p className="text-sm text-green-600">Our team will contact you soon to discuss your custom jewellery requirements.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {submitStatus === 'error' && (
+            <div className="p-4 bg-red-50 border-l-4 border-red-500 flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-red-500" />
+              <p className="text-red-800">{errorMessage}</p>
+            </div>
+          )}
+
           {/* Contact Details Section */}
           <div className="border-l-4 border-header bg-linear-to-r from-amber-100 to-amber-50 p-4">
             <h3 className="text-lg font-semibold text-gray-800">
@@ -145,15 +227,36 @@ export default function CustomJewelleryForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Address<span className="text-red-600">*</span>
+                Metal Type<span className="text-red-600">*</span>
               </label>
-              <textarea
-                name="address"
-                value={formData.address}
+              <select
+                name="metalType"
+                value={formData.metalType}
                 onChange={handleInputChange}
-                rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              ></textarea>
+              >
+                <option value="">Select Metal Type</option>
+                {METAL_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Budget Range<span className="text-red-600">*</span>
+              </label>
+              <select
+                name="budgetRange"
+                value={formData.budgetRange}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+                <option value="">Select Budget Range</option>
+                {BUDGET_RANGES.map((range) => (
+                  <option key={range} value={range}>{range}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -185,8 +288,7 @@ export default function CustomJewelleryForm() {
                 {formData.designChoice === 'upload' && (
                   <div className="mt-4">
                     <p className="text-sm text-gray-600 mb-3">
-                      Upload image of the jewellery you wish to manufacture by
-                      us.
+                      Upload image of the jewellery you wish to manufacture by us.
                     </p>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                       <input
@@ -229,7 +331,7 @@ export default function CustomJewelleryForm() {
                     className="w-4 h-4 text-header focus:ring-header"
                   />
                   <span className="font-medium text-gray-800">
-                    Select a design from malabargoldanddiamonds collection
+                    Describe your design in comments below
                   </span>
                 </label>
               </div>
@@ -238,7 +340,7 @@ export default function CustomJewelleryForm() {
             {/* Comments Section */}
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comments /Instructions<span className="text-red-600">*</span>
+                Design Requirements / Instructions<span className="text-red-600">*</span>
               </label>
               <textarea
                 name="comments"
@@ -246,7 +348,7 @@ export default function CustomJewelleryForm() {
                 onChange={handleInputChange}
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="Enter any specific requirements or instructions..."
+                placeholder="Describe your custom jewellery requirements, preferred design, size, occasion, etc..."
               ></textarea>
             </div>
 
@@ -308,9 +410,17 @@ export default function CustomJewelleryForm() {
             <div className="mt-6">
               <button
                 onClick={handleSubmit}
-                className="w-full md:w-auto bg-header text-white px-12 py-3 rounded-md text-lg font-semibold hover:bg-header/90 transition shadow-lg"
+                disabled={submitMutation.isPending}
+                className="w-full md:w-auto bg-header text-white px-12 py-3 rounded-md text-lg font-semibold hover:bg-header/90 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Submit
+                {submitMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Request'
+                )}
               </button>
             </div>
           </div>

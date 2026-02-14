@@ -63,15 +63,43 @@ export interface ProductListResponse {
 }
 
 export interface ProductFilters {
+  // Category filters
   category_id?: string
+  category_ids?: string[]  // Multiple categories
+  // Brand filters
   brand_id?: string
+  brand_ids?: string[]  // Multiple brands
+  // Collection filters
   collection_id?: string
+  collection_ids?: string[]  // Multiple collections
+  // Gender filters
   gender?: string
+  genders?: string[]  // Multiple genders
+  // Metal filters
   metal_type?: string
+  metal_types?: string[]  // Multiple metal types
+  metal_purity?: string
+  metal_purities?: string[]  // Multiple purities
+  // Size filter
+  size?: string
+  sizes?: string[]  // Multiple sizes
+  // Weight range
+  min_weight?: number
+  max_weight?: number
+  // Stock filter
+  in_stock?: boolean
+  // Status
   is_featured?: boolean
+  // Search
   search?: string
+  // Sorting
+  sort_by?: 'newest' | 'oldest' | 'name_asc' | 'name_desc' | 'featured'
+  // Pagination
   page?: number
   per_page?: number
+  // IDs
+  ids?: string[]
+  exclude_ids?: string[]
 }
 
 /**
@@ -82,18 +110,44 @@ export async function getCategoryTree(): Promise<APIResponse<Category[]>> {
 }
 
 /**
- * Get products with filters
+ * Get products with advanced filters
  */
 export async function getProducts(filters: ProductFilters = {}): Promise<APIResponse<ProductListResponse>> {
   const params = new URLSearchParams()
 
+  // Single value filters
   if (filters.category_id) params.append('category_id', filters.category_id)
   if (filters.brand_id) params.append('brand_id', filters.brand_id)
   if (filters.collection_id) params.append('collection_id', filters.collection_id)
   if (filters.gender) params.append('gender', filters.gender)
   if (filters.metal_type) params.append('metal_type', filters.metal_type)
+  if (filters.metal_purity) params.append('metal_purity', filters.metal_purity)
+  if (filters.size) params.append('size', filters.size)
+
+  // Array filters (comma-separated)
+  if (filters.category_ids?.length) params.append('category_ids', filters.category_ids.join(','))
+  if (filters.brand_ids?.length) params.append('brand_ids', filters.brand_ids.join(','))
+  if (filters.collection_ids?.length) params.append('collection_ids', filters.collection_ids.join(','))
+  if (filters.genders?.length) params.append('genders', filters.genders.join(','))
+  if (filters.metal_types?.length) params.append('metal_types', filters.metal_types.join(','))
+  if (filters.metal_purities?.length) params.append('metal_purities', filters.metal_purities.join(','))
+  if (filters.sizes?.length) params.append('sizes', filters.sizes.join(','))
+  if (filters.ids?.length) params.append('ids', filters.ids.join(','))
+  if (filters.exclude_ids?.length) params.append('exclude_ids', filters.exclude_ids.join(','))
+
+  // Range filters
+  if (filters.min_weight !== undefined) params.append('min_weight', String(filters.min_weight))
+  if (filters.max_weight !== undefined) params.append('max_weight', String(filters.max_weight))
+
+  // Boolean filters
+  if (filters.in_stock !== undefined) params.append('in_stock', String(filters.in_stock))
   if (filters.is_featured !== undefined) params.append('is_featured', String(filters.is_featured))
+
+  // Search and sorting
   if (filters.search) params.append('search', filters.search)
+  if (filters.sort_by) params.append('sort_by', filters.sort_by)
+
+  // Pagination
   if (filters.page) params.append('page', String(filters.page))
   if (filters.per_page) params.append('per_page', String(filters.per_page))
 
