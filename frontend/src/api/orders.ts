@@ -17,61 +17,72 @@ export interface OrderItem {
   subtotal: number
 }
 
-export interface ShippingAddress {
-  full_name: string
-  phone: string
-  email: string
-  address_line1: string
-  address_line2?: string
-  city: string
-  state?: string
-  postal_code: string
-  country: string
+export interface OrderListItem {
+  id: string
+  order_number: string
+  status: string
+  payment_status: string
+  total: number
+  item_count: number
+  created_at: string
 }
 
 export interface Order {
   id: string
   order_number: string
   customer_id: string | null
+  is_pos_order: boolean
+  pos_customer_name: string | null
+  pos_customer_phone: string | null
   status: string
   payment_status: string
   payment_method: string
-  shipping_address: ShippingAddress
-  billing_address: ShippingAddress | null
+  payment_transaction_id: string | null
+  shipping_address: Record<string, any>
+  is_gift: boolean
+  gift_message: string | null
+  hide_prices: boolean
   items: OrderItem[]
   subtotal: number
-  discount: number
-  shipping_cost: number
-  tax: number
+  discount_amount: number
+  delivery_charge: number
+  tax_amount: number
   total: number
+  currency: string
   promo_code: string | null
-  notes: string | null
-  tracking_number: string | null
+  customer_notes: string | null
   created_at: string
-  updated_at: string
+  confirmed_at: string | null
+  shipped_at: string | null
+  delivered_at: string | null
+  paid_at: string | null
 }
 
 export interface CreateOrderRequest {
-  shipping_address: ShippingAddress
-  billing_address?: ShippingAddress
+  address_id: string
   payment_method: string
-  notes?: string
+  is_gift?: boolean
+  gift_message?: string
+  hide_prices?: boolean
   promo_code?: string
+  notes?: string
 }
 
-export interface OrderListResponse {
-  items: Order[]
+export interface OrderCreatedResponse {
+  order_id: string
+  order_number: string
+  payment_method: string
   total: number
-  page: number
-  per_page: number
-  pages: number
+  requires_payment: boolean
+  payment_url: string | null
+  message: string
 }
 
 /**
  * Create a new order from cart
  */
-export async function createOrder(data: CreateOrderRequest): Promise<APIResponse<Order>> {
-  return apiClient.post<Order>('/orders', data)
+export async function createOrder(data: CreateOrderRequest): Promise<APIResponse<OrderCreatedResponse>> {
+  return apiClient.post<OrderCreatedResponse>('/orders', data)
 }
 
 /**
@@ -82,17 +93,17 @@ export async function getOrder(orderId: string): Promise<APIResponse<Order>> {
 }
 
 /**
- * Get order by order number (for tracking)
+ * Get list of orders (simpler response)
  */
-export async function getOrderByNumber(orderNumber: string): Promise<APIResponse<Order>> {
-  return apiClient.get<Order>(`/orders/track/${orderNumber}`)
+export async function getOrdersList(limit: number = 20, offset: number = 0): Promise<APIResponse<OrderListItem[]>> {
+  return apiClient.get<OrderListItem[]>(`/orders?limit=${limit}&offset=${offset}`)
 }
 
 /**
  * Get user's orders
  */
-export async function getMyOrders(page: number = 1, limit: number = 10): Promise<APIResponse<OrderListResponse>> {
-  return apiClient.get<OrderListResponse>(`/orders/my?page=${page}&per_page=${limit}`)
+export async function getMyOrders(limit: number = 20, offset: number = 0): Promise<APIResponse<Order[]>> {
+  return apiClient.get<Order[]>(`/orders?limit=${limit}&offset=${offset}`)
 }
 
 /**

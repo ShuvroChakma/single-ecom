@@ -1,11 +1,28 @@
 import { useState, useContext } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Share2, X, Loader2, Package, Heart, ShoppingBag } from 'lucide-react'
+import { Share2, X, Loader2, Package, Heart, ShoppingBag, MapPin, Plus, Trash2, Star, ChevronRight, Edit2 } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { AuthContext } from '@/contexts/AuthContext'
 import { getWishlist, removeFromWishlist, moveToCart, type WishlistItem } from '@/api/wishlist'
-import { getMyOrders, type Order } from '@/api/orders'
+import { getOrdersList, type OrderListItem } from '@/api/orders'
 import { changePassword } from '@/api/auth'
+import {
+  getAddresses,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  type Address,
+  type AddressCreateRequest,
+  type AddressUpdateRequest
+} from '@/api/addresses'
+
+// Bangladesh districts
+const BD_DISTRICTS = [
+  'Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Barisal', 'Sylhet', 'Rangpur', 'Mymensingh',
+  'Comilla', 'Gazipur', 'Narayanganj', 'Tangail', 'Bogra', 'Jessore', 'Cox\'s Bazar', 'Dinajpur',
+  'Brahmanbaria', 'Narsingdi', 'Savar', 'Tongi', 'Jamalpur', 'Rangamati', 'Pabna', 'Noakhali'
+].sort()
 
 export default function MyAccountPage() {
   const navigate = useNavigate()
@@ -21,6 +38,22 @@ export default function MyAccountPage() {
   })
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
+
+  // Address form states
+  const [showAddressForm, setShowAddressForm] = useState(false)
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null)
+  const [addressForm, setAddressForm] = useState<AddressCreateRequest>({
+    label: 'Home',
+    full_name: '',
+    phone: '',
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    district: '',
+    postal_code: '',
+    country: 'Bangladesh',
+    is_default: false,
+  })
 
   // Redirect if not authenticated
   if (!authContext?.isAuthenticated && !authContext?.isLoading) {
@@ -48,7 +81,14 @@ export default function MyAccountPage() {
   // Fetch orders
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ['my-orders'],
-    queryFn: () => getMyOrders(1, 10),
+    queryFn: () => getOrdersList(10, 0),
+    enabled: !!user,
+  })
+
+  // Fetch addresses
+  const { data: addressesData, isLoading: addressesLoading } = useQuery({
+    queryKey: ['addresses'],
+    queryFn: getAddresses,
     enabled: !!user,
   })
 
@@ -84,6 +124,37 @@ export default function MyAccountPage() {
     },
   })
 
+  // Address mutations
+  const createAddressMutation = useMutation({
+    mutationFn: createAddress,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] })
+      resetAddressForm()
+    },
+  })
+
+  const updateAddressMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: AddressUpdateRequest }) => updateAddress(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] })
+      resetAddressForm()
+    },
+  })
+
+  const deleteAddressMutation = useMutation({
+    mutationFn: deleteAddress,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] })
+    },
+  })
+
+  const setDefaultMutation = useMutation({
+    mutationFn: setDefaultAddress,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] })
+    },
+  })
+
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordError('')
@@ -110,8 +181,53 @@ export default function MyAccountPage() {
     navigate({ to: '/' })
   }
 
+  const resetAddressForm = () => {
+    setShowAddressForm(false)
+    setEditingAddress(null)
+    setAddressForm({
+      label: 'Home',
+      full_name: '',
+      phone: '',
+      address_line1: '',
+      address_line2: '',
+      city: '',
+      district: '',
+      postal_code: '',
+      country: 'Bangladesh',
+      is_default: false,
+    })
+  }
+
+  const handleEditAddress = (address: Address) => {
+    setEditingAddress(address)
+    setAddressForm({
+      label: address.label,
+      full_name: address.full_name,
+      phone: address.phone,
+      address_line1: address.address_line1,
+      address_line2: address.address_line2 || '',
+      city: address.city,
+      district: address.district,
+      postal_code: address.postal_code || '',
+      country: address.country,
+      is_default: address.is_default,
+    })
+    setShowAddressForm(true)
+  }
+
+  const handleAddressSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (editingAddress) {
+      updateAddressMutation.mutate({ id: editingAddress.id, data: addressForm })
+    } else {
+      createAddressMutation.mutate(addressForm)
+    }
+  }
+
   const wishlistItems = wishlistData?.success ? wishlistData.data.items : []
-  const orders = ordersData?.success ? ordersData.data.items : []
+  const orders = ordersData?.data || []
+  const addresses = addressesData?.data?.addresses || []
+  const maxAddresses = addressesData?.data?.max_allowed || 5
 
   // Get image URL helper
   const getImageUrl = (path: string | null) => {
@@ -121,17 +237,17 @@ export default function MyAccountPage() {
   }
 
   const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'DELIVERED':
+    switch (status.toLowerCase()) {
+      case 'delivered':
         return 'bg-green-100 text-green-700'
-      case 'SHIPPED':
-      case 'IN_TRANSIT':
+      case 'shipped':
+        return 'bg-purple-100 text-purple-700'
+      case 'processing':
+      case 'confirmed':
         return 'bg-blue-100 text-blue-700'
-      case 'PROCESSING':
-      case 'CONFIRMED':
+      case 'pending':
         return 'bg-yellow-100 text-yellow-700'
-      case 'CANCELLED':
-      case 'REFUNDED':
+      case 'cancelled':
         return 'bg-red-100 text-red-700'
       default:
         return 'bg-gray-100 text-gray-700'
@@ -142,7 +258,7 @@ export default function MyAccountPage() {
     if (activeSection === 'profile') return 'Profile'
     if (activeSection === 'wishlist') return 'My Wishlist'
     if (activeSection === 'orders') return 'My Orders'
-    if (activeSection === 'editProfile') return 'Edit Profile'
+    if (activeSection === 'addresses') return 'My Addresses'
     if (activeSection === 'changePassword') return 'Change Password'
     return 'My Account'
   }
@@ -197,24 +313,38 @@ export default function MyAccountPage() {
               <nav className="space-y-2">
                 <button
                   onClick={() => setActiveSection('orders')}
-                  className={`w-full text-left px-4 py-2 rounded transition-colors ${
+                  className={`w-full text-left px-4 py-2 rounded transition-colors flex items-center gap-2 ${
                     activeSection === 'orders'
                       ? 'border border-header/90 text-header font-medium'
                       : 'hover:bg-gray-50'
                   }`}
                 >
+                  <Package size={18} />
                   My Orders
                 </button>
 
                 <button
                   onClick={() => setActiveSection('wishlist')}
-                  className={`w-full text-left px-4 py-2 rounded transition-colors ${
+                  className={`w-full text-left px-4 py-2 rounded transition-colors flex items-center gap-2 ${
                     activeSection === 'wishlist'
-                      ? ' border border-header/90 text-header font-medium'
+                      ? 'border border-header/90 text-header font-medium'
                       : 'hover:bg-gray-50'
                   }`}
                 >
+                  <Heart size={18} />
                   My Wishlist
+                </button>
+
+                <button
+                  onClick={() => setActiveSection('addresses')}
+                  className={`w-full text-left px-4 py-2 rounded transition-colors flex items-center gap-2 ${
+                    activeSection === 'addresses'
+                      ? 'border border-header/90 text-header font-medium'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <MapPin size={18} />
+                  My Addresses
                 </button>
 
                 <button
@@ -277,6 +407,233 @@ export default function MyAccountPage() {
                     Change Password
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Addresses Section */}
+            {activeSection === 'addresses' && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-semibold">My Addresses</h2>
+                  <span className="text-sm text-gray-500">{addresses.length}/{maxAddresses} addresses</span>
+                </div>
+
+                {addressesLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-header" />
+                  </div>
+                ) : showAddressForm ? (
+                  // Address Form
+                  <form onSubmit={handleAddressSubmit} className="space-y-4">
+                    <h3 className="font-semibold text-lg mb-4">
+                      {editingAddress ? 'Edit Address' : 'Add New Address'}
+                    </h3>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Label</label>
+                        <select
+                          value={addressForm.label}
+                          onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
+                          className="w-full border rounded px-3 py-2"
+                        >
+                          <option value="Home">Home</option>
+                          <option value="Office">Office</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Full Name *</label>
+                        <input
+                          type="text"
+                          value={addressForm.full_name}
+                          onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })}
+                          required
+                          className="w-full border rounded px-3 py-2"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Phone *</label>
+                        <input
+                          type="tel"
+                          value={addressForm.phone}
+                          onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                          required
+                          className="w-full border rounded px-3 py-2"
+                          placeholder="01XXXXXXXXX"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">District *</label>
+                        <select
+                          value={addressForm.district}
+                          onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
+                          required
+                          className="w-full border rounded px-3 py-2"
+                        >
+                          <option value="">Select District</option>
+                          {BD_DISTRICTS.map(d => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Address *</label>
+                      <textarea
+                        value={addressForm.address_line1}
+                        onChange={(e) => setAddressForm({ ...addressForm, address_line1: e.target.value })}
+                        required
+                        rows={2}
+                        className="w-full border rounded px-3 py-2"
+                        placeholder="House/Flat No., Street, Area"
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">City *</label>
+                        <input
+                          type="text"
+                          value={addressForm.city}
+                          onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                          required
+                          className="w-full border rounded px-3 py-2"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Postal Code</label>
+                        <input
+                          type="text"
+                          value={addressForm.postal_code}
+                          onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
+                          className="w-full border rounded px-3 py-2"
+                        />
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={addressForm.is_default}
+                        onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
+                      />
+                      <span className="text-sm">Set as default address</span>
+                    </label>
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="submit"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        className="bg-header text-white px-8 py-3 rounded font-medium hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {(createAddressMutation.isPending || updateAddressMutation.isPending) && (
+                          <Loader2 size={16} className="animate-spin" />
+                        )}
+                        {editingAddress ? 'Update Address' : 'Save Address'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetAddressForm}
+                        className="border-2 border-header text-header px-8 py-3 rounded font-medium hover:bg-pink-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  // Address List
+                  <>
+                    {addresses.length === 0 ? (
+                      <div className="text-center py-12">
+                        <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500 text-lg mb-4">No addresses saved yet</p>
+                        <button
+                          onClick={() => setShowAddressForm(true)}
+                          className="inline-flex items-center gap-2 bg-header text-white px-6 py-3 rounded font-medium hover:opacity-90"
+                        >
+                          <Plus size={18} />
+                          Add Address
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid md:grid-cols-2 gap-4 mb-6">
+                          {addresses.map((address) => (
+                            <div key={address.id} className="border rounded-lg p-4 relative">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-semibold text-header bg-header/10 px-2 py-0.5 rounded">
+                                    {address.label}
+                                  </span>
+                                  {address.is_default && (
+                                    <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                                      <Star size={12} fill="currentColor" />
+                                      Default
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleEditAddress(address)}
+                                    className="p-1.5 text-gray-500 hover:text-header hover:bg-gray-100 rounded"
+                                    title="Edit"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteAddressMutation.mutate(address.id)}
+                                    disabled={deleteAddressMutation.isPending}
+                                    className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded"
+                                    title="Delete"
+                                  >
+                                    {deleteAddressMutation.isPending ? (
+                                      <Loader2 size={16} className="animate-spin" />
+                                    ) : (
+                                      <Trash2 size={16} />
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              <p className="font-medium">{address.full_name}</p>
+                              <p className="text-sm text-gray-600">{address.phone}</p>
+                              <p className="text-sm text-gray-600 mt-1">{address.address_line1}</p>
+                              <p className="text-sm text-gray-600">
+                                {address.city}, {address.district}
+                                {address.postal_code && ` - ${address.postal_code}`}
+                              </p>
+
+                              {!address.is_default && (
+                                <button
+                                  onClick={() => setDefaultMutation.mutate(address.id)}
+                                  disabled={setDefaultMutation.isPending}
+                                  className="mt-3 text-sm text-header hover:underline"
+                                >
+                                  Set as default
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {addresses.length < maxAddresses && (
+                          <button
+                            onClick={() => setShowAddressForm(true)}
+                            className="inline-flex items-center gap-2 text-header hover:underline"
+                          >
+                            <Plus size={18} />
+                            Add New Address
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -459,7 +816,12 @@ export default function MyAccountPage() {
             {/* Orders Section */}
             {activeSection === 'orders' && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-semibold mb-6">My Orders</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-semibold">My Orders</h2>
+                  <Link to="/orders" className="text-header hover:underline text-sm">
+                    View All
+                  </Link>
+                </div>
 
                 {ordersLoading ? (
                   <div className="flex justify-center py-12">
@@ -476,50 +838,28 @@ export default function MyAccountPage() {
                 ) : (
                   <div className="space-y-4">
                     {orders.map((order) => (
-                      <div key={order.id} className="border rounded-lg p-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                      <Link
+                        key={order.id}
+                        to={`/orders/${order.id}`}
+                        className="block border rounded-lg p-4 hover:border-header transition-colors"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div>
                             <p className="font-semibold">Order #{order.order_number}</p>
                             <p className="text-sm text-gray-500">
                               Placed on {new Date(order.created_at).toLocaleDateString()}
                             </p>
+                            <p className="text-sm text-gray-500">{order.item_count} item(s)</p>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className={`text-xs px-3 py-1 rounded-full ${getStatusColor(order.status)}`}>
-                              {order.status.replace('_', ' ')}
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                             </span>
-                            <span className="font-semibold">৳ {order.total.toLocaleString('en-IN')}</span>
+                            <span className="font-semibold">৳{Number(order.total).toLocaleString()}</span>
+                            <ChevronRight size={20} className="text-gray-400" />
                           </div>
                         </div>
-
-                        {/* Order Items Preview */}
-                        <div className="flex gap-3 overflow-x-auto pb-2">
-                          {order.items.slice(0, 3).map((item) => (
-                            <div key={item.id} className="shrink-0 w-16 h-16 bg-gray-100 rounded overflow-hidden">
-                              <img
-                                src={getImageUrl(item.product_image)}
-                                alt={item.product_name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
-                          {order.items.length > 3 && (
-                            <div className="shrink-0 w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-sm">
-                              +{order.items.length - 3}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* View Details Button */}
-                        <div className="mt-4 flex gap-3">
-                          <Link
-                            to={`/footer/track-order`}
-                            className="flex-1 border-2 border-header text-header text-center py-2 rounded font-medium hover:bg-pink-50 transition-colors"
-                          >
-                            Track Order
-                          </Link>
-                        </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
