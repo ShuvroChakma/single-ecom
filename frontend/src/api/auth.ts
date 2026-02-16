@@ -141,6 +141,15 @@ export const resendOTP = createServerFn({ method: "POST" })
     });
   });
 
+// Reset password with OTP (forgot password flow)
+export const resetPassword = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { email: string; otp: string; new_password: string } }) => {
+    return apiRequest<ApiResponse<{ message: string }>>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  });
+
 // Change password (when logged in)
 export const changePassword = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: ChangePasswordPayload }) => {

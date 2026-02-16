@@ -1,11 +1,12 @@
 /**
  * Login Page Component
- * Container that orchestrates Login, Register, Forgot Password, and OTP Verification forms
+ * Container that orchestrates Login, Register, Forgot Password, Reset Password, and OTP Verification forms
  */
 import { useState } from 'react'
 import { LoginForm } from './LoginForm'
 import { RegisterForm } from './RegisterForm'
 import { ForgotPasswordForm } from './ForgotPasswordForm'
+import { ResetPasswordForm } from './ResetPasswordForm'
 import { OTPVerificationForm } from './OTPVerificationForm'
 
 type ActiveTab = 'login' | 'register'
@@ -13,8 +14,10 @@ type ActiveTab = 'login' | 'register'
 const Login = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('login')
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showResetPassword, setShowResetPassword] = useState(false)
   const [showOTPVerification, setShowOTPVerification] = useState(false)
   const [verificationEmail, setVerificationEmail] = useState<string>('')
+  const [resetPasswordEmail, setResetPasswordEmail] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -26,6 +29,7 @@ const Login = () => {
 
   const handleBackToLogin = () => {
     setShowForgotPassword(false)
+    setShowResetPassword(false)
     setShowOTPVerification(false)
     setActiveTab('login')
     setError(null)
@@ -43,6 +47,25 @@ const Login = () => {
     setShowOTPVerification(false)
     setActiveTab('login')
     setSuccessMessage('Email verified successfully! You can now log in.')
+  }
+
+  const handleForgotPasswordOTPSent = (email: string) => {
+    setResetPasswordEmail(email)
+    setShowForgotPassword(false)
+    setShowResetPassword(true)
+    setError(null)
+    setSuccessMessage(null)
+  }
+
+  const handleResetPasswordSuccess = () => {
+    setShowResetPassword(false)
+    setActiveTab('login')
+    setSuccessMessage('Password reset successfully! You can now log in with your new password.')
+  }
+
+  const handleBackToForgotPassword = () => {
+    setShowResetPassword(false)
+    setShowForgotPassword(true)
   }
 
   return (
@@ -114,9 +137,16 @@ const Login = () => {
               />
             )}
           </>
+        ) : showResetPassword ? (
+          <ResetPasswordForm
+            email={resetPasswordEmail}
+            onSuccess={handleResetPasswordSuccess}
+            onBackToForgotPassword={handleBackToForgotPassword}
+          />
         ) : (
           <ForgotPasswordForm
             onBackToLogin={handleBackToLogin}
+            onOTPSent={handleForgotPasswordOTPSent}
             error={error}
             setError={setError}
             successMessage={successMessage}

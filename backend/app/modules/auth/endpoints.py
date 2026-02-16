@@ -408,6 +408,56 @@ async def get_current_user_info(
 
 
 @router.post(
+    "/reset-password",
+    response_model=SuccessResponse[None],
+    summary="Reset Password",
+    responses=doc_responses(
+        success_message="Password reset successfully. You can now login.",
+        errors=(400, 422)
+    )
+)
+@rate_limit(RateLimit.AUTH_VERIFY_EMAIL)
+async def reset_password(
+    request: ResetPasswordRequest,
+    http_request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Reset password with OTP verification.
+
+    - Validates OTP code sent via forgot password
+    - Updates user password
+    - Allows user to login with new password
+    """
+    from app.modules.users.repository import UserRepository
+
+    # Verify OTP
+    await OTPService.verify_otp(request.email, request.otp, OTPType.PASSWORD_RESET)
+
+    # Get user and update password
+    user_repo = UserRepository(db)
+    user = await user_repo.get_by_email(request.email)
+
+    if user:
+        await user_repo.update(user, {"hashed_password": get_password_hash(request.new_password)})
+
+        # Audit Log
+        await audit_service.log_action(
+            action="reset_password",
+            actor_id=user.id,
+            target_id=str(user.id),
+            target_type="user",
+            details={"email": request.email},
+            request=http_request
+        )
+
+    return SuccessResponse(
+        message="Password reset successfully. You can now login.",
+        data=None
+    )
+
+
+@router.post(
     "/change-password",
     response_model=SuccessResponse[None],
     summary="Change Password",

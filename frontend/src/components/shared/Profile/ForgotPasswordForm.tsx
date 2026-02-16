@@ -9,6 +9,7 @@ import { FieldError } from './FieldError'
 
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void
+  onOTPSent: (email: string) => void
   error: string | null
   setError: (error: string | null) => void
   successMessage: string | null
@@ -17,6 +18,7 @@ interface ForgotPasswordFormProps {
 
 export function ForgotPasswordForm({
   onBackToLogin,
+  onOTPSent,
   error,
   setError,
   successMessage,
@@ -38,10 +40,16 @@ export function ForgotPasswordForm({
         })
 
         if (response.success) {
+          // Store email before reset and redirect to reset password form
+          const submittedEmail = value.email
           setSuccessMessage(
-            response.message || 'Password reset link sent to your email!'
+            response.message || 'OTP sent to your email!'
           )
           form.reset()
+          // Navigate to reset password form after a brief delay
+          setTimeout(() => {
+            onOTPSent(submittedEmail)
+          }, 1000)
         }
       } catch (err) {
         if (hasFieldErrors(err)) {
