@@ -11,6 +11,7 @@ import { FieldError } from './FieldError'
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void
+  onNeedVerification: (email: string) => void
   onSuccess: (message: string) => void
   error: string | null
   setError: (error: string | null) => void
@@ -19,6 +20,7 @@ interface RegisterFormProps {
 
 export function RegisterForm({
   onSwitchToLogin,
+  onNeedVerification,
   onSuccess,
   error,
   setError,
@@ -56,12 +58,15 @@ export function RegisterForm({
         if (response.success) {
           onSuccess(
             response.message ||
-              'Registration successful! Please check your email to verify.'
+              'Registration successful! Please verify your email.'
           )
+          // Store the email before resetting the form
+          const registeredEmail = value.email
           form.reset()
+          // Redirect to OTP verification instead of login
           setTimeout(() => {
-            onSwitchToLogin()
-          }, 2000)
+            onNeedVerification(registeredEmail)
+          }, 1500)
         }
       } catch (err) {
         if (hasFieldErrors(err)) {

@@ -11,6 +11,7 @@ import { FieldError } from './FieldError'
 interface LoginFormProps {
   onForgotPassword: () => void
   onSwitchToRegister: () => void
+  onNeedVerification: (email: string) => void
   error: string | null
   setError: (error: string | null) => void
 }
@@ -18,6 +19,7 @@ interface LoginFormProps {
 export function LoginForm({
   onForgotPassword,
   onSwitchToRegister,
+  onNeedVerification,
   error,
   setError,
 }: LoginFormProps) {
@@ -37,11 +39,21 @@ export function LoginForm({
       try {
         await login(value.email, value.password)
         navigate({ to: '/profile' })
-      } catch (err) {
+      } catch (err: any) {
+        // Check if the error is due to unverified email
+        const errorCode = err?.response?.data?.error_code || err?.error_code
+        const errorMessage = getErrorMessage(err)
+
+        if (errorCode === 'AUTH_002' || errorMessage.toLowerCase().includes('verify your email')) {
+          // Redirect to OTP verification
+          onNeedVerification(value.email)
+          return
+        }
+
         if (hasFieldErrors(err)) {
           setFieldErrors(getFieldErrors(err))
         } else {
-          setError(getErrorMessage(err))
+          setError(errorMessage)
         }
       }
     },

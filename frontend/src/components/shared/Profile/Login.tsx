@@ -1,17 +1,20 @@
 /**
  * Login Page Component
- * Container that orchestrates Login, Register, and Forgot Password forms
+ * Container that orchestrates Login, Register, Forgot Password, and OTP Verification forms
  */
 import { useState } from 'react'
 import { LoginForm } from './LoginForm'
 import { RegisterForm } from './RegisterForm'
 import { ForgotPasswordForm } from './ForgotPasswordForm'
+import { OTPVerificationForm } from './OTPVerificationForm'
 
 type ActiveTab = 'login' | 'register'
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('login')
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showOTPVerification, setShowOTPVerification] = useState(false)
+  const [verificationEmail, setVerificationEmail] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -23,15 +26,35 @@ const Login = () => {
 
   const handleBackToLogin = () => {
     setShowForgotPassword(false)
+    setShowOTPVerification(false)
     setActiveTab('login')
     setError(null)
     setSuccessMessage(null)
   }
 
+  const handleNeedVerification = (email: string) => {
+    setVerificationEmail(email)
+    setShowOTPVerification(true)
+    setError(null)
+    setSuccessMessage(null)
+  }
+
+  const handleVerificationSuccess = () => {
+    setShowOTPVerification(false)
+    setActiveTab('login')
+    setSuccessMessage('Email verified successfully! You can now log in.')
+  }
+
   return (
     <div className="bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-white shadow-md rounded-md overflow-hidden">
-        {!showForgotPassword ? (
+        {showOTPVerification ? (
+          <OTPVerificationForm
+            email={verificationEmail}
+            onSuccess={handleVerificationSuccess}
+            onBackToLogin={handleBackToLogin}
+          />
+        ) : !showForgotPassword ? (
           <>
             {/* Tab Headers */}
             <div className="flex relative">
@@ -62,11 +85,19 @@ const Login = () => {
               />
             </div>
 
+            {/* Success Message after verification */}
+            {successMessage && (
+              <div className="mx-8 mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-green-600 text-sm">{successMessage}</p>
+              </div>
+            )}
+
             {/* Forms */}
             {activeTab === 'login' && (
               <LoginForm
                 onForgotPassword={() => setShowForgotPassword(true)}
                 onSwitchToRegister={() => handleTabChange('register')}
+                onNeedVerification={handleNeedVerification}
                 error={error}
                 setError={setError}
               />
@@ -75,6 +106,7 @@ const Login = () => {
             {activeTab === 'register' && (
               <RegisterForm
                 onSwitchToLogin={() => handleTabChange('login')}
+                onNeedVerification={handleNeedVerification}
                 onSuccess={setSuccessMessage}
                 error={error}
                 setError={setError}
