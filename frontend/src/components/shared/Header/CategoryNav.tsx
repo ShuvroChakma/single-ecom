@@ -1,4 +1,5 @@
 import { getCategoryTree, type Category } from "@/api/categories"
+import { getImageUrl } from "@/api/client"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
@@ -29,13 +30,6 @@ const CategoryNav = () => {
   // Check if category has children (subcategories)
   const hasSubcategories = (category: Category) => {
     return category.children && category.children.length > 0
-  }
-
-  // Get image URL helper
-  const getImageUrl = (path: string | null) => {
-    if (!path) return null
-    if (path.startsWith("http")) return path
-    return `${import.meta.env.VITE_API_URL?.replace("/api/v1", "")}${path}`
   }
 
   if (isLoading) {

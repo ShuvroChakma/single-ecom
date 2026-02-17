@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { getProducts } from '@/api/categories'
+import { getImageUrl } from '@/api/client'
 
 const SearchBar = () => {
   const navigate = useNavigate()
@@ -50,13 +51,6 @@ const SearchBar = () => {
       setIsFocused(false)
       inputRef.current?.blur()
     }
-  }
-
-  // Get image URL helper
-  const getImageUrl = (path: string | null) => {
-    if (!path) return '/placeholder-product.jpg'
-    if (path.startsWith('http')) return path
-    return `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${path}`
   }
 
   return (
@@ -130,7 +124,7 @@ const SearchBar = () => {
                   }}
                 >
                   <img
-                    src={getImageUrl(product.images?.[0])}
+                    src={getImageUrl(product.images?.[0], '/placeholder-product.jpg')}
                     alt={product.name}
                     className="w-12 h-12 object-cover rounded"
                   />

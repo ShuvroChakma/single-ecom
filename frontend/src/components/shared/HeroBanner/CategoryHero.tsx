@@ -1,14 +1,8 @@
 import { getCategoryTree, type Category } from '@/api/categories'
+import { getImageUrl } from '@/api/client'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
-
-// Get image URL helper
-const getImageUrl = (path: string | null) => {
-  if (!path) return null
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${path}`
-}
 
 // Default category images as fallback
 const DEFAULT_IMAGES: Record<string, string> = {

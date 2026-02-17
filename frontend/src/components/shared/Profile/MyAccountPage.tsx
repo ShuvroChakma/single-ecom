@@ -16,6 +16,7 @@ import {
   type AddressCreateRequest,
   type AddressUpdateRequest
 } from '@/api/addresses'
+import { getImageUrl } from '@/api/client'
 
 // Bangladesh districts
 const BD_DISTRICTS = [
@@ -228,13 +229,6 @@ export default function MyAccountPage() {
   const orders = ordersData?.data || []
   const addresses = addressesData?.data?.addresses || []
   const maxAddresses = addressesData?.data?.max_allowed || 5
-
-  // Get image URL helper
-  const getImageUrl = (path: string | null) => {
-    if (!path) return '/placeholder-product.jpg'
-    if (path.startsWith('http')) return path
-    return `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${path}`
-  }
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -680,7 +674,7 @@ export default function MyAccountPage() {
                         <Link to={`/products/${item.product.slug}-${item.product.id}`}>
                           <div className="mb-4 flex items-center justify-center py-8">
                             <img
-                              src={getImageUrl(item.product.image)}
+                              src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                               alt={item.product.name}
                               className="w-full h-48 object-contain"
                             />

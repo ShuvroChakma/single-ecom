@@ -7,6 +7,7 @@ import { createOrder, type CreateOrderRequest } from '@/api/orders'
 import { getAddresses, createAddress, type Address, type AddressCreateRequest } from '@/api/addresses'
 import { getDeliveryZones, calculateDeliveryCharge, type DeliveryChargeResponse } from '@/api/delivery'
 import { getPaymentMethods, getPaymentLogo, type PaymentMethod } from '@/api/payments'
+import { getImageUrl } from '@/api/client'
 
 // Bangladesh districts
 const BD_DISTRICTS = [
@@ -270,13 +271,6 @@ const PaymentMethodCard = ({
     </div>
   </div>
 )
-
-// Get image URL helper
-const getImageUrl = (path: string | null) => {
-  if (!path) return '/placeholder-product.jpg'
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${path}`
-}
 
 const Checkout = () => {
   const navigate = useNavigate()
@@ -680,7 +674,7 @@ const Checkout = () => {
                     {cart.items.map(item => (
                       <div key={item.id} className="flex gap-3 text-sm">
                         <img
-                          src={getImageUrl(item.product.image)}
+                          src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                           alt={item.product.name}
                           className="w-16 h-16 object-cover rounded"
                         />
@@ -799,7 +793,7 @@ const Checkout = () => {
                 {cart.items.slice(0, 3).map(item => (
                   <div key={item.id} className="flex gap-3 text-sm">
                     <img
-                      src={getImageUrl(item.product.image)}
+                      src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                       alt={item.product.name}
                       className="w-12 h-12 object-cover rounded"
                     />

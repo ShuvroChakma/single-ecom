@@ -18,6 +18,7 @@ import {
 import Header from "@/components/shared/Header/Header"
 import Footer from "@/components/shared/Footer/Footer"
 import { getProductById, getProductBySlug, getProducts, type Product, type ProductVariant } from "@/api/categories"
+import { getImageUrl } from "@/api/client"
 import { addToCart } from "@/api/cart"
 import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
 
@@ -139,13 +140,6 @@ function ProductPage() {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] })
     },
   })
-
-  // Get image URL helper
-  const getImageUrl = (path: string | null) => {
-    if (!path) return "/placeholder-product.jpg"
-    if (path.startsWith("http")) return path
-    return `${import.meta.env.VITE_API_URL?.replace("/api/v1", "")}${path}`
-  }
 
   // Calculate price from variant
   const calculatePrice = (variant: ProductVariant | null) => {
@@ -304,7 +298,7 @@ function ProductPage() {
                   onMouseMove={handleMouseMove}
                 >
                   <img
-                    src={getImageUrl(images[selectedImage])}
+                    src={getImageUrl(images[selectedImage], '/placeholder-product.jpg')}
                     alt={product.name}
                     className="w-full h-full object-contain p-8"
                     style={{
@@ -337,7 +331,7 @@ function ProductPage() {
                       }`}
                     >
                       <img
-                        src={getImageUrl(img)}
+                        src={getImageUrl(img, '/placeholder-product.jpg')}
                         alt={`${product.name} ${idx + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -567,7 +561,7 @@ function ProductPage() {
                 >
                   <div className="aspect-square bg-gray-50 overflow-hidden">
                     <img
-                      src={getImageUrl(relatedProduct.images?.[0])}
+                      src={getImageUrl(relatedProduct.images?.[0], '/placeholder-product.jpg')}
                       alt={relatedProduct.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

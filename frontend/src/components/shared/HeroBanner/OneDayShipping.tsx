@@ -1,11 +1,8 @@
-import React, { useEffect,useRef, useState   } from 'react';
-
-interface Product {
-  id: number;
-  imageUrl: string;
-  name: string;
-  price: string;
-}
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { getFeaturedProducts } from '@/api/products';
+import { getImageUrl } from '@/api/client';
 
 const OneDayShipping: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -15,93 +12,40 @@ const OneDayShipping: React.FC = () => {
   const [dragStart, setDragStart] = useState(0);
   const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
 
-  const products: Array<Product> = [
-    {
-      id: 1,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/e/r/erhrm14248_n.jpg',
-      name: 'Mine Diamond Earring ERHRM14248',
-      price: '₹ 48,181'
-    },
-    {
-      id: 2,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/f/r/frgen19864.jpg',
-      name: 'Mine Diamond Ring FRGEN19864',
-      price: '₹ 35,133'
-    },
-    {
-      id: 3,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/f/r/frgen19842.jpg',
-      name: 'Mine Diamond Ring FRGEN19842',
-      price: '₹ 37,718'
-    },
-    {
-      id: 4,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/f/r/frhrm13393.jpg',
-      name: 'Mine Diamond Ring FRHRM13393',
-      price: '₹ 42,073'
-    },
-    {
-      id: 5,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/e/r/ergen20860.jpg',
-      name: 'Mine Diamond Ring FRGEN19845',
-      price: '₹ 39,450'
-    },
-    {
-      id: 6,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/f/r/frgen19862.jpg',
-      name: 'Mine Diamond Ring FRGEN19862',
-      price: '₹ 41,200'
-    },
-    {
-      id: 7,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/f/r/frgen19805.jpg',
-      name: 'Mine Diamond Ring FRGEN19805',
-      price: '₹ 38,900'
-    },
-    {
-      id: 8,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/f/r/frhrm13378.jpg',
-      name: 'Mine Diamond Ring FRHRM13378',
-      price: '₹ 44,320'
-    },
-    {
-      id: 9,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/f/r/frgen19796.jpg',
-      name: 'Mine Diamond Ring FRGEN19796',
-      price: '₹ 36,850'
-    },
-    {
-      id: 10,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/e/r/ergen21455.jpg',
-      name: 'Mine Diamond Earring ERGEN21455',
-      price: '₹ 45,600'
-    },
-    {
-      id: 11,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/e/r/ergen21444.jpg',
-      name: 'Mine Diamond Earring ERGEN21444',
-      price: '₹ 43,290'
-    },
-    
-    {
-      id: 12,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/catalog/product/cache/1/image/265x/9df78eab33525d08d6e5fb8d27136e95/e/r/ergen20860.jpg',
-      name: 'Mine Diamond Earring ERGEN21445',
-      price: '₹ 44,290'
-    }
-  ];
+  const { data: productsResponse, isLoading } = useQuery({
+    queryKey: ['featured-products'],
+    queryFn: () => getFeaturedProducts(12),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Transform API products to display format
+  const products = useMemo(() => {
+    if (!productsResponse?.data?.items) return [];
+    return productsResponse.data.items.map(product => ({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      code: product.variants?.[0]?.sku || product.id.substring(0, 10),
+      price: product.variants?.[0]?.calculated_price
+        ? `৳ ${product.variants[0].calculated_price.toLocaleString('en-BD')}`
+        : 'Price on request',
+      image: getImageUrl(product.images?.[0], '/placeholder-product.jpg'),
+    }));
+  }, [productsResponse]);
 
   const itemsPerView = typeof window !== 'undefined' && window.innerWidth >= 768 ? 4 : 1;
-  const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+  const maxIndex = Math.max(0, Math.ceil(products.length / itemsPerView) - 1);
 
   // Auto-slide functionality
   const resetAutoSlide = () => {
     if (autoSlideRef.current) {
       clearInterval(autoSlideRef.current);
     }
-    autoSlideRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-    }, 5000);
+    if (maxIndex > 0) {
+      autoSlideRef.current = setInterval(() => {
+        setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+      }, 5000);
+    }
   };
 
   useEffect(() => {
@@ -169,14 +113,19 @@ const OneDayShipping: React.FC = () => {
     }
   };
 
+  // Don't render if no featured products
+  if (!isLoading && products.length === 0) {
+    return null;
+  }
+
   return (
     <div className="w-full px-0 py-8 md:py-12 bg-footer/80">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 md:mb-10">
-          <h2 className="text-3xl md:text-4xl font-serif mb-3">One Day Shipping</h2>
+          <h2 className="text-3xl md:text-4xl font-serif mb-3">Featured Products</h2>
           <p className="text-sm md:text-base text-gray-700 max-w-3xl mx-auto">
-            Experience convenience with our one-day shipping, ensuring your purchase arrives at your doorstep quickly.
+            Discover our handpicked selection of featured jewellery pieces.
           </p>
         </div>
 
@@ -198,45 +147,66 @@ const OneDayShipping: React.FC = () => {
                 transform: `translateX(-${currentIndex * 100}%)`
               }}
             >
-              {Array.from({ length: Math.ceil(products.length / itemsPerView) }).map((_, slideIndex) => (
-                <div
-                  key={slideIndex}
-                  className="w-full shrink-0 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-4"
-                >
-                  {products
-                    .slice(slideIndex * itemsPerView, (slideIndex + 1) * itemsPerView)
-                    .map((product) => (
-                      <div
-                        key={product.id}
-                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
-                      >
-                        <div className="aspect-square bg-white flex items-center justify-center p-2">
-                          <img
-                            src={product.imageUrl}
-                            alt={product.name}
-                            className="w-full h-full object-contain"
-                            draggable="false"
-                          />
-                        </div>
-                        <div className="p-2 text-center">
-                          <h3 className="text-sm md:text-base font-medium text-gray-800 mb-2 line-clamp-2">
-                            {product.name}
-                          </h3>
-                          <p className="text-lg font-semibold text-top_bar">{product.price}</p>
-                        </div>
+              {isLoading ? (
+                <div className="w-full shrink-0 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                      <div className="aspect-square bg-gray-200" />
+                      <div className="p-2 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+                        <div className="h-5 bg-gray-200 rounded w-2/3 mx-auto" />
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                Array.from({ length: Math.ceil(products.length / itemsPerView) }).map((_, slideIndex) => (
+                  <div
+                    key={slideIndex}
+                    className="w-full shrink-0 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-4"
+                  >
+                    {products
+                      .slice(slideIndex * itemsPerView, (slideIndex + 1) * itemsPerView)
+                      .map((product) => (
+                        <Link
+                          key={product.id}
+                          to="/products/$slug"
+                          params={{ slug: product.slug }}
+                          className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                        >
+                          <div className="aspect-square bg-white flex items-center justify-center p-2">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-contain"
+                              draggable="false"
+                            />
+                          </div>
+                          <div className="p-2 text-center">
+                            <h3 className="text-sm md:text-base font-medium text-gray-800 mb-1 line-clamp-2">
+                              {product.name}
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-1">{product.code}</p>
+                            <p className="text-lg font-semibold text-top_bar">{product.price}</p>
+                          </div>
+                        </Link>
+                      ))}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* View All Button */}
         <div className="text-center">
-          <button className="bg-header text-white font-semibold px-6 py-3 rounded transition-colors duration-300 cursor-pointer">
-            VIEW ALL PRODUCTS
-          </button>
+          <Link
+            to="/products"
+            search={{ is_featured: true }}
+            className="inline-block bg-header text-white font-semibold px-6 py-3 rounded transition-colors duration-300 cursor-pointer hover:opacity-90"
+          >
+            VIEW ALL FEATURED
+          </Link>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, Grid, List, ChevronDown, Heart, ShoppingCart
 import Header from '@/components/shared/Header/Header'
 import Footer from '@/components/shared/Footer/Footer'
 import { getProducts, getCategoryTree, findCategoryBySlug, type Category } from '@/api/categories'
+import { getImageUrl } from '@/api/client'
 import { addToWishlist } from '@/api/wishlist'
 
 // Search params type
@@ -100,13 +101,6 @@ function ProductsPage() {
 
   const products = data?.pages.flatMap((page) => (page.success ? page.data.items : [])) || []
   const totalProducts = data?.pages[0]?.success ? data.pages[0].data.total : 0
-
-  // Get image URL helper
-  const getImageUrl = (path: string | null) => {
-    if (!path) return '/placeholder-product.jpg'
-    if (path.startsWith('http')) return path
-    return `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${path}`
-  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -270,7 +264,7 @@ function ProductsPage() {
                     }`}
                   >
                     <img
-                      src={getImageUrl(product.images?.[0])}
+                      src={getImageUrl(product.images?.[0], '/placeholder-product.jpg')}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

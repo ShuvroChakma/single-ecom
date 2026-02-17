@@ -277,17 +277,15 @@ export async function apiRequest<T>(
 
 /**
  * Helper function to get full image URL
- * In development, prepends backend URL. In production, nginx handles it.
+ * Prepends the backend server URL to relative paths.
+ * @param url - The image URL or path
+ * @param placeholder - Placeholder to return for null/empty values (default: empty string)
  */
-export function getImageUrl(url: string): string {
-  if (!url) return ''
+export function getImageUrl(url: string | null | undefined, placeholder: string = ''): string {
+  if (!url) return placeholder
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
-  // In development, prepend backend URL
-  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
-    return `${SERVER_URL}${url}`
-  }
-  // In production, nginx handles /uploads/* paths
-  return url
+  // Prepend backend URL for relative paths
+  return `${SERVER_URL}${url}`
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { getNewArrivals } from '@/api/products';
+import { getImageUrl } from '@/api/client';
 
 const NewArrivals: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,7 +29,7 @@ const NewArrivals: React.FC = () => {
       price: product.variants?.[0]?.calculated_price
         ? `৳ ${product.variants[0].calculated_price.toLocaleString('en-BD')}`
         : 'Price on request',
-      image: product.images?.[0] || '/placeholder-product.jpg',
+      image: getImageUrl(product.images?.[0], '/placeholder-product.jpg'),
     }));
   }, [productsResponse]);
 

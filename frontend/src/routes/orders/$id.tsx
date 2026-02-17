@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Package, MapPin, CreditCard, ArrowLeft, X, Check, Truck, Clock, ShoppingBag } from 'lucide-react'
 import { getOrder, cancelOrder } from '@/api/orders'
+import { getImageUrl } from '@/api/client'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/orders/$id')({
@@ -17,13 +18,6 @@ const ORDER_STATUS_COLORS: Record<string, { bg: string; text: string; icon: type
   shipped: { bg: 'bg-purple-100', text: 'text-purple-800', icon: Truck },
   delivered: { bg: 'bg-green-100', text: 'text-green-800', icon: Check },
   cancelled: { bg: 'bg-red-100', text: 'text-red-800', icon: X },
-}
-
-// Get image URL helper
-const getImageUrl = (path: string | null) => {
-  if (!path) return '/placeholder-product.jpg'
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}${path}`
 }
 
 function OrderDetailPage() {
@@ -158,7 +152,7 @@ function OrderDetailPage() {
                 {order.items.map((item) => (
                   <div key={item.id} className="flex gap-4 pb-4 border-b last:border-0 last:pb-0">
                     <img
-                      src={getImageUrl(item.product_image)}
+                      src={getImageUrl(item.product_image, '/placeholder-product.jpg')}
                       alt={item.product_name}
                       className="w-20 h-20 object-cover rounded"
                     />

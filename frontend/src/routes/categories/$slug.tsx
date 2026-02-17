@@ -12,6 +12,7 @@ import {
   type Product,
   type ProductFilters,
 } from "@/api/categories"
+import { getImageUrl } from "@/api/client"
 
 export const Route = createFileRoute("/categories/$slug")({
   component: CategoryPage,
@@ -73,13 +74,6 @@ function CategoryPage() {
   }, [productsData])
 
   const totalProducts = productsData?.pages?.[0]?.total || 0
-
-  // Get image URL helper
-  const getImageUrl = useCallback((path: string | null) => {
-    if (!path) return "/placeholder-product.jpg"
-    if (path.startsWith("http")) return path
-    return `${import.meta.env.VITE_API_URL?.replace("/api/v1", "")}${path}`
-  }, [])
 
   // Get product price (from first variant)
   const getProductPrice = useCallback((product: Product) => {
@@ -416,7 +410,7 @@ function ProductCard({
       <Link to={`/products/${product.slug}-${product.id}`} className="block">
         <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
           <img
-            src={getImageUrl(product.images?.[0])}
+            src={getImageUrl(product.images?.[0], '/placeholder-product.jpg')}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
