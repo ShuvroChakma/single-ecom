@@ -1,7 +1,7 @@
+import { getCategoryTree, type Category } from '@/api/categories'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
-import { getCategoryTree, type Category } from '@/api/categories'
 
 // Get image URL helper
 const getImageUrl = (path: string | null) => {
@@ -40,6 +40,7 @@ const getFallbackImage = (name: string): string => {
 
 // Flatten category tree to get all categories
 const flattenCategories = (categories: Category[]): Category[] => {
+  if (!Array.isArray(categories)) return []
   const result: Category[] = []
   for (const cat of categories) {
     if (cat.is_active) {
@@ -54,19 +55,21 @@ const flattenCategories = (categories: Category[]): Category[] => {
 
 export default function CategoryHero() {
   const { data, isLoading } = useQuery({
-    queryKey: ['category-tree'],
+    queryKey: ['category-tree-hero'],
     queryFn: async () => {
       const result = await getCategoryTree()
-      if (result.success) {
+      if (result.success && Array.isArray(result.data)) {
         return result.data
       }
       return []
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   })
 
   // Get all active categories (flattened, limited to 14 for display)
-  const categories = data ? flattenCategories(data).slice(0, 14) : []
+  const categories = Array.isArray(data) ? flattenCategories(data).slice(0, 14) : []
 
   if (isLoading) {
     return (

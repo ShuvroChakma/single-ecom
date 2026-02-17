@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react"
-import { Link } from "@tanstack/react-router"
-import { useQuery } from "@tanstack/react-query"
 import { getCategoryTree, type Category } from "@/api/categories"
+import { useQuery } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
+import { useMemo, useState } from "react"
 
 const CategoryNav = () => {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)

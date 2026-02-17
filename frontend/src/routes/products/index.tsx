@@ -1,22 +1,24 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect, useMemo } from 'react'
 import { Search, SlidersHorizontal, Grid, List, ChevronDown, Heart, ShoppingCart, Loader2 } from 'lucide-react'
 import Header from '@/components/shared/Header/Header'
 import Footer from '@/components/shared/Footer/Footer'
-import { getProducts } from '@/api/categories'
+import { getProducts, getCategoryTree, findCategoryBySlug, type Category } from '@/api/categories'
 import { addToWishlist } from '@/api/wishlist'
 
 // Search params type
 type ProductsSearch = {
   q?: string
+  category?: string
 }
 
-export const Route = createFileRoute('/products')({
+export const Route = createFileRoute('/products/')({
   component: ProductsPage,
   validateSearch: (search: Record<string, unknown>): ProductsSearch => {
     return {
       q: typeof search.q === 'string' ? search.q : undefined,
+      category: typeof search.category === 'string' ? search.category : undefined,
     }
   },
 })
@@ -24,7 +26,7 @@ export const Route = createFileRoute('/products')({
 function ProductsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { q } = Route.useSearch()
+  const { q, category } = Route.useSearch()
   const [searchQuery, setSearchQuery] = useState(q || '')
   const [sortBy, setSortBy] = useState('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -36,6 +38,23 @@ function ProductsPage() {
       setSearchQuery(q)
     }
   }, [q])
+
+  // Fetch category tree to resolve slug to ID
+  const { data: categoryTree } = useQuery({
+    queryKey: ['category-tree'],
+    queryFn: async () => {
+      const result = await getCategoryTree()
+      return result.success ? result.data : []
+    },
+    staleTime: 10 * 60 * 1000,
+    enabled: !!category,
+  })
+
+  // Resolve category slug to ID
+  const selectedCategory = useMemo(() => {
+    if (!category || !Array.isArray(categoryTree)) return null
+    return findCategoryBySlug(categoryTree, category)
+  }, [category, categoryTree])
 
   // Add to wishlist mutation
   const addWishlistMutation = useMutation({
@@ -60,12 +79,13 @@ function ProductsPage() {
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ['products', searchQuery, sortBy],
+    queryKey: ['products', searchQuery, sortBy, selectedCategory?.id],
     queryFn: async ({ pageParam = 1 }) => {
       const result = await getProducts({
         page: pageParam,
         per_page: 12,
         search: searchQuery || undefined,
+        category_id: selectedCategory?.id || undefined,
       })
       return result
     },
@@ -123,12 +143,24 @@ function ProductsPage() {
             Home
           </Link>
           <span>/</span>
-          <span className="text-gray-900 font-medium">All Products</span>
+          {selectedCategory ? (
+            <>
+              <Link to="/products" className="hover:text-header">
+                Products
+              </Link>
+              <span>/</span>
+              <span className="text-gray-900 font-medium">{selectedCategory.name}</span>
+            </>
+          ) : (
+            <span className="text-gray-900 font-medium">All Products</span>
+          )}
         </nav>
 
         {/* Page Title */}
         <div className="mb-6">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">All Products</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+            {selectedCategory ? selectedCategory.name : 'All Products'}
+          </h1>
           <p className="text-gray-600 mt-1">{totalProducts} products available</p>
         </div>
 

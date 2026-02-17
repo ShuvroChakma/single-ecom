@@ -12,11 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WishlistRouteRouteImport } from './routes/wishlist/route'
 import { Route as StoresRouteRouteImport } from './routes/stores/route'
 import { Route as ProfileRouteRouteImport } from './routes/profile/route'
-import { Route as ProductsRouteRouteImport } from './routes/products/route'
 import { Route as OrdersRouteRouteImport } from './routes/orders/route'
 import { Route as CheckoutRouteRouteImport } from './routes/checkout/route'
 import { Route as CartRouteRouteImport } from './routes/cart/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as FooterTrackOrderRouteImport } from './routes/footer/track-order'
@@ -25,7 +25,6 @@ import { Route as FooterOurPoliciesRouteImport } from './routes/footer/our-polic
 import { Route as FooterFaqRouteImport } from './routes/footer/faq'
 import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custom-jewellery'
 import { Route as FooterAboutRouteImport } from './routes/footer/about'
-import { Route as CategoriesDiamondRouteImport } from './routes/categories/Diamond'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
 
 const WishlistRouteRoute = WishlistRouteRouteImport.update({
@@ -41,11 +40,6 @@ const StoresRouteRoute = StoresRouteRouteImport.update({
 const ProfileRouteRoute = ProfileRouteRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductsRouteRoute = ProductsRouteRouteImport.update({
-  id: '/products',
-  path: '/products',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersRouteRoute = OrdersRouteRouteImport.update({
@@ -68,10 +62,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductsIndexRoute = ProductsIndexRouteImport.update({
+  id: '/products/',
+  path: '/products/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsSlugRoute = ProductsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => ProductsRouteRoute,
+  id: '/products/$slug',
+  path: '/products/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
@@ -108,11 +107,6 @@ const FooterAboutRoute = FooterAboutRouteImport.update({
   path: '/footer/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CategoriesDiamondRoute = CategoriesDiamondRouteImport.update({
-  id: '/categories/Diamond',
-  path: '/categories/Diamond',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
   id: '/categories/$slug',
   path: '/categories/$slug',
@@ -124,12 +118,10 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRouteRoute
   '/checkout': typeof CheckoutRouteRoute
   '/orders': typeof OrdersRouteRouteWithChildren
-  '/products': typeof ProductsRouteRouteWithChildren
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/categories/$slug': typeof CategoriesSlugRoute
-  '/categories/Diamond': typeof CategoriesDiamondRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
@@ -138,18 +130,17 @@ export interface FileRoutesByFullPath {
   '/footer/track-order': typeof FooterTrackOrderRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/products': typeof ProductsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRouteRoute
   '/checkout': typeof CheckoutRouteRoute
   '/orders': typeof OrdersRouteRouteWithChildren
-  '/products': typeof ProductsRouteRouteWithChildren
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/categories/$slug': typeof CategoriesSlugRoute
-  '/categories/Diamond': typeof CategoriesDiamondRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
@@ -158,6 +149,7 @@ export interface FileRoutesByTo {
   '/footer/track-order': typeof FooterTrackOrderRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/products': typeof ProductsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,12 +157,10 @@ export interface FileRoutesById {
   '/cart': typeof CartRouteRoute
   '/checkout': typeof CheckoutRouteRoute
   '/orders': typeof OrdersRouteRouteWithChildren
-  '/products': typeof ProductsRouteRouteWithChildren
   '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/categories/$slug': typeof CategoriesSlugRoute
-  '/categories/Diamond': typeof CategoriesDiamondRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
@@ -179,6 +169,7 @@ export interface FileRoutesById {
   '/footer/track-order': typeof FooterTrackOrderRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/products/': typeof ProductsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -187,12 +178,10 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/orders'
-    | '/products'
     | '/profile'
     | '/stores'
     | '/wishlist'
     | '/categories/$slug'
-    | '/categories/Diamond'
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
@@ -201,18 +190,17 @@ export interface FileRouteTypes {
     | '/footer/track-order'
     | '/orders/$id'
     | '/products/$slug'
+    | '/products'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cart'
     | '/checkout'
     | '/orders'
-    | '/products'
     | '/profile'
     | '/stores'
     | '/wishlist'
     | '/categories/$slug'
-    | '/categories/Diamond'
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
@@ -221,18 +209,17 @@ export interface FileRouteTypes {
     | '/footer/track-order'
     | '/orders/$id'
     | '/products/$slug'
+    | '/products'
   id:
     | '__root__'
     | '/'
     | '/cart'
     | '/checkout'
     | '/orders'
-    | '/products'
     | '/profile'
     | '/stores'
     | '/wishlist'
     | '/categories/$slug'
-    | '/categories/Diamond'
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
@@ -241,6 +228,7 @@ export interface FileRouteTypes {
     | '/footer/track-order'
     | '/orders/$id'
     | '/products/$slug'
+    | '/products/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -248,18 +236,18 @@ export interface RootRouteChildren {
   CartRouteRoute: typeof CartRouteRoute
   CheckoutRouteRoute: typeof CheckoutRouteRoute
   OrdersRouteRoute: typeof OrdersRouteRouteWithChildren
-  ProductsRouteRoute: typeof ProductsRouteRouteWithChildren
   ProfileRouteRoute: typeof ProfileRouteRoute
   StoresRouteRoute: typeof StoresRouteRoute
   WishlistRouteRoute: typeof WishlistRouteRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
-  CategoriesDiamondRoute: typeof CategoriesDiamondRoute
   FooterAboutRoute: typeof FooterAboutRoute
   FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
   FooterFaqRoute: typeof FooterFaqRoute
   FooterOurPoliciesRoute: typeof FooterOurPoliciesRoute
   FooterSizeGuideRoute: typeof FooterSizeGuideRoute
   FooterTrackOrderRoute: typeof FooterTrackOrderRoute
+  ProductsSlugRoute: typeof ProductsSlugRoute
+  ProductsIndexRoute: typeof ProductsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -283,13 +271,6 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/products': {
-      id: '/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProductsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orders': {
@@ -320,12 +301,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products/': {
+      id: '/products/'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products/$slug': {
       id: '/products/$slug'
-      path: '/$slug'
+      path: '/products/$slug'
       fullPath: '/products/$slug'
       preLoaderRoute: typeof ProductsSlugRouteImport
-      parentRoute: typeof ProductsRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/orders/$id': {
       id: '/orders/$id'
@@ -376,13 +364,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FooterAboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/categories/Diamond': {
-      id: '/categories/Diamond'
-      path: '/categories/Diamond'
-      fullPath: '/categories/Diamond'
-      preLoaderRoute: typeof CategoriesDiamondRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/categories/$slug': {
       id: '/categories/$slug'
       path: '/categories/$slug'
@@ -405,35 +386,23 @@ const OrdersRouteRouteWithChildren = OrdersRouteRoute._addFileChildren(
   OrdersRouteRouteChildren,
 )
 
-interface ProductsRouteRouteChildren {
-  ProductsSlugRoute: typeof ProductsSlugRoute
-}
-
-const ProductsRouteRouteChildren: ProductsRouteRouteChildren = {
-  ProductsSlugRoute: ProductsSlugRoute,
-}
-
-const ProductsRouteRouteWithChildren = ProductsRouteRoute._addFileChildren(
-  ProductsRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CartRouteRoute: CartRouteRoute,
   CheckoutRouteRoute: CheckoutRouteRoute,
   OrdersRouteRoute: OrdersRouteRouteWithChildren,
-  ProductsRouteRoute: ProductsRouteRouteWithChildren,
   ProfileRouteRoute: ProfileRouteRoute,
   StoresRouteRoute: StoresRouteRoute,
   WishlistRouteRoute: WishlistRouteRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
-  CategoriesDiamondRoute: CategoriesDiamondRoute,
   FooterAboutRoute: FooterAboutRoute,
   FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,
   FooterFaqRoute: FooterFaqRoute,
   FooterOurPoliciesRoute: FooterOurPoliciesRoute,
   FooterSizeGuideRoute: FooterSizeGuideRoute,
   FooterTrackOrderRoute: FooterTrackOrderRoute,
+  ProductsSlugRoute: ProductsSlugRoute,
+  ProductsIndexRoute: ProductsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
