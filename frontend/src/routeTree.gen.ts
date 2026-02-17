@@ -68,9 +68,9 @@ const ProductsIndexRoute = ProductsIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsSlugRoute = ProductsSlugRouteImport.update({
-  id: '/products/$slug',
-  path: '/products/$slug',
-  getParentRoute: () => rootRouteImport,
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ProductsRouteRoute,
 } as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
@@ -246,7 +246,6 @@ export interface RootRouteChildren {
   FooterOurPoliciesRoute: typeof FooterOurPoliciesRoute
   FooterSizeGuideRoute: typeof FooterSizeGuideRoute
   FooterTrackOrderRoute: typeof FooterTrackOrderRoute
-  ProductsSlugRoute: typeof ProductsSlugRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
 }
 
@@ -310,10 +309,10 @@ declare module '@tanstack/react-router' {
     }
     '/products/$slug': {
       id: '/products/$slug'
-      path: '/products/$slug'
+      path: '/$slug'
       fullPath: '/products/$slug'
       preLoaderRoute: typeof ProductsSlugRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ProductsRouteRoute
     }
     '/orders/$id': {
       id: '/orders/$id'
@@ -401,7 +400,6 @@ const rootRouteChildren: RootRouteChildren = {
   FooterOurPoliciesRoute: FooterOurPoliciesRoute,
   FooterSizeGuideRoute: FooterSizeGuideRoute,
   FooterTrackOrderRoute: FooterTrackOrderRoute,
-  ProductsSlugRoute: ProductsSlugRoute,
   ProductsIndexRoute: ProductsIndexRoute,
 }
 export const routeTree = rootRouteImport

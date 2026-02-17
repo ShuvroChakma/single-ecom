@@ -4,11 +4,18 @@
  */
 
 // Base API configuration - works in both server (process.env) and browser (import.meta.env)
-export const API_URL = (typeof process !== 'undefined' && process.env?.VITE_API_URL)
+// Note: VITE_API_URL should already include the /api/v1 path (e.g., https://example.com/api/v1)
+export const API_BASE = (typeof process !== 'undefined' && process.env?.VITE_API_URL)
     || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
-    || "http://localhost:8000";
+    || "http://localhost:8000/api/v1";
 
-export const API_BASE = `${API_URL}/api/v1`;
+// Base server URL for images (without /api/v1 path)
+const getServerUrl = () => {
+    const apiBase = API_BASE;
+    // Remove /api/v1 suffix to get server base URL
+    return apiBase.replace(/\/api\/v1\/?$/, '') || 'http://localhost:8000';
+};
+export const SERVER_URL = getServerUrl();
 
 // API Response types
 export interface ApiResponse<T> {
@@ -279,7 +286,7 @@ export function getImageUrl(url: string): string {
   }
   // In development, prepend backend URL
   if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
-    return `${API_URL}${url}`
+    return `${SERVER_URL}${url}`
   }
   // In production, nginx handles /uploads/* paths
   return url
