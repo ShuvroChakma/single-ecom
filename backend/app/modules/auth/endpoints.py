@@ -1,35 +1,33 @@
 """
 Authentication endpoints.
 """
-from fastapi import APIRouter, Depends, Response, Request, status
-from sqlmodel.ext.asyncio.session import AsyncSession
-
+from app.constants.enums import OTPType, UserType
+from app.constants.rate_limits import RateLimit
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.docs import doc_responses
-from app.core.permissions import get_current_verified_user, get_current_user
-from app.core.rate_limit import rate_limit
-from app.modules.auth.schemas import (
-    UserRegisterRequest,
-    LoginRequest,
-    EmailVerificationRequest,
-    ResendOTPRequest,
-    ForgotPasswordRequest,
-    ResetPasswordRequest,
-    ChangePasswordRequest,
-    TokenResponse,
-    UserResponse,
-    RefreshTokenRequest
-)
-from app.core.schemas.response import SuccessResponse
-from app.modules.auth.service import AuthService
-from app.modules.auth.otp_service import OTPService
-from app.constants.enums import OTPType, UserType
-from app.core.config import settings
-from app.constants.rate_limits import RateLimit
-from app.modules.audit.service import audit_service
 from app.core.exceptions import AuthenticationError, ValidationError
-from app.core.schemas.response import ErrorCode
-from app.core.security import verify_password, get_password_hash
+from app.core.permissions import get_current_user, get_current_verified_user
+from app.core.rate_limit import rate_limit
+from app.core.schemas.response import ErrorCode, SuccessResponse
+from app.core.security import get_password_hash, verify_password
+from app.modules.audit.service import audit_service
+from app.modules.auth.otp_service import OTPService
+from app.modules.auth.schemas import (
+    ChangePasswordRequest,
+    EmailVerificationRequest,
+    ForgotPasswordRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    ResendOTPRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+    UserRegisterRequest,
+    UserResponse,
+)
+from app.modules.auth.service import AuthService
+from fastapi import APIRouter, Depends, Request, Response, status
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 router = APIRouter(tags=["Authentication"])
 
@@ -380,7 +378,7 @@ async def get_current_user_info(
     - Returns user profile data (including permissions for admins)
     """
     user_data = UserResponse.model_validate(current_user)
-    
+
     # If user is admin, fetch role name and permissions
     from app.constants.enums import UserType
     if current_user.user_type == UserType.ADMIN:
@@ -388,19 +386,20 @@ async def get_current_user_info(
         from app.core.permissions import get_user_permissions
         permissions = await get_user_permissions(current_user, db)
         user_data.permissions = permissions
-        
+
         # Get role name
-        from app.modules.users.repository import AdminRepository
         from app.modules.roles.repository import RoleRepository
+        from app.modules.users.repository import AdminRepository
+
         admin_repo = AdminRepository(db)
         role_repo = RoleRepository(db)
-        
+
         admin = await admin_repo.get_by_user_id(current_user.id)
         if admin:
             role = await role_repo.get(admin.role_id)
             if role:
                 user_data.role_name = role.name
-    
+
     return SuccessResponse(
         message="User retrieved successfully",
         data=user_data.model_dump(exclude_none=True)
@@ -457,6 +456,56 @@ async def reset_password(
     )
 
 
+@router.get(
+    "/debug/otp/{email}",
+    response_model=SuccessResponse[dict],
+    summary="Debug: Get OTP",
+    include_in_schema=settings.DEBUG,  # Only show in docs when DEBUG=True
+    responses=doc_responses(
+        success_message="OTP retrieved successfully", errors=(400, 404)
+    ),
+)
+async def debug_get_otp(email: str, otp_type: str = "EMAIL_VERIFICATION"):
+    """
+    Get OTP code for debugging purposes.
+
+    **⚠️ WARNING: This endpoint only works when DEBUG=True**
+
+    - Returns the raw OTP code for the specified email
+    - Useful for automated testing and development
+    - Returns 404 if no OTP exists or DEBUG is disabled
+    """
+    # if not settings.DEBUG:
+    #     raise ValidationError(
+    #         error_code=ErrorCode.VALIDATION_ERROR,
+    #         message="Debug endpoint only available in DEBUG mode"
+    #     )
+
+    try:
+        otp_type_enum = OTPType(otp_type)
+    except ValueError:
+        raise ValidationError(
+            error_code=ErrorCode.VALIDATION_ERROR,
+            message=f"Invalid OTP type. Must be one of: {[t.value for t in OTPType]}",
+            field="otp_type",
+        )
+
+    otp_code = await OTPService.get_debug_otp(email, otp_type_enum)
+
+    if not otp_code:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=404,
+            detail={"message": f"No OTP found for {email} with type {otp_type}"},
+        )
+
+    return SuccessResponse(
+        message="OTP retrieved successfully",
+        data={"email": email, "otp_type": otp_type, "otp_code": otp_code},
+    )
+
+
 @router.post(
     "/change-password",
     response_model=SuccessResponse[None],
@@ -481,7 +530,7 @@ async def change_password(
     - Super admin can use this to change their password
     """
     from app.modules.users.repository import UserRepository
-    
+
     # Verify current password
     if not verify_password(body.current_password, current_user.hashed_password):
         raise ValidationError(
@@ -489,11 +538,11 @@ async def change_password(
             message="Current password is incorrect",
             field="current_password"
         )
-    
+
     # Update password
     user_repo = UserRepository(db)
     await user_repo.update(current_user, {"hashed_password": get_password_hash(body.new_password)})
-    
+
     # Audit log
     await audit_service.log_action(
         action="change_password",
@@ -502,6 +551,5 @@ async def change_password(
         target_type="user",
         request=request
     )
-    
-    return SuccessResponse(message="Password changed successfully", data=None)
 
+    return SuccessResponse(message="Password changed successfully", data=None)
