@@ -126,7 +126,7 @@ function ProductPage() {
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
-    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart(data.variant_id, data.quantity),
+    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] })
     },
