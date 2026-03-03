@@ -23,7 +23,7 @@ const SearchBar = () => {
   // Fetch search suggestions
   const { data: suggestions, isLoading } = useQuery({
     queryKey: ['search-suggestions', debouncedSearch],
-    queryFn: () => getProducts({ search: debouncedSearch, per_page: 5 }),
+    queryFn: () => getProducts({ data: { search: debouncedSearch, per_page: 5 } }),
     enabled: debouncedSearch.length >= 2,
     staleTime: 30 * 1000,
   })

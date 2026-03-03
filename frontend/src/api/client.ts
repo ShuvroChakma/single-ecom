@@ -230,11 +230,20 @@ export async function apiRequest<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
+  const fullUrl = `${API_BASE}${endpoint}`;
+  console.log(`[API] ${options.method || 'GET'} ${fullUrl}`);
+
+  let response: Response;
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers,
       credentials: "include", // Include cookies for HttpOnly refresh token
-  });
+    });
+  } catch (err) {
+    console.error(`[API] Network error: ${options.method || 'GET'} ${fullUrl}`, err);
+    throw err;
+  }
 
     // Handle 401 Unauthorized - try to refresh token
     if (response.status === 401 && retryOnUnauthorized && token) {
@@ -246,6 +255,7 @@ export async function apiRequest<T>(
         }
 
         // Refresh failed - throw auth error
+        console.error(`[API] 401 Unauthorized (token refresh failed): ${options.method || 'GET'} ${fullUrl}`);
         throw new AuthenticationError("Session expired. Please login again.");
     }
 
@@ -261,6 +271,14 @@ export async function apiRequest<T>(
 
       // Extract detailed error message
       const message = extractErrorMessage(errorData);
+
+      console.error(
+        `[API] ${response.status} ${options.method || 'GET'} ${fullUrl}`,
+        '\n  message:', message,
+        '\n  code:', errorData.error?.code,
+        errorData.errors?.length ? '\n  errors:' : '',
+        errorData.errors?.length ? errorData.errors : ''
+      );
 
       throw new ApiError(
           message,

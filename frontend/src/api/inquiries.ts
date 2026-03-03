@@ -1,8 +1,9 @@
 /**
- * Inquiries API functions
+ * Inquiries API - Server Functions (public + auth)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
+import { apiRequest, ApiResponse } from './client'
 
 export interface InquiryCreateData {
   type?: 'CUSTOM_JEWELLERY' | 'GENERAL' | 'SUPPORT' | 'FEEDBACK'
@@ -46,17 +47,19 @@ export interface InquiryResponse {
   updated_at: string
 }
 
-/**
- * Submit a general inquiry
- */
-export async function submitInquiry(data: InquiryCreateData): Promise<APIResponse<InquiryCreatedResponse>> {
-  return apiClient.post<InquiryCreatedResponse>('/inquiries', data)
-}
+export const submitInquiry = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: InquiryCreateData }) => {
+    return apiRequest<ApiResponse<InquiryCreatedResponse>>('/inquiries', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  })
 
 /**
  * Submit a custom jewellery request (with file upload support)
+ * Uses client-side fetch due to multipart form data
  */
-export async function submitCustomJewelleryRequest(data: CustomJewelleryData): Promise<APIResponse<InquiryCreatedResponse>> {
+export async function submitCustomJewelleryRequest(data: CustomJewelleryData): Promise<{ success: boolean; message?: string; data: InquiryCreatedResponse | null }> {
   const formData = new FormData()
   formData.append('name', data.name)
   formData.append('email', data.email)
@@ -69,7 +72,6 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
     formData.append('design_image', data.design_image)
   }
 
-  // Use fetch directly for multipart form data
   const response = await fetch(`${import.meta.env.VITE_API_URL}/inquiries/custom-jewellery`, {
     method: 'POST',
     body: formData,
@@ -82,7 +84,7 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
     return {
       success: false,
       message: result.message || 'Failed to submit request',
-      data: null as any,
+      data: null,
     }
   }
 
@@ -93,9 +95,9 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
   }
 }
 
-/**
- * Get my inquiries (logged in users)
- */
-export async function getMyInquiries(): Promise<APIResponse<InquiryResponse[]>> {
-  return apiClient.get<InquiryResponse[]>('/inquiries/my')
-}
+export const getMyInquiries = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<InquiryResponse[]>>('/inquiries/my', {}, token)
+  })

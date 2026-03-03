@@ -78,7 +78,7 @@ function ProductPage() {
   // Fetch product data - by ID if available, otherwise by slug
   const { data: productResponse, isLoading, error } = useQuery({
     queryKey: ["product", productId || urlSlug],
-    queryFn: () => productId ? getProductById(productId) : getProductBySlug(urlSlug),
+    queryFn: () => productId ? getProductById({ data: { id: productId } }) : getProductBySlug({ data: { slug: urlSlug } }),
     staleTime: 5 * 60 * 1000,
   })
 
@@ -87,11 +87,12 @@ function ProductPage() {
   // Check if product is in wishlist
   const { data: wishlistCheck } = useQuery({
     queryKey: ["wishlist-check", product?.id],
-    queryFn: () => checkWishlist(product!.id),
+    queryFn: () => checkWishlist({ data: { productId: product!.id } }),
     enabled: !!product?.id,
   })
 
-  const isInWishlist = wishlistCheck?.success ? wishlistCheck.data.in_wishlist : false
+  const isInWishlist = wishlistCheck?.success ? wishlistCheck.data?.in_wishlist ?? false : false
+  const wishlistItemId = wishlistCheck?.success ? wishlistCheck.data?.item_id ?? null : null
 
   // Redirect to canonical URL if slug doesn't match
   useEffect(() => {
@@ -115,7 +116,7 @@ function ProductPage() {
   // Fetch related products
   const { data: relatedResponse } = useQuery({
     queryKey: ["related-products", product?.category_id],
-    queryFn: () => getProducts({ category_id: product?.category_id, per_page: 4 }),
+    queryFn: () => getProducts({ data: { category_id: product?.category_id, per_page: 4 } }),
     enabled: !!product?.category_id,
     staleTime: 5 * 60 * 1000,
   })
@@ -126,7 +127,7 @@ function ProductPage() {
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
-    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart(data),
+    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] })
     },
@@ -134,7 +135,15 @@ function ProductPage() {
 
   // Wishlist mutations
   const addWishlistMutation = useMutation({
-    mutationFn: (data: { product_id: string; variant_id?: string }) => addToWishlist(data.product_id, data.variant_id),
+    mutationFn: (data: { product_id: string; variant_id?: string }) => addToWishlist({ data: { product_id: data.product_id, variant_id: data.variant_id } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist-check", product?.id] })
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] })
+    },
+  })
+
+  const removeWishlistMutation = useMutation({
+    mutationFn: (itemId: string) => removeFromWishlist({ data: { itemId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist-check", product?.id] })
       queryClient.invalidateQueries({ queryKey: ["wishlist"] })
@@ -179,10 +188,14 @@ function ProductPage() {
 
   const handleToggleWishlist = () => {
     if (!product) return
-    addWishlistMutation.mutate({
-      product_id: product.id,
-      variant_id: selectedVariant?.id
-    })
+    if (isInWishlist && wishlistItemId) {
+      removeWishlistMutation.mutate(wishlistItemId)
+    } else {
+      addWishlistMutation.mutate({
+        product_id: product.id,
+        variant_id: selectedVariant?.id,
+      })
+    }
   }
 
   // Loading state
@@ -250,10 +263,10 @@ function ProductPage() {
                 {/* Wishlist button */}
                 <button
                   onClick={handleToggleWishlist}
-                  disabled={addWishlistMutation.isPending}
+                  disabled={addWishlistMutation.isPending || removeWishlistMutation.isPending}
                   className="absolute top-4 right-4 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform disabled:opacity-50"
                 >
-                  {addWishlistMutation.isPending ? (
+                  {(addWishlistMutation.isPending || removeWishlistMutation.isPending) ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <Heart

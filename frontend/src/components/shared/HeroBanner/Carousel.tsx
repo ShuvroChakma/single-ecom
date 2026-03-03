@@ -25,7 +25,7 @@ const FALLBACK_SLIDES = [
 export default function Carousel() {
   const { data: slidesResponse, isLoading } = useQuery({
     queryKey: ['home-carousel-slides'],
-    queryFn: getHomeCarouselSlides,
+    queryFn: () => getHomeCarouselSlides(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 

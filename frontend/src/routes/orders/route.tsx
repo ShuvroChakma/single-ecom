@@ -26,7 +26,7 @@ const PAYMENT_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 function OrdersPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['my-orders'],
-    queryFn: () => getOrdersList(50, 0),
+    queryFn: () => getOrdersList({ data: { limit: 50, offset: 0 } }),
   })
 
   const orders = data?.data || []

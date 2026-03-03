@@ -28,7 +28,7 @@ function CategoryPage() {
   // Fetch category tree
   const { data: categoriesResponse } = useQuery({
     queryKey: ["category-tree"],
-    queryFn: getCategoryTree,
+    queryFn: () => getCategoryTree(),
     staleTime: 5 * 60 * 1000,
   })
 
@@ -50,10 +50,12 @@ function CategoryPage() {
     queryFn: async ({ pageParam = 1 }) => {
       if (!currentCategory?.id) return { items: [], total: 0, page: 1, per_page: 20, pages: 0 }
       const response = await getProducts({
-        category_id: currentCategory.id,
-        page: pageParam,
-        per_page: 20,
-        ...filters,
+        data: {
+          category_id: currentCategory.id,
+          page: pageParam,
+          per_page: 20,
+          ...filters,
+        },
       })
       return response.success ? response.data : { items: [], total: 0, page: 1, per_page: 20, pages: 0 }
     },

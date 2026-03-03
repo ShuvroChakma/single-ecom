@@ -13,23 +13,23 @@ export default function ShoppingCart() {
 
   const { data: cartResponse, isLoading } = useQuery({
     queryKey: ['cart'],
-    queryFn: getCart,
+    queryFn: () => getCart(),
     staleTime: 60 * 1000, // 1 minute
   });
 
   const updateItemMutation = useMutation({
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
-      updateCartItem(itemId, quantity),
+      updateCartItem({ data: { itemId, quantity } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: removeFromCart,
+    mutationFn: (itemId: string) => removeFromCart({ data: { itemId } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const validatePromoMutation = useMutation({
-    mutationFn: (code: string) => validatePromoCode(code, cart?.subtotal || 0),
+    mutationFn: (code: string) => validatePromoCode({ data: { code, order_amount: cart?.subtotal || 0 } }),
     onSuccess: (response) => {
       if (response.data) {
         setPromoResult(response.data);

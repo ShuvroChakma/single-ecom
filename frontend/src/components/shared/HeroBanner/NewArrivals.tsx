@@ -14,7 +14,7 @@ const NewArrivals: React.FC = () => {
 
   const { data: productsResponse, isLoading } = useQuery({
     queryKey: ['new-arrivals'],
-    queryFn: () => getNewArrivals(8),
+    queryFn: () => getNewArrivals({ data: { limit: 8 } }),
     staleTime: 5 * 60 * 1000,
   });
 

@@ -1,73 +1,44 @@
 /**
- * Products API functions
+ * Products API - Server Functions (public, no auth needed)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
-import type { Product, ProductListResponse, ProductFilters } from './categories'
+import { createServerFn } from '@tanstack/react-start'
+import { apiRequest, ApiResponse } from './client'
+import type { Product, ProductListResponse } from './categories'
 
 // Re-export types from categories
 export type { Product, ProductVariant, ProductListResponse, ProductFilters } from './categories'
 
-/**
- * Get products with filters
- */
-export async function getProducts(filters: ProductFilters = {}): Promise<APIResponse<ProductListResponse>> {
-  const params = new URLSearchParams()
+export const getFeaturedProducts = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data?: { limit?: number } }) => {
+    const limit = data?.limit ?? 8
+    return apiRequest<ApiResponse<ProductListResponse>>(`/products?is_featured=true&per_page=${limit}`)
+  })
 
-  if (filters.category_id) params.append('category_id', filters.category_id)
-  if (filters.brand_id) params.append('brand_id', filters.brand_id)
-  if (filters.collection_id) params.append('collection_id', filters.collection_id)
-  if (filters.gender) params.append('gender', filters.gender)
-  if (filters.metal_type) params.append('metal_type', filters.metal_type)
-  if (filters.is_featured !== undefined) params.append('is_featured', String(filters.is_featured))
-  if (filters.search) params.append('search', filters.search)
-  if (filters.page) params.append('page', String(filters.page))
-  if (filters.per_page) params.append('per_page', String(filters.per_page))
+export const getNewArrivals = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data?: { limit?: number } }) => {
+    const limit = data?.limit ?? 8
+    return apiRequest<ApiResponse<ProductListResponse>>(`/products?per_page=${limit}`)
+  })
 
-  const queryString = params.toString()
-  const url = queryString ? `/products?${queryString}` : '/products'
+export const getProductsByGender = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { gender: string; limit?: number } }) => {
+    const { gender, limit = 4 } = data
+    return apiRequest<ApiResponse<ProductListResponse>>(`/products?gender=${gender}&per_page=${limit}`)
+  })
 
-  return apiClient.get<ProductListResponse>(url)
-}
+export const getProductsByCategory = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { categoryId: string; limit?: number } }) => {
+    const { categoryId, limit = 8 } = data
+    return apiRequest<ApiResponse<ProductListResponse>>(`/products?category_id=${categoryId}&per_page=${limit}`)
+  })
 
-/**
- * Get featured products
- */
-export async function getFeaturedProducts(limit: number = 8): Promise<APIResponse<ProductListResponse>> {
-  return apiClient.get<ProductListResponse>(`/products?is_featured=true&per_page=${limit}`)
-}
+export const getProductBySlug = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { slug: string } }) => {
+    return apiRequest<ApiResponse<Product>>(`/products/${data.slug}`)
+  })
 
-/**
- * Get new arrivals (sorted by created_at desc)
- */
-export async function getNewArrivals(limit: number = 8): Promise<APIResponse<ProductListResponse>> {
-  return apiClient.get<ProductListResponse>(`/products?per_page=${limit}`)
-}
-
-/**
- * Get products by gender
- */
-export async function getProductsByGender(gender: string, limit: number = 4): Promise<APIResponse<ProductListResponse>> {
-  return apiClient.get<ProductListResponse>(`/products?gender=${gender}&per_page=${limit}`)
-}
-
-/**
- * Get products by category slug
- */
-export async function getProductsByCategory(categoryId: string, limit: number = 8): Promise<APIResponse<ProductListResponse>> {
-  return apiClient.get<ProductListResponse>(`/products?category_id=${categoryId}&per_page=${limit}`)
-}
-
-/**
- * Get single product by slug
- */
-export async function getProductBySlug(slug: string): Promise<APIResponse<Product>> {
-  return apiClient.get<Product>(`/products/${slug}`)
-}
-
-/**
- * Search products
- */
-export async function searchProducts(query: string, limit: number = 20): Promise<APIResponse<ProductListResponse>> {
-  return apiClient.get<ProductListResponse>(`/products?search=${encodeURIComponent(query)}&per_page=${limit}`)
-}
+export const searchProducts = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
+    const { query, limit = 20 } = data
+    return apiRequest<ApiResponse<ProductListResponse>>(`/products?search=${encodeURIComponent(query)}&per_page=${limit}`)
+  })

@@ -28,7 +28,7 @@ const FALLBACK_STORES: Array<Store> = [
 const StoreLocatorPage = () => {
   const { data: storesResponse, isLoading } = useQuery({
     queryKey: ["stores"],
-    queryFn: getStores,
+    queryFn: () => getStores(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   })
 

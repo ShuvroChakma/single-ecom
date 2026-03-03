@@ -14,7 +14,7 @@ const OneDayShipping: React.FC = () => {
 
   const { data: productsResponse, isLoading } = useQuery({
     queryKey: ['featured-products'],
-    queryFn: () => getFeaturedProducts(12),
+    queryFn: () => getFeaturedProducts({ data: { limit: 12 } }),
     staleTime: 5 * 60 * 1000,
   });
 

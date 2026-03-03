@@ -59,7 +59,7 @@ function ProductsPage() {
 
   // Add to wishlist mutation
   const addWishlistMutation = useMutation({
-    mutationFn: (productId: string) => addToWishlist(productId),
+    mutationFn: (productId: string) => addToWishlist({ data: { product_id: productId } }),
     onMutate: (productId) => {
       setAddingToWishlist(productId)
     },
@@ -83,10 +83,12 @@ function ProductsPage() {
     queryKey: ['products', searchQuery, sortBy, selectedCategory?.id],
     queryFn: async ({ pageParam = 1 }) => {
       const result = await getProducts({
-        page: pageParam,
-        per_page: 12,
-        search: searchQuery || undefined,
-        category_id: selectedCategory?.id || undefined,
+        data: {
+          page: pageParam,
+          per_page: 12,
+          search: searchQuery || undefined,
+          category_id: selectedCategory?.id || undefined,
+        },
       })
       return result
     },

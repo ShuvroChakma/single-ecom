@@ -292,27 +292,27 @@ const Checkout = () => {
   // Fetch cart
   const { data: cartResponse, isLoading: cartLoading } = useQuery({
     queryKey: ['cart'],
-    queryFn: getCart,
+    queryFn: () => getCart(),
   })
   const cart = cartResponse?.data
 
   // Fetch addresses
   const { data: addressResponse, isLoading: addressLoading } = useQuery({
     queryKey: ['addresses'],
-    queryFn: getAddresses,
+    queryFn: () => getAddresses(),
   })
   const addresses = addressResponse?.data?.addresses || []
 
   // Fetch delivery zones
   const { data: zonesResponse } = useQuery({
     queryKey: ['delivery-zones'],
-    queryFn: getDeliveryZones,
+    queryFn: () => getDeliveryZones(),
   })
 
   // Fetch payment methods
   const { data: paymentResponse, isLoading: paymentLoading } = useQuery({
     queryKey: ['payment-methods', cart?.total],
-    queryFn: () => getPaymentMethods(cart?.total),
+    queryFn: () => getPaymentMethods({ data: { order_amount: cart?.total } }),
     enabled: !!cart,
   })
   const paymentMethods = paymentResponse?.data?.methods || []
@@ -337,7 +337,7 @@ const Checkout = () => {
   useEffect(() => {
     const selectedAddress = addresses.find(a => a.id === selectedAddressId)
     if (selectedAddress && cart) {
-      calculateDeliveryCharge(selectedAddress.district, cart.subtotal)
+      calculateDeliveryCharge({ data: { district: selectedAddress.district, order_amount: cart.subtotal } })
         .then(res => {
           if (res.success) {
             setDeliveryInfo(res.data)
@@ -361,7 +361,7 @@ const Checkout = () => {
 
   // Create address mutation
   const createAddressMutation = useMutation({
-    mutationFn: createAddress,
+    mutationFn: (data: AddressCreateRequest) => createAddress({ data }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
       if (response.data) {
@@ -373,7 +373,7 @@ const Checkout = () => {
 
   // Validate promo mutation
   const validatePromoMutation = useMutation({
-    mutationFn: (code: string) => validatePromoCode(code, cart?.subtotal || 0),
+    mutationFn: (code: string) => validatePromoCode({ data: { code, order_amount: cart?.subtotal || 0 } }),
     onSuccess: (response) => {
       if (response.success && response.data?.valid) {
         setPromoDiscount({
@@ -395,7 +395,7 @@ const Checkout = () => {
 
   // Create order mutation
   const createOrderMutation = useMutation({
-    mutationFn: createOrder,
+    mutationFn: (data: CreateOrderRequest) => createOrder({ data }),
     onSuccess: (response) => {
       if (response.success && response.data) {
         queryClient.invalidateQueries({ queryKey: ['cart'] })

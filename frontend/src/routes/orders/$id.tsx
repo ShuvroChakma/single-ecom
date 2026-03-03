@@ -28,11 +28,11 @@ function OrderDetailPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['order', id],
-    queryFn: () => getOrder(id),
+    queryFn: () => getOrder({ data: { orderId: id } }),
   })
 
   const cancelMutation = useMutation({
-    mutationFn: () => cancelOrder(id),
+    mutationFn: () => cancelOrder({ data: { orderId: id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order', id] })
       queryClient.invalidateQueries({ queryKey: ['my-orders'] })

@@ -24,12 +24,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Fetch user profile using server function
   const fetchUser = useCallback(async () => {
     try {
       const response = await authApi.getMe()
       if (response.success && response.data) {
-        // Reject admin users - this is customer frontend only
         if (response.data.user_type === 'ADMIN') {
           await authApi.logout()
           setUser(null)
@@ -47,7 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [])
 
-  // Check auth status on mount
   useEffect(() => {
     fetchUser()
   }, [fetchUser])
@@ -55,13 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = async (email: string, password: string) => {
     const response = await authApi.loginCustomer({ data: { email, password } })
     if (response.success) {
-      // Fetch user profile to check user type
       const userResponse = await authApi.getMe()
-
       if (userResponse.success && userResponse.data) {
-        // Reject admin users - this is customer frontend only
         if (userResponse.data.user_type === 'ADMIN') {
-          // Logout immediately to clear tokens
           await authApi.logout()
           throw new Error('Admin users cannot login here. Please use the admin panel.')
         }

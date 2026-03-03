@@ -75,27 +75,27 @@ export default function MyAccountPage() {
   // Fetch wishlist
   const { data: wishlistData, isLoading: wishlistLoading } = useQuery({
     queryKey: ['wishlist'],
-    queryFn: getWishlist,
+    queryFn: () => getWishlist(),
     enabled: !!user,
   })
 
   // Fetch orders
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ['my-orders'],
-    queryFn: () => getOrdersList(10, 0),
+    queryFn: () => getOrdersList({ data: { limit: 10, offset: 0 } }),
     enabled: !!user,
   })
 
   // Fetch addresses
   const { data: addressesData, isLoading: addressesLoading } = useQuery({
     queryKey: ['addresses'],
-    queryFn: getAddresses,
+    queryFn: () => getAddresses(),
     enabled: !!user,
   })
 
   // Remove from wishlist mutation
   const removeFromWishlistMutation = useMutation({
-    mutationFn: (itemId: string) => removeFromWishlist(itemId),
+    mutationFn: (itemId: string) => removeFromWishlist({ data: { itemId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] })
     },
@@ -103,7 +103,7 @@ export default function MyAccountPage() {
 
   // Move to cart mutation
   const moveToCartMutation = useMutation({
-    mutationFn: (itemId: string) => moveToCart(itemId),
+    mutationFn: (itemId: string) => moveToCart({ data: { itemId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] })
       queryClient.invalidateQueries({ queryKey: ['cart'] })
@@ -127,7 +127,7 @@ export default function MyAccountPage() {
 
   // Address mutations
   const createAddressMutation = useMutation({
-    mutationFn: createAddress,
+    mutationFn: (data: AddressCreateRequest) => createAddress({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
       resetAddressForm()
@@ -135,7 +135,7 @@ export default function MyAccountPage() {
   })
 
   const updateAddressMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: AddressUpdateRequest }) => updateAddress(id, data),
+    mutationFn: ({ id, data }: { id: string; data: AddressUpdateRequest }) => updateAddress({ data: { addressId: id, updates: data } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
       resetAddressForm()
@@ -143,14 +143,14 @@ export default function MyAccountPage() {
   })
 
   const deleteAddressMutation = useMutation({
-    mutationFn: deleteAddress,
+    mutationFn: (addressId: string) => deleteAddress({ data: { addressId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
     },
   })
 
   const setDefaultMutation = useMutation({
-    mutationFn: setDefaultAddress,
+    mutationFn: (addressId: string) => setDefaultAddress({ data: { addressId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
     },

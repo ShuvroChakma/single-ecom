@@ -1,10 +1,10 @@
 /**
- * Wishlist API functions
+ * Wishlist API - Server Functions (token from HttpOnly cookie)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
+import { apiRequest, ApiResponse } from './client'
 
-// Product info in wishlist
 export interface WishlistProductInfo {
   id: string
   name: string
@@ -12,7 +12,6 @@ export interface WishlistProductInfo {
   image: string | null
 }
 
-// Variant info in wishlist
 export interface WishlistVariantInfo {
   id: string
   sku: string
@@ -40,47 +39,54 @@ export interface WishlistCheckResponse {
   item_id: string | null
 }
 
-/**
- * Get user's wishlist
- */
-export async function getWishlist(): Promise<APIResponse<Wishlist>> {
-  return apiClient.get<Wishlist>('/wishlist')
-}
+export const getWishlist = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Wishlist>>('/wishlist', {}, token)
+  })
 
-/**
- * Add product to wishlist
- */
-export async function addToWishlist(productId: string, variantId?: string): Promise<APIResponse<WishlistItem>> {
-  return apiClient.post<WishlistItem>('/wishlist', { product_id: productId, variant_id: variantId })
-}
+export const addToWishlist = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { product_id: string; variant_id?: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<WishlistItem>>('/wishlist', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token)
+  })
 
-/**
- * Remove product from wishlist
- */
-export async function removeFromWishlist(itemId: string): Promise<APIResponse<{ removed: boolean }>> {
-  return apiClient.delete<{ removed: boolean }>(`/wishlist/${itemId}`)
-}
+export const removeFromWishlist = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { itemId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<{ removed: boolean }>>(`/wishlist/${data.itemId}`, {
+      method: 'DELETE',
+    }, token)
+  })
 
-/**
- * Check if product is in wishlist
- */
-export async function isInWishlist(productId: string): Promise<APIResponse<WishlistCheckResponse>> {
-  return apiClient.get<WishlistCheckResponse>(`/wishlist/check/${productId}`)
-}
+export const checkWishlist = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { productId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: { in_wishlist: false, item_id: null } } as any
+    return apiRequest<ApiResponse<WishlistCheckResponse>>(`/wishlist/check/${data.productId}`, {}, token)
+  })
 
-// Alias for checkWishlist
-export const checkWishlist = isInWishlist
+export const clearWishlist = createServerFn({ method: 'POST' })
+  .handler(async () => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<{ cleared: boolean }>>('/wishlist', {
+      method: 'DELETE',
+    }, token)
+  })
 
-/**
- * Clear entire wishlist
- */
-export async function clearWishlist(): Promise<APIResponse<{ cleared: boolean }>> {
-  return apiClient.delete<{ cleared: boolean }>('/wishlist')
-}
-
-/**
- * Move wishlist item to cart
- */
-export async function moveToCart(itemId: string): Promise<APIResponse<{ success: boolean }>> {
-  return apiClient.post<{ success: boolean }>(`/wishlist/${itemId}/move-to-cart`, {})
-}
+export const moveToCart = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { itemId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<{ success: boolean }>>(`/wishlist/${data.itemId}/move-to-cart`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }, token)
+  })
