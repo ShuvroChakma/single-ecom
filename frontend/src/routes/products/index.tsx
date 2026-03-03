@@ -7,6 +7,8 @@ import Footer from '@/components/shared/Footer/Footer'
 import { getProducts, getCategoryTree, findCategoryBySlug, type Category } from '@/api/categories'
 import { getImageUrl } from '@/api/client'
 import { addToWishlist } from '@/api/wishlist'
+import { useAuth } from '@/hooks/useAuth'
+import { useLoginModal } from '@/contexts/LoginModalContext'
 
 // Search params type
 type ProductsSearch = {
@@ -32,6 +34,8 @@ function ProductsPage() {
   const [sortBy, setSortBy] = useState('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null)
+  const { isAuthenticated } = useAuth()
+  const { showLoginModal } = useLoginModal()
 
   // Sync URL query param with local state
   useEffect(() => {
@@ -281,6 +285,12 @@ function ProductsPage() {
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
+                          if (!isAuthenticated) {
+                            showLoginModal('Please login to save items to your wishlist', () => {
+                              addWishlistMutation.mutate(product.id)
+                            })
+                            return
+                          }
                           addWishlistMutation.mutate(product.id)
                         }}
                         disabled={addingToWishlist === product.id}

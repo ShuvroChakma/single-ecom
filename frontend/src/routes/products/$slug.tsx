@@ -21,6 +21,8 @@ import { getProductById, getProductBySlug, getProducts, type Product, type Produ
 import { getImageUrl } from "@/api/client"
 import { addToCart } from "@/api/cart"
 import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
+import { useAuth } from "@/hooks/useAuth"
+import { useLoginModal } from "@/contexts/LoginModalContext"
 
 export const Route = createFileRoute("/products/$slug")({
   component: ProductPage,
@@ -65,6 +67,8 @@ function ProductPage() {
   const { slug: urlSlug } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isAuthenticated } = useAuth()
+  const { showLoginModal } = useLoginModal()
 
   const [selectedImage, setSelectedImage] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
@@ -178,16 +182,34 @@ function ProductPage() {
 
   const handleAddToCart = () => {
     if (!selectedVariant) return
+    if (!isAuthenticated) {
+      showLoginModal('Please login to add items to your cart', () => {
+        addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
+      })
+      return
+    }
     addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
   }
 
   const handleBuyNow = () => {
+    if (!selectedVariant) return
+    if (!isAuthenticated) {
+      showLoginModal('Please login to purchase this item', () => {
+        addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
+        navigate({ to: "/cart" })
+      })
+      return
+    }
     handleAddToCart()
     navigate({ to: "/cart" })
   }
 
   const handleToggleWishlist = () => {
     if (!product) return
+    if (!isAuthenticated) {
+      showLoginModal('Please login to save items to your wishlist')
+      return
+    }
     if (isInWishlist && wishlistItemId) {
       removeWishlistMutation.mutate(wishlistItemId)
     } else {

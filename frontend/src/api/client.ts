@@ -231,7 +231,14 @@ export async function apiRequest<T>(
   }
 
   const fullUrl = `${API_BASE}${endpoint}`;
-  console.log(`[API] ${options.method || 'GET'} ${fullUrl}`);
+  const method = options.method || 'GET';
+
+  // Log full request
+  console.log(`\n[API REQUEST] ${method} ${fullUrl}`);
+  console.log('[API REQUEST] Headers:', JSON.stringify(headers, null, 2));
+  if (options.body) {
+    console.log('[API REQUEST] Body:', options.body);
+  }
 
   let response: Response;
   try {
@@ -241,7 +248,7 @@ export async function apiRequest<T>(
       credentials: "include", // Include cookies for HttpOnly refresh token
     });
   } catch (err) {
-    console.error(`[API] Network error: ${options.method || 'GET'} ${fullUrl}`, err);
+    console.error(`[API] Network error: ${method} ${fullUrl}`, err);
     throw err;
   }
 
@@ -259,23 +266,33 @@ export async function apiRequest<T>(
         throw new AuthenticationError("Session expired. Please login again.");
     }
 
+  // Log response status
+  console.log(`[API RESPONSE] ${response.status} ${response.statusText} ← ${method} ${fullUrl}`);
+
   if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json().catch(() => ({
+      const rawText = await response.text().catch(() => '');
+      let errorData: ApiErrorResponse;
+      try {
+        errorData = JSON.parse(rawText);
+      } catch {
+        errorData = {
           success: false,
           error: {
-              code: "UNKNOWN_ERROR",
-              message: response.statusText || `HTTP ${response.status}`,
-              field: null,
+            code: "UNKNOWN_ERROR",
+            message: response.statusText || `HTTP ${response.status}`,
+            field: null,
           },
-    }));
+        };
+      }
 
       // Extract detailed error message
       const message = extractErrorMessage(errorData);
 
       console.error(
-        `[API] ${response.status} ${options.method || 'GET'} ${fullUrl}`,
+        `\n[API ERROR] ${response.status} ${method} ${fullUrl}`,
         '\n  message:', message,
         '\n  code:', errorData.error?.code,
+        '\n  raw response:', rawText,
         errorData.errors?.length ? '\n  errors:' : '',
         errorData.errors?.length ? errorData.errors : ''
       );

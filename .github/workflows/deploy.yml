@@ -76,6 +76,8 @@ jobs:
       run: |
         rsync -az --delete \
           --exclude=venv \
+          --exclude=static/uploads \
+          --exclude=logs \
           backend/ \
           ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ env.DEPLOY_PATH }}/backend/
 
