@@ -140,7 +140,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       />
 
       {/* Menu Panel - positioned below header */}
-      <div className="absolute left-0 top-20 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+      <div className="absolute left-0 top-17 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
         {/* Categories List */}
         <div className="flex-1 bg-white overflow-y-auto">
           <nav className="py-2">
@@ -161,13 +161,13 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         </div>
 
         {/* Bottom Section */}
-        <div className="bg-footer px-4 py-5 shrink-0 border-t border-gray-200">
+        <div className="bg-footer px-4 py-4 shrink-0 border-t border-gray-200 mb-8">
           {/* Auth Buttons */}
-          <div className="flex gap-3 mb-5">
+          <div className="flex gap-4 mb-8">
             <Link
               to="/profile"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-header active:bg-header transition-colors shadow-sm"
+              className="flex-1 py-2.5 px-4 bg-header text-white rounded-sm text-center text-sm font-semibold hover:bg-header active:bg-header transition-colors shadow-sm"
             >
               Login
             </Link>
@@ -181,7 +181,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           </div>
 
           {/* Help Section */}
-          <div className="text-left">
+          {/* <div className="text-left py-2 px-3 rounded-md bg-gray-50">
             <p className="text-xs text-gray-700 leading-relaxed">
               NEED HELP? CALL{' '}
               <a
@@ -191,7 +191,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                 +91 22 62300916
               </a>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

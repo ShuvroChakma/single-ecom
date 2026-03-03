@@ -53,25 +53,25 @@ const AboutUs: React.FC = () => {
       </div>
 
       {/* Founder Section */}
-      <div className="bg-footer py-20">
-        <div className="max-w-6xl mx-auto px-2">
-          <h2 className="text-3xl font-semibold text-center mb-8">
+      <div className="bg-footer py-20 ">
+        <div className="max-w-6xl mx-auto px-2  py-2">
+          <h2 className="text-3xl font-semibold text-center mb-8 ">
             Faces of Nazu Meah Jewellers
           </h2>
           
 
-          <div className="flex justify-center">
-            <div className="bg-white rounded-2xl shadow-md px-2 py-6 text-center max-w-sm">
-              <div className="w-44 h-44 mx-auto rounded-full overflow-hidden mb-5">
+          <div className="flex justify-center ">
+            <div className="bg-white rounded-2xl shadow-md px-2 py-6 text-center max-w-sm border-4 border-header">
+              <div className="w-44 h-44 mx-auto rounded-full overflow-hidden mb-5 ">
                 <img
                   src={owner.image}
                   alt={owner.name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-2xl font-semibold">{owner.name}</h3>
+              <h3 className="text-3xl font-semibold">{owner.name}</h3>
               <p className="text-header mt-2 font-medium">{owner.role}</p>
-              <p className="text-gray-600 mt-4 text-sm leading-relaxed">
+              <p className="text-gray-600 mt-4 text-sm leading-relaxed ">
                 With years of experience in the jewellery industry, Md. Shawkot Iqbal
                 leads the brand with integrity, craftsmanship, and a vision to
                 deliver lasting value to every customer.
