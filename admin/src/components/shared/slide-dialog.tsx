@@ -411,13 +411,28 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                         name="position"
                         children={(field) => (
                             <div className="space-y-2">
-                                <Label htmlFor="position">Homepage Position</Label>
-                                <Input
-                                    id="position"
+                                <Label>Homepage Position</Label>
+                                <Select
                                     value={field.state.value}
-                                    onChange={(e) => field.handleChange(e.target.value)}
-                                    placeholder="e.g. home_carousel, jewelry_offers, hand_picked, gifting"
-                                />
+                                    onValueChange={(value) => field.handleChange(value === "__none__" ? "" : value)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a homepage section" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__none__">None / Not assigned</SelectItem>
+                                        <SelectItem value="home_carousel">Home Carousel (Hero Slider)</SelectItem>
+                                        <SelectItem value="jewelry_offers">Jewelry Offers (4 banners)</SelectItem>
+                                        <SelectItem value="hand_picked">Hand Picked (3 images)</SelectItem>
+                                        <SelectItem value="silver_banner">Silver Collection (top 2 banners)</SelectItem>
+                                        <SelectItem value="earring_collection">Earring Collection (4 banners)</SelectItem>
+                                        <SelectItem value="gemstone">Gemstone Jewellery (4 banners)</SelectItem>
+                                        <SelectItem value="platinum_collection">Platinum Collection (2 banners)</SelectItem>
+                                        <SelectItem value="gold_jewellery">Gold Jewellery (6 circles)</SelectItem>
+                                        <SelectItem value="our_collection">Our Collection (3 banners)</SelectItem>
+                                        <SelectItem value="gifting">Gifting & More (6 banners)</SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <p className="text-xs text-muted-foreground">
                                     Which homepage section this slide appears in
                                 </p>

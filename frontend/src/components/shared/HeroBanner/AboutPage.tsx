@@ -20,10 +20,10 @@ const AboutPage: React.FC = () => {
     imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/ind-homepage/410-Showroom.jpeg',
     phoneDescription: 'For store queries and schemes',
     goldSchemeTitle: 'GOLD SCHEME',
-    goldSchemeDescription: 'Payment for india stores',
+    goldSchemeDescription: 'Easy monthly payment plans',
     goldSchemeLink: '#',
     goldRateTitle: 'GOLD RATE',
-    goldRateDescription: 'One best rate across India!',
+    goldRateDescription: 'Best rate, updated daily!',
     goldRateLink: '#'
   };
 
@@ -46,7 +46,7 @@ const AboutPage: React.FC = () => {
           <div className="relative overflow-hidden rounded-lg">
             <img
               src={storeData.imageUrl}
-              alt="Malabar Gold & Diamonds Showroom"
+              alt="Our Showroom"
               className="w-full h-full object-cover"
             />
           </div>

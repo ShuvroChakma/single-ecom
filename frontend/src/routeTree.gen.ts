@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as WishlistRouteRouteImport } from './routes/wishlist/route'
 import { Route as StoresRouteRouteImport } from './routes/stores/route'
 import { Route as ProfileRouteRouteImport } from './routes/profile/route'
@@ -30,6 +31,11 @@ import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custo
 import { Route as FooterAboutRouteImport } from './routes/footer/about'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
 
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WishlistRouteRoute = WishlistRouteRouteImport.update({
   id: '/wishlist',
   path: '/wishlist',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRouteRouteWithChildren
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
+  '/$': typeof SplatRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
+  '/$': typeof SplatRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRouteRouteWithChildren
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
+  '/$': typeof SplatRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/stores'
     | '/wishlist'
+    | '/$'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/stores'
     | '/wishlist'
+    | '/$'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/stores'
     | '/wishlist'
+    | '/$'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   ProfileRouteRoute: typeof ProfileRouteRouteWithChildren
   StoresRouteRoute: typeof StoresRouteRoute
   WishlistRouteRoute: typeof WishlistRouteRoute
+  SplatRoute: typeof SplatRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   FooterAboutRoute: typeof FooterAboutRoute
   FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
@@ -284,6 +297,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wishlist': {
       id: '/wishlist'
       path: '/wishlist'
@@ -463,6 +483,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRouteRoute: ProfileRouteRouteWithChildren,
   StoresRouteRoute: StoresRouteRoute,
   WishlistRouteRoute: WishlistRouteRoute,
+  SplatRoute: SplatRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   FooterAboutRoute: FooterAboutRoute,
   FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,
