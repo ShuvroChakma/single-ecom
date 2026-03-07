@@ -12,8 +12,8 @@ export interface Slide {
   mobile_image_url: string | null
   link_url: string | null
   link_text: string | null
-  position: string
-  display_order: number
+  position: string | null
+  sort_order: number
   is_active: boolean
   start_date: string | null
   end_date: string | null
