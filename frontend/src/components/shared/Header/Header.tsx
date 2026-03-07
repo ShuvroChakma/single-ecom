@@ -100,7 +100,8 @@ const Header = () => {
                   alt={store_name}
                   className="h-9 sm:h-10 md:h-12 lg:h-14 w-auto object-contain transition-transform hover:scale-105"
                   onError={(e) => {
-                    e.currentTarget.style.display = "none";
+                    e.currentTarget.src = '/NazuMeah.svg'
+                    e.currentTarget.onerror = null
                   }}
                 />
               </Link>
