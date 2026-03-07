@@ -84,7 +84,7 @@ const GiftingPage: React.FC = () => {
               <a key={item.id} href={item.href || '#'} className="relative overflow-hidden rounded-lg cursor-pointer h-40 lg:h-50">
                 <img
                   src={item.imageUrl}
-
+                  alt={item.label}
                   className="w-full h-full object-cover"
                 />
               </a>
@@ -97,6 +97,7 @@ const GiftingPage: React.FC = () => {
               <a key={item.id} href={item.href || '#'} className="relative overflow-hidden rounded-lg cursor-pointer h-84 lg:h-104">
                 <img
                   src={item.imageUrl}
+                  alt={item.label}
                   className="w-full h-full object-cover"
                 />
               </a>
@@ -114,7 +115,7 @@ const GiftingPage: React.FC = () => {
             >
               <img
                 src={item.imageUrl}
-
+                alt={item.label}
                 className="w-full h-full object-cover"
               />
             </a>

@@ -146,6 +146,18 @@ function SlidesPage() {
       },
     },
     {
+      accessorKey: "position",
+      header: "Position",
+      cell: ({ row }) => {
+        const pos = row.getValue("position") as string | null
+        return pos ? (
+          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{pos}</code>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        )
+      },
+    },
+    {
       accessorKey: "sort_order",
       header: "Order",
       cell: ({ row }) => <span>{row.getValue("sort_order")}</span>,
