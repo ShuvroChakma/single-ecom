@@ -18,7 +18,7 @@ interface FormData {
 }
 
 const METAL_TYPES = ['Gold', 'Silver', 'Platinum', 'Diamond', 'White Gold', 'Rose Gold']
-const BUDGET_RANGES = ['Under ৳50,000', '৳50,000 - ৳1,00,000', '৳1,00,000 - ৳2,00,000', '৳2,00,000 - ৳5,00,000', 'Above ৳5,00,000']
+const BUDGET_RANGES = ['Under 50,000', '50,000 - 1,00,000', '1,00,000 - 2,00,000', '2,00,000 - 5,00,000', 'Above 5,00,000']
 
 export default function CustomJewelleryForm() {
   const [formData, setFormData] = useState<FormData>({
@@ -195,7 +195,7 @@ export default function CustomJewelleryForm() {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
 
@@ -208,7 +208,7 @@ export default function CustomJewelleryForm() {
                 name="mobile"
                 value={formData.mobile}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
 
@@ -221,7 +221,7 @@ export default function CustomJewelleryForm() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
 
@@ -252,7 +252,7 @@ export default function CustomJewelleryForm() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               >
-                <option value="">Select Budget Range</option>
+                <option value="">Select Budget Range (BDT)</option>
                 {BUDGET_RANGES.map((range) => (
                   <option key={range} value={range}>{range}</option>
                 ))}

@@ -106,7 +106,7 @@ const SearchBar = () => {
 
       {/* Search suggestions dropdown */}
       {isFocused && searchValue.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-0.5 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50">
+        <div className="absolute top-full left-0 right-0 mt-0.5 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-100">
           {isLoading ? (
             <div className="p-4 flex items-center justify-center">
               <Loader2 className="w-5 h-5 animate-spin text-gray-400" />

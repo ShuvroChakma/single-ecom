@@ -151,7 +151,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       />
 
       {/* Menu Panel - positioned below header */}
-      <div className="absolute left-0 top-20 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+      <div className="absolute left-0 top-17 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
         {/* Categories List */}
         <div className="flex-1 bg-white overflow-y-auto">
           <nav className="py-2">
