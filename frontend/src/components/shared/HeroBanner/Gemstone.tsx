@@ -1,4 +1,35 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getSlides } from '@/api/slides';
+import { SLIDE_POSITIONS } from '@/api/slidePositions';
+import { getImageUrl } from '@/api/client';
+
+const FALLBACK_GEMSTONES = [
+  {
+    id: 1,
+    title: 'Necklaces',
+    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/gemstone-necklace.jpg',
+    href: null,
+  },
+  {
+    id: 2,
+    title: 'Rings',
+    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/Rings.jpg',
+    href: null,
+  },
+  {
+    id: 3,
+    title: 'Earrings',
+    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/Earrings.jpg',
+    href: null,
+  },
+  {
+    id: 4,
+    title: 'Bangles',
+    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/gemstone-bangles.jpg',
+    href: null,
+  },
+];
 
 const Gemstone = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -6,29 +37,21 @@ const Gemstone = () => {
   const [touchEnd, setTouchEnd] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  // This data structure is ready for backend integration
-  const categories = [
-    {
-      id: 1,
-      name: 'Necklaces',
-      image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/gemstone-necklace.jpg'
-    },
-    {
-      id: 2,
-      name: 'Rings',
-      image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/Rings.jpg'
-    },
-    {
-      id: 3,
-      name: 'Earrings',
-      image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/Earrings.jpg'
-    },
-    {
-      id: 4,
-      name: 'Bangles',
-      image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/gemstone-bangles.jpg'
-    }
-  ];
+  const { data } = useQuery({
+    queryKey: ['slides', SLIDE_POSITIONS.GEMSTONE],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.GEMSTONE } }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categories =
+    data?.success && data.data.length > 0
+      ? data.data.map((s) => ({
+          id: s.id,
+          title: s.title,
+          image: getImageUrl(s.image_url, ''),
+          href: s.link_url,
+        }))
+      : FALLBACK_GEMSTONES;
 
   // Minimum swipe distance (in px) to trigger slide change
   const minSwipeDistance = 50;
@@ -45,7 +68,7 @@ const Gemstone = () => {
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -79,7 +102,7 @@ const Gemstone = () => {
       setIsDragging(false);
       return;
     }
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -114,7 +137,7 @@ const Gemstone = () => {
 
         {/* Mobile Slider (below md) */}
         <div className="md:hidden">
-          <div 
+          <div
             className="relative overflow-hidden cursor-pointer active:cursor-pointer"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
@@ -138,7 +161,7 @@ const Gemstone = () => {
                     <div className="aspect-3/4 overflow-hidden">
                       <img
                         src={category.image}
-                        alt={category.name}
+                        alt={category.title}
                         className="w-full h-full object-cover pointer-events-none select-none"
                         draggable="false"
                       />
@@ -169,21 +192,22 @@ const Gemstone = () => {
         {/* Desktop Grid (md and above) */}
         <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category) => (
-            <div
+            <a
               key={category.id}
+              href={category.href || '#'}
               className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
             >
               {/* Image */}
               <div className="aspect-3/4 overflow-hidden">
                 <img
                   src={category.image}
-                  alt={category.name}
+                  alt={category.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              
-              
-            </div>
+
+
+            </a>
           ))}
         </div>
       </div>

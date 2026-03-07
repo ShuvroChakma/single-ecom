@@ -1,4 +1,8 @@
 import React from "react"
+import { useQuery } from "@tanstack/react-query"
+import { getSlides } from "@/api/slides"
+import { SLIDE_POSITIONS } from "@/api/slidePositions"
+import { getImageUrl } from "@/api/client"
 
 interface PlatinumBanner {
   id: number
@@ -7,7 +11,7 @@ interface PlatinumBanner {
   link?: string
 }
 
-const PLATINUM_BANNERS: Array<PlatinumBanner> = [
+const FALLBACK_PLATINUM: Array<PlatinumBanner> = [
   {
     id: 1,
     image:
@@ -25,6 +29,22 @@ const PLATINUM_BANNERS: Array<PlatinumBanner> = [
 ]
 
 const PlatinumCollection: React.FC = () => {
+  const { data } = useQuery({
+    queryKey: ["slides", SLIDE_POSITIONS.PLATINUM_COLLECTION],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.PLATINUM_COLLECTION } }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const banners =
+    data?.success && data.data.length > 0
+      ? data.data.map((s) => ({
+          id: s.id,
+          image: getImageUrl(s.image_url, ""),
+          alt: s.title,
+          link: s.link_url,
+        }))
+      : FALLBACK_PLATINUM
+
   return (
     <section className="max-w-7xl mx-auto px-2 sm:px-2 lg:px-2 py-8">
       {/* Heading */}
@@ -39,7 +59,7 @@ const PlatinumCollection: React.FC = () => {
 
       {/* Banners */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {PLATINUM_BANNERS.map((banner) => (
+        {banners.map((banner) => (
           <a
             key={banner.id}
             href={banner.link}
