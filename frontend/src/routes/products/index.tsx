@@ -314,7 +314,19 @@ function ProductsPage() {
                     {product.description && viewMode === 'list' && (
                       <p className="text-sm text-gray-600 mt-2 line-clamp-2">{product.description}</p>
                     )}
-                    <div className="mt-2 flex items-center justify-between">
+                    {(() => {
+                      const prices = (product.variants || [])
+                        .map((v: any) => v.calculated_price)
+                        .filter((p: any): p is number => p != null && p > 0)
+                      if (!prices.length) return null
+                      const min = Math.min(...prices)
+                      const max = Math.max(...prices)
+                      const label = min === max
+                        ? `৳ ${min.toLocaleString('en-BD')}`
+                        : `৳ ${min.toLocaleString('en-BD')} – ৳ ${max.toLocaleString('en-BD')}`
+                      return <p className="text-sm font-semibold text-top_bar mt-2">{label}</p>
+                    })()}
+                    <div className="mt-1 flex items-center justify-between">
                       <span className="text-sm text-gray-500">{product.gender}</span>
                       {product.variants && product.variants.length > 1 && (
                         <span className="text-xs text-gray-400">
