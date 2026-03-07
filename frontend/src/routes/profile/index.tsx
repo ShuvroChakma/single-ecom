@@ -3,13 +3,13 @@ import { useAuth } from '@/hooks/useAuth'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   User, Package, Heart, MapPin, LogOut, ChevronRight, ShieldCheck,
-  KeyRound, Loader2, ShoppingBag, Calendar, Phone, Mail,
+  KeyRound, Loader2, ShoppingBag, Calendar, Phone, Mail, Edit2, Save, X,
 } from 'lucide-react'
 import { getOrdersList } from '@/api/orders'
 import { getWishlist } from '@/api/wishlist'
 import { getAddresses } from '@/api/addresses'
 import { useState } from 'react'
-import { changePassword } from '@/api/auth'
+import { changePassword, updateProfile } from '@/api/auth'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -34,12 +34,16 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 function RouteComponent() {
-  const { user, logout } = useAuth()
+  const { user, logout, refetchUser } = useAuth()
   const navigate = useNavigate()
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm_password: '' })
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState('')
+
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [editForm, setEditForm] = useState({ first_name: '', last_name: '', phone_number: '' })
+  const [editError, setEditError] = useState('')
 
   const { data: ordersData } = useQuery({
     queryKey: ['my-orders', 0],
@@ -65,6 +69,19 @@ function RouteComponent() {
     onError: (error: any) => {
       setPwError(error.message || 'Failed to change password')
       setPwSuccess('')
+    },
+  })
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: { first_name: string; last_name: string; phone_number?: string }) =>
+      updateProfile({ data }),
+    onSuccess: () => {
+      setEditingProfile(false)
+      setEditError('')
+      refetchUser()
+    },
+    onError: (error: any) => {
+      setEditError(error.message || 'Failed to update profile')
     },
   })
 
@@ -234,43 +251,130 @@ function RouteComponent() {
 
         {/* Account info */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Account Details</h2>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            <div className="flex items-start gap-3">
-              <User size={16} className="text-gray-400 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-gray-500 text-xs">Full Name</p>
-                <p className="font-medium mt-0.5">{user?.first_name} {user?.last_name}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Mail size={16} className="text-gray-400 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-gray-500 text-xs">Email</p>
-                <p className="font-medium mt-0.5 break-all">{user?.email}</p>
-              </div>
-            </div>
-            {user?.phone_number && (
-              <div className="flex items-start gap-3">
-                <Phone size={16} className="text-gray-400 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-gray-500 text-xs">Phone</p>
-                  <p className="font-medium mt-0.5">{user.phone_number}</p>
-                </div>
-              </div>
-            )}
-            {user?.created_at && (
-              <div className="flex items-start gap-3">
-                <Calendar size={16} className="text-gray-400 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-gray-500 text-xs">Member Since</p>
-                  <p className="font-medium mt-0.5">
-                    {new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                </div>
-              </div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900">Account Details</h2>
+            {!editingProfile && (
+              <button
+                onClick={() => {
+                  setEditForm({
+                    first_name: user?.first_name || '',
+                    last_name: user?.last_name || '',
+                    phone_number: user?.phone_number || '',
+                  })
+                  setEditError('')
+                  setEditingProfile(true)
+                }}
+                className="flex items-center gap-1.5 text-sm text-header hover:underline"
+              >
+                <Edit2 size={13} />
+                Edit
+              </button>
             )}
           </div>
+
+          {editingProfile ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                updateProfileMutation.mutate({
+                  first_name: editForm.first_name,
+                  last_name: editForm.last_name,
+                  phone_number: editForm.phone_number || undefined,
+                })
+              }}
+              className="space-y-4"
+            >
+              {editError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{editError}</div>
+              )}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>First Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={editForm.first_name}
+                    onChange={(e) => setEditForm(f => ({ ...f, first_name: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Last Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={editForm.last_name}
+                    onChange={(e) => setEditForm(f => ({ ...f, last_name: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Phone Number</Label>
+                <Input
+                  type="tel"
+                  value={editForm.phone_number}
+                  onChange={(e) => setEditForm(f => ({ ...f, phone_number: e.target.value }))}
+                  placeholder="01XXXXXXXXX"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email</Label>
+                <Input value={user?.email || ''} disabled className="bg-gray-50 text-gray-400" />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="submit"
+                  disabled={updateProfileMutation.isPending}
+                  className="flex items-center gap-2 bg-header text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                >
+                  {updateProfileMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingProfile(false)}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50"
+                >
+                  <X size={14} />
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-start gap-3">
+                <User size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-gray-500 text-xs">Full Name</p>
+                  <p className="font-medium mt-0.5">{user?.first_name} {user?.last_name}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mail size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-gray-500 text-xs">Email</p>
+                  <p className="font-medium mt-0.5 break-all">{user?.email}</p>
+                </div>
+              </div>
+              {user?.phone_number && (
+                <div className="flex items-start gap-3">
+                  <Phone size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-gray-500 text-xs">Phone</p>
+                    <p className="font-medium mt-0.5">{user.phone_number}</p>
+                  </div>
+                </div>
+              )}
+              {user?.created_at && (
+                <div className="flex items-start gap-3">
+                  <Calendar size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-gray-500 text-xs">Member Since</p>
+                    <p className="font-medium mt-0.5">
+                      {new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Recent Orders */}
