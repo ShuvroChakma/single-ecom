@@ -5,7 +5,7 @@ import { Search, SlidersHorizontal, Grid, List, ChevronDown, ChevronUp, Heart, L
 import Header from '@/components/shared/Header/Header'
 import Footer from '@/components/shared/Footer/Footer'
 import { getProducts, getCategoryTree, findCategoryBySlug } from '@/api/categories'
-import { getMetals } from '@/api/products'
+import { getMetals, getFilterableAttributes } from '@/api/products'
 import { getImageUrl } from '@/api/client'
 import { addToWishlist } from '@/api/wishlist'
 import { useAuth } from '@/hooks/useAuth'
@@ -82,6 +82,7 @@ function ProductsPage() {
   const [minWeight, setMinWeight] = useState('')
   const [maxWeight, setMaxWeight] = useState('')
   const [inStockOnly, setInStockOnly] = useState(false)
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({})
   const { isAuthenticated } = useAuth()
   const { showLoginModal } = useLoginModal()
 
@@ -136,6 +137,30 @@ function ProductsPage() {
   // Deduplicate purities by code
   const uniquePurities = availablePurities.filter((p, i, arr) => arr.findIndex(x => x.code === p.code) === i)
 
+  // Fetch filterable EAV attributes
+  const { data: filterableAttrsData } = useQuery({
+    queryKey: ['filterable-attributes'],
+    queryFn: () => getFilterableAttributes(),
+    staleTime: 10 * 60 * 1000,
+  })
+  const filterableAttributes = filterableAttrsData?.success
+    ? filterableAttrsData.data.filter((a: any) => a.options && a.options.length > 0)
+    : []
+
+  const toggleAttributeValue = (code: string, value: string) => {
+    setSelectedAttributes(prev => {
+      const current = prev[code] || []
+      const updated = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+      if (!updated.length) {
+        const { [code]: _, ...rest } = prev
+        return rest
+      }
+      return { ...prev, [code]: updated }
+    })
+  }
+
+  const activeAttrCount = Object.values(selectedAttributes).reduce((sum, vals) => sum + vals.length, 0)
+
   // Add to wishlist mutation
   const addWishlistMutation = useMutation({
     mutationFn: (productId: string) => addToWishlist({ data: { product_id: productId } }),
@@ -160,12 +185,13 @@ function ProductsPage() {
     setMinWeight('')
     setMaxWeight('')
     setInStockOnly(false)
+    setSelectedAttributes({})
     setSearchQuery('')
   }
 
   const activeFilterCount =
     selectedGenders.length + selectedMetals.length + selectedPurities.length +
-    (inStockOnly ? 1 : 0) + (minWeight ? 1 : 0) + (maxWeight ? 1 : 0)
+    activeAttrCount + (inStockOnly ? 1 : 0) + (minWeight ? 1 : 0) + (maxWeight ? 1 : 0)
 
   const {
     data,
@@ -175,7 +201,7 @@ function ProductsPage() {
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ['products', debouncedSearch, sortBy, selectedCategory?.id, selectedGenders, selectedMetals, selectedPurities, minWeight, maxWeight, inStockOnly],
+    queryKey: ['products', debouncedSearch, sortBy, selectedCategory?.id, selectedGenders, selectedMetals, selectedPurities, minWeight, maxWeight, inStockOnly, selectedAttributes],
     queryFn: async ({ pageParam = 1 }) => {
       const result = await getProducts({
         data: {
@@ -189,6 +215,7 @@ function ProductsPage() {
           min_weight: minWeight ? Number(minWeight) : undefined,
           max_weight: maxWeight ? Number(maxWeight) : undefined,
           in_stock: inStockOnly || undefined,
+          attribute_filters: Object.keys(selectedAttributes).length ? selectedAttributes : undefined,
         },
       })
       return result
@@ -343,6 +370,13 @@ function ProductsPage() {
                 <button onClick={() => { setMinWeight(''); setMaxWeight('') }}><X size={10} /></button>
               </span>
             )}
+            {Object.entries(selectedAttributes).map(([code, values]) =>
+              values.map(v => (
+                <span key={`${code}:${v}`} className="inline-flex items-center gap-1 px-2.5 py-1 bg-header/10 text-header text-xs rounded-full font-medium">
+                  {v} <button onClick={() => toggleAttributeValue(code, v)}><X size={10} /></button>
+                </span>
+              ))
+            )}
             {inStockOnly && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-header/10 text-header text-xs rounded-full font-medium">
                 In Stock <button onClick={() => setInStockOnly(false)}><X size={10} /></button>
@@ -433,6 +467,20 @@ function ProductsPage() {
                 </label>
               </FilterSection>
 
+              {filterableAttributes.map((attr: any) => (
+                <FilterSection key={attr.code} title={attr.name} defaultOpen={false}>
+                  <div className="flex flex-wrap gap-1.5">
+                    {attr.options.map((opt: string) => (
+                      <Chip key={opt}
+                        active={(selectedAttributes[attr.code] || []).includes(opt)}
+                        onClick={() => toggleAttributeValue(attr.code, opt)}>
+                        {opt}
+                      </Chip>
+                    ))}
+                  </div>
+                </FilterSection>
+              ))}
+
               {activeFilterCount > 0 && (
                 <button onClick={clearAllFilters} className="mt-2 text-xs text-red-500 hover:text-red-600 flex items-center gap-1">
                   <X size={11} /> Clear all
@@ -520,6 +568,20 @@ function ProductsPage() {
                     <span className="text-sm text-gray-700">In Stock Only</span>
                   </label>
                 </FilterSection>
+
+                {filterableAttributes.map((attr: any) => (
+                  <FilterSection key={attr.code} title={attr.name} defaultOpen={false}>
+                    <div className="flex flex-wrap gap-1.5">
+                      {attr.options.map((opt: string) => (
+                        <Chip key={opt}
+                          active={(selectedAttributes[attr.code] || []).includes(opt)}
+                          onClick={() => toggleAttributeValue(attr.code, opt)}>
+                          {opt}
+                        </Chip>
+                      ))}
+                    </div>
+                  </FilterSection>
+                ))}
               </div>
             </div>
           )}

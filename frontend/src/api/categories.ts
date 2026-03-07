@@ -89,6 +89,7 @@ export interface ProductFilters {
   per_page?: number
   ids?: string[]
   exclude_ids?: string[]
+  attribute_filters?: Record<string, string[]>
 }
 
 export const getCategoryTree = createServerFn({ method: 'GET' })
@@ -123,6 +124,12 @@ export const getProducts = createServerFn({ method: 'GET' })
     if (filters.max_weight !== undefined) params.append('max_weight', String(filters.max_weight))
     if (filters.in_stock !== undefined) params.append('in_stock', String(filters.in_stock))
     if (filters.is_featured !== undefined) params.append('is_featured', String(filters.is_featured))
+
+    if (filters.attribute_filters) {
+      for (const [code, values] of Object.entries(filters.attribute_filters)) {
+        if (values.length) params.append(`attr_${code}`, values.join(','))
+      }
+    }
 
     if (filters.search) params.append('search', filters.search)
     if (filters.sort_by) params.append('sort_by', filters.sort_by)

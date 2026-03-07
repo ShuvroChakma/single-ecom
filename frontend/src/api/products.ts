@@ -101,6 +101,20 @@ export const getMetals = createServerFn({ method: 'GET' })
     apiRequest<ApiResponse<Metal[]>>(`/products/metals`)
   )
 
+export interface FilterableAttribute {
+  id: string
+  code: string
+  name: string
+  type: string
+  options: string[] | null
+  group_id: string
+}
+
+export const getFilterableAttributes = createServerFn({ method: 'GET' })
+  .handler(async () =>
+    apiRequest<ApiResponse<FilterableAttribute[]>>(`/products/attributes/filterable`)
+  )
+
 export const searchProducts = createServerFn({ method: 'GET' })
   .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
     const { query, limit = 20 } = data
