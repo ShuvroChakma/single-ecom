@@ -1,4 +1,8 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getSlides } from '@/api/slides';
+import { SLIDE_POSITIONS } from '@/api/slidePositions';
+import { getImageUrl } from '@/api/client';
 import { useSettings } from '@/contexts/SettingsContext'
 
 interface AboutStoreData {
@@ -12,12 +16,25 @@ interface AboutStoreData {
   goldRateLink: string;
 }
 
+const FALLBACK_IMAGE = 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/ind-homepage/410-Showroom.jpeg'
+
 const AboutPage: React.FC = () => {
   const { contact_phone } = useSettings()
 
+  const { data } = useQuery({
+    queryKey: ['slides', SLIDE_POSITIONS.ABOUT_SHOWROOM],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.ABOUT_SHOWROOM } }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const showroomImage =
+    data?.success && data.data.length > 0
+      ? getImageUrl(data.data[0].image_url, FALLBACK_IMAGE)
+      : FALLBACK_IMAGE
+
   // Data from backend
   const storeData: AboutStoreData = {
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/ind-homepage/410-Showroom.jpeg',
+    imageUrl: showroomImage,
     phoneDescription: 'For store queries and schemes',
     goldSchemeTitle: 'GOLD SCHEME',
     goldSchemeDescription: 'Easy monthly payment plans',

@@ -11,4 +11,5 @@ export const SLIDE_POSITIONS = {
   GOLD_JEWELLERY: 'gold_jewellery',
   OUR_COLLECTION: 'our_collection',
   GIFTING: 'gifting',
+  ABOUT_SHOWROOM: 'about_showroom',
 } as const
