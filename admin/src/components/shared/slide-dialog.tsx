@@ -81,6 +81,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
             overlay_color: "",
             sort_order: 0,
             is_active: true,
+            position: "",
         },
         onSubmit: async ({ value }) => {
             const payload: SlidePayload = {
@@ -96,6 +97,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                 overlay_color: value.overlay_color || undefined,
                 sort_order: value.sort_order,
                 is_active: value.is_active,
+                position: value.position || undefined,
             }
 
             if (isEdit && slide) {
@@ -148,6 +150,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
             form.setFieldValue("overlay_color", slide.overlay_color || "")
             form.setFieldValue("sort_order", slide.sort_order)
             form.setFieldValue("is_active", slide.is_active)
+            form.setFieldValue("position", slide.position || "")
             setImageUrl(slide.image_url)
         } else if (open && !slide) {
             form.reset()
@@ -402,6 +405,25 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                             )}
                         />
                     </div>
+
+                    {/* Position */}
+                    <form.Field
+                        name="position"
+                        children={(field) => (
+                            <div className="space-y-2">
+                                <Label htmlFor="position">Homepage Position</Label>
+                                <Input
+                                    id="position"
+                                    value={field.state.value}
+                                    onChange={(e) => field.handleChange(e.target.value)}
+                                    placeholder="e.g. home_carousel, jewelry_offers, hand_picked, gifting"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Which homepage section this slide appears in
+                                </p>
+                            </div>
+                        )}
+                    />
 
                     {/* Colors */}
                     <div className="grid grid-cols-2 gap-4">

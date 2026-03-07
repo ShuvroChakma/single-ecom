@@ -21,6 +21,7 @@ export interface Slide {
   overlay_color: string | null;
   sort_order: number;
   is_active: boolean;
+  position: string | null;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
@@ -40,6 +41,7 @@ export interface SlidePayload {
   overlay_color?: string;
   sort_order?: number;
   is_active?: boolean;
+  position?: string;
   start_date?: string;
   end_date?: string;
 }
