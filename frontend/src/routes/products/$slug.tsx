@@ -576,6 +576,13 @@ function ProductPage() {
                 </div>
               )}
 
+              {/* Error message */}
+              {addToCartMutation.isError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {(addToCartMutation.error as any)?.message || "Failed to add to cart. Please try again."}
+                </div>
+              )}
+
               {/* Features */}
               <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                 <div className="flex flex-col items-center text-center gap-2">
