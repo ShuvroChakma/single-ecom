@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, ShoppingCart, User, X } from "lucide-react";
-import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Heart, LogOut, MapPin, Package, ShoppingCart, User, X } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getCart } from "@/api/cart";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +48,47 @@ const NavIcons = () => {
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [selectedCurrency, setSelectedCurrency] = useState(currencies[0].code);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Close user menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        userMenuRef.current && !userMenuRef.current.contains(e.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(e.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleToggleUserMenu = () => {
+    if (!isUserMenuOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setIsUserMenuOpen((o) => !o);
+  };
+
+  const handleLogout = async () => {
+    setIsUserMenuOpen(false);
+    await logout();
+    navigate({ to: "/" });
+  };
+
+  const initials = user
+    ? `${user.first_name?.[0] ?? ""}${user.last_name?.[0] ?? ""}`.toUpperCase() || "U"
+    : "";
 
   const { data: cartResponse } = useQuery({
     queryKey: ['cart'],
@@ -98,11 +139,72 @@ const NavIcons = () => {
             <span className="text-sm font-semibold">Country</span>
           </button>
 
-          <NavIcon
-            to="/profile"
-            icon={<User className="w-7 h-7" />}
-            label="Profile"
-          />
+          {/* User Menu */}
+          {isAuthenticated && user ? (
+            <div>
+              <button
+                ref={buttonRef}
+                onClick={handleToggleUserMenu}
+                className="flex flex-col items-center gap-1 text-primary-foreground hover:opacity-80 transition-all"
+              >
+                <div className="w-7 h-7 rounded-full bg-white/20 border border-white/40 flex items-center justify-center text-xs font-bold text-white">
+                  {initials}
+                </div>
+                <span className="text-sm font-medium max-w-[80px] truncate">
+                  {user.first_name}
+                </span>
+              </button>
+
+              {isUserMenuOpen && typeof document !== "undefined" && createPortal(
+                <div
+                  ref={userMenuRef}
+                  style={{ top: dropdownPos.top, right: dropdownPos.right }}
+                  className="fixed w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-[99999]"
+                >
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {user.first_name} {user.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>
+                  </div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <User className="w-4 h-4 text-gray-400" />
+                    My Account
+                  </Link>
+                  <Link
+                    to="/orders"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Package className="w-4 h-4 text-gray-400" />
+                    My Orders
+                  </Link>
+                  <div className="border-t border-gray-100 mt-1 pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>,
+                document.body
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/profile"
+              className="flex flex-col items-center gap-1 text-primary-foreground hover:opacity-80 transition-all"
+            >
+              <User className="w-7 h-7" />
+              <span className="text-sm font-medium">Sign In</span>
+            </Link>
+          )}
         </div>
 
         {/* === ALWAYS VISIBLE (SM → LG+) === */}

@@ -124,12 +124,12 @@ function ProductPage() {
   }, [product, productId, urlSlug, navigate])
 
   // Set default variant when product loads
-  useMemo(() => {
+  useEffect(() => {
     if (product?.variants?.length && !selectedVariant) {
       const defaultVariant = product.variants.find((v) => v.is_default) || product.variants[0]
       setSelectedVariant(defaultVariant)
     }
-  }, [product, selectedVariant])
+  }, [product?.id])
 
   // Fetch product attributes (EAV)
   const { data: attributesResponse } = useQuery({
