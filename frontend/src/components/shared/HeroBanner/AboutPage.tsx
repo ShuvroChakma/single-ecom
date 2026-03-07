@@ -1,8 +1,8 @@
 import React from 'react';
+import { useSettings } from '@/contexts/SettingsContext'
 
 interface AboutStoreData {
   imageUrl: string;
-  phoneNumber: string;
   phoneDescription: string;
   goldSchemeTitle: string;
   goldSchemeDescription: string;
@@ -13,10 +13,11 @@ interface AboutStoreData {
 }
 
 const AboutPage: React.FC = () => {
+  const { contact_phone } = useSettings()
+
   // Data from backend
   const storeData: AboutStoreData = {
     imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/ind-homepage/410-Showroom.jpeg',
-    phoneNumber: '9562-916-916',
     phoneDescription: 'For store queries and schemes',
     goldSchemeTitle: 'GOLD SCHEME',
     goldSchemeDescription: 'Payment for india stores',
@@ -25,6 +26,8 @@ const AboutPage: React.FC = () => {
     goldRateDescription: 'One best rate across India!',
     goldRateLink: '#'
   };
+
+  const displayPhone = contact_phone || '9562-916-916'
 
   return (
     <div className="w-full bg-white py-6 px-2 sm:px-2 lg:px-2">
@@ -52,9 +55,11 @@ const AboutPage: React.FC = () => {
           <div className="flex flex-col gap-4 md:gap-5">
             {/* Phone Number Card */}
             <div className="bg-footer rounded-lg p-6 md:p-8 lg:p-10 text-center flex-1 flex flex-col justify-center">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-header mb-2 md:mb-3">
-                {storeData.phoneNumber}
-              </h2>
+              <a href={`tel:${displayPhone}`}>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-header mb-2 md:mb-3">
+                  {displayPhone}
+                </h2>
+              </a>
               <p className="text-gray-800 text-sm md:text-base">
                 {storeData.phoneDescription}
               </p>
