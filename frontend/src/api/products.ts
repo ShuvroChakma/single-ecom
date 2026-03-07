@@ -37,6 +37,29 @@ export const getProductBySlug = createServerFn({ method: 'GET' })
     return apiRequest<ApiResponse<Product>>(`/products/${data.slug}`)
   })
 
+export interface PriceBreakdown {
+  rate_per_gram: number
+  metal_cost: number
+  making_charge_type: string
+  making_charge_value: number
+  making_charge: number
+  subtotal: number
+  tax_rate: number
+  tax_amount: number
+  total_price: number
+}
+
+export interface ProductPricing {
+  product_id: string
+  name: string
+  variants: Array<{ variant_id: string; sku: string; pricing: PriceBreakdown }>
+}
+
+export const getProductPricing = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { productId: string } }) =>
+    apiRequest<ApiResponse<ProductPricing>>(`/products/products/${data.productId}/pricing`)
+  )
+
 export const searchProducts = createServerFn({ method: 'GET' })
   .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
     const { query, limit = 20 } = data

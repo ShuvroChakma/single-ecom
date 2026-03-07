@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, ShoppingCart, User, X } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getCart } from "@/api/cart";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavIconProps {
   to: string;
@@ -44,6 +47,15 @@ const NavIcons = () => {
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [selectedCurrency, setSelectedCurrency] = useState(currencies[0].code);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
+
+  const { data: cartResponse } = useQuery({
+    queryKey: ['cart'],
+    queryFn: () => getCart(),
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
+  });
+  const cartCount = cartResponse?.data?.item_count || 0;
 
   const handleCountrySelect = (country: typeof countries[number]) => {
     setSelectedCountry(country);
@@ -102,7 +114,16 @@ const NavIcons = () => {
 
         <NavIcon
           to="/cart"
-          icon={<ShoppingCart className="w-6 h-7" />}
+          icon={
+            <div className="relative">
+              <ShoppingCart className="w-6 h-7" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </div>
+          }
           label="Cart"
         />
       </div>

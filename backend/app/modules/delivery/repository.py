@@ -42,9 +42,9 @@ class DeliveryZoneRepository:
         # Get all active zones
         zones = await self.get_all(include_inactive=False)
         
-        # First pass: look for exact district match
+        # First pass: look for exact district match or zone name match
         for zone in zones:
-            if district in zone.districts:
+            if district in zone.districts or district == zone.name:
                 return zone
         
         # Second pass: look for catch-all zone

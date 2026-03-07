@@ -88,16 +88,14 @@ class OrderRepository:
         """Create a new order."""
         self.session.add(order)
         await self.session.commit()
-        await self.session.refresh(order)
-        return order
-    
+        return await self.get_by_id(order.id)
+
     async def update(self, order: Order) -> Order:
         """Update an order."""
         order.updated_at = datetime.utcnow()
         self.session.add(order)
         await self.session.commit()
-        await self.session.refresh(order)
-        return order
+        return await self.get_by_id(order.id)
     
     async def count_by_customer(self, customer_id: UUID) -> int:
         """Count orders for a customer (for first order promo check)."""

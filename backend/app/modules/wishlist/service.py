@@ -58,7 +58,7 @@ class WishlistService:
                     metal_purity=item.variant.metal_purity,
                     metal_color=item.variant.metal_color,
                     size=item.variant.size,
-                    calculated_price=item.variant.calculated_price
+                    calculated_price=getattr(item.variant, 'calculated_price', None)
                 )
 
             wishlist_items.append(WishlistItemResponse(
@@ -138,7 +138,7 @@ class WishlistService:
                 metal_purity=variant.metal_purity,
                 metal_color=variant.metal_color,
                 size=variant.size,
-                calculated_price=variant.calculated_price
+                calculated_price=getattr(variant, 'calculated_price', None)
             )
 
         return WishlistItemResponse(

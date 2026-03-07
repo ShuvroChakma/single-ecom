@@ -68,8 +68,13 @@ export const removeFromWishlist = createServerFn({ method: 'POST' })
 export const checkWishlist = createServerFn({ method: 'GET' })
   .handler(async ({ data }: { data: { productId: string } }) => {
     const token = getCookie('access_token')
-    if (!token) return { success: false, message: 'Not authenticated', data: { in_wishlist: false, item_id: null } } as any
-    return apiRequest<ApiResponse<WishlistCheckResponse>>(`/wishlist/check/${data.productId}`, {}, token)
+    if (!token) return { success: true, message: 'Not authenticated', data: { in_wishlist: false, item_id: null } }
+    try {
+      return await apiRequest<ApiResponse<WishlistCheckResponse>>(`/wishlist/check/${data.productId}`, {}, token)
+    } catch {
+      // Stale/expired token — treat as not in wishlist instead of throwing
+      return { success: true, message: 'Not authenticated', data: { in_wishlist: false, item_id: null } }
+    }
   })
 
 export const clearWishlist = createServerFn({ method: 'POST' })

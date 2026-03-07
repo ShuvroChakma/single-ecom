@@ -12,7 +12,8 @@ from app.core.schemas.response import SuccessResponse, create_success_response
 from app.constants.enums import UserType
 from app.core.exceptions import PermissionDeniedError
 from app.constants.error_codes import ErrorCode
-from app.modules.users.models import User
+from app.modules.users.models import User, Customer
+from app.modules.users.repository import UserRepository
 from app.modules.wishlist.service import WishlistService
 from app.modules.wishlist.schemas import (
     AddToWishlistRequest,
@@ -31,31 +32,35 @@ def get_wishlist_service(session: AsyncSession = Depends(get_db)) -> WishlistSer
 
 
 async def get_current_customer(
-    current_user: User = Depends(get_current_verified_user)
-) -> User:
-    """Verify user is a customer."""
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_db)
+) -> Customer:
+    """Verify user is a customer and return their Customer record (eagerly loaded)."""
     if current_user.user_type != UserType.CUSTOMER:
         raise PermissionDeniedError(
             error_code=ErrorCode.PERMISSION_DENIED,
             message="Wishlist is only available for customers"
         )
 
-    if not current_user.customer:
+    user_repo = UserRepository(db)
+    customer = await user_repo.get_customer_by_user_id(current_user.id)
+
+    if not customer:
         raise PermissionDeniedError(
             error_code=ErrorCode.PERMISSION_DENIED,
             message="Customer profile not found"
         )
 
-    return current_user
+    return customer
 
 
 @router.get("", response_model=SuccessResponse[WishlistResponse])
 async def get_wishlist(
-    current_user: User = Depends(get_current_customer),
+    customer: Customer = Depends(get_current_customer),
     service: WishlistService = Depends(get_wishlist_service)
 ):
     """Get current user's wishlist."""
-    wishlist = await service.get_wishlist(current_user.customer.id)
+    wishlist = await service.get_wishlist(customer.id)
     return create_success_response(
         message="Wishlist retrieved successfully",
         data=wishlist
@@ -65,12 +70,12 @@ async def get_wishlist(
 @router.post("", response_model=SuccessResponse[WishlistItemResponse], status_code=201)
 async def add_to_wishlist(
     request: AddToWishlistRequest,
-    current_user: User = Depends(get_current_customer),
+    customer: Customer = Depends(get_current_customer),
     service: WishlistService = Depends(get_wishlist_service)
 ):
     """Add product to wishlist."""
     item = await service.add_to_wishlist(
-        customer_id=current_user.customer.id,
+        customer_id=customer.id,
         product_id=request.product_id,
         variant_id=request.variant_id
     )
@@ -83,12 +88,12 @@ async def add_to_wishlist(
 @router.delete("/{item_id}", response_model=SuccessResponse[dict])
 async def remove_from_wishlist(
     item_id: UUID,
-    current_user: User = Depends(get_current_customer),
+    customer: Customer = Depends(get_current_customer),
     service: WishlistService = Depends(get_wishlist_service)
 ):
     """Remove item from wishlist."""
     await service.remove_from_wishlist(
-        customer_id=current_user.customer.id,
+        customer_id=customer.id,
         item_id=item_id
     )
     return create_success_response(
@@ -99,11 +104,11 @@ async def remove_from_wishlist(
 
 @router.delete("", response_model=SuccessResponse[dict])
 async def clear_wishlist(
-    current_user: User = Depends(get_current_customer),
+    customer: Customer = Depends(get_current_customer),
     service: WishlistService = Depends(get_wishlist_service)
 ):
     """Clear all items from wishlist."""
-    await service.clear_wishlist(current_user.customer.id)
+    await service.clear_wishlist(customer.id)
     return create_success_response(
         message="Wishlist cleared",
         data={"cleared": True}
@@ -113,12 +118,12 @@ async def clear_wishlist(
 @router.get("/check/{product_id}", response_model=SuccessResponse[WishlistCheckResponse])
 async def check_in_wishlist(
     product_id: UUID,
-    current_user: User = Depends(get_current_customer),
+    customer: Customer = Depends(get_current_customer),
     service: WishlistService = Depends(get_wishlist_service)
 ):
     """Check if product is in wishlist."""
     result = await service.check_in_wishlist(
-        customer_id=current_user.customer.id,
+        customer_id=customer.id,
         product_id=product_id
     )
     return create_success_response(
@@ -130,12 +135,12 @@ async def check_in_wishlist(
 @router.post("/{item_id}/move-to-cart", response_model=SuccessResponse[dict])
 async def move_to_cart(
     item_id: UUID,
-    current_user: User = Depends(get_current_customer),
+    customer: Customer = Depends(get_current_customer),
     service: WishlistService = Depends(get_wishlist_service)
 ):
     """Move wishlist item to cart."""
     await service.move_to_cart(
-        customer_id=current_user.customer.id,
+        customer_id=customer.id,
         item_id=item_id
     )
     return create_success_response(

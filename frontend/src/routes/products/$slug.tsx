@@ -18,6 +18,7 @@ import {
 import Header from "@/components/shared/Header/Header"
 import Footer from "@/components/shared/Footer/Footer"
 import { getProductById, getProductBySlug, getProducts, type Product, type ProductVariant } from "@/api/categories"
+import { getProductPricing, type PriceBreakdown } from "@/api/products"
 import { getImageUrl } from "@/api/client"
 import { addToCart } from "@/api/cart"
 import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
@@ -88,15 +89,28 @@ function ProductPage() {
 
   const product = productResponse?.success ? productResponse.data : null
 
-  // Check if product is in wishlist
+  // Check if product is in wishlist (only when authenticated)
   const { data: wishlistCheck } = useQuery({
     queryKey: ["wishlist-check", product?.id],
     queryFn: () => checkWishlist({ data: { productId: product!.id } }),
-    enabled: !!product?.id,
+    enabled: !!product?.id && isAuthenticated,
   })
 
   const isInWishlist = wishlistCheck?.success ? wishlistCheck.data?.in_wishlist ?? false : false
   const wishlistItemId = wishlistCheck?.success ? wishlistCheck.data?.item_id ?? null : null
+
+  // Fetch real pricing for all variants
+  const { data: pricingResponse } = useQuery({
+    queryKey: ["product-pricing", product?.id],
+    queryFn: () => getProductPricing({ data: { productId: product!.id } }),
+    enabled: !!product?.id,
+  })
+
+  const variantPricing: PriceBreakdown | null = useMemo(() => {
+    if (!pricingResponse?.success || !selectedVariant) return null
+    const match = pricingResponse.data.variants.find(v => v.variant_id === selectedVariant.id)
+    return match?.pricing ?? null
+  }, [pricingResponse, selectedVariant])
 
   // Redirect to canonical URL if slug doesn't match
   useEffect(() => {
@@ -154,18 +168,10 @@ function ProductPage() {
     },
   })
 
-  // Calculate price from variant
-  const calculatePrice = (variant: ProductVariant | null) => {
-    if (!variant) return 0
-    return variant.net_weight * 100
-  }
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", minimumFractionDigits: 0 }).format(n)
 
-  const price = calculatePrice(selectedVariant)
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "BDT",
-    minimumFractionDigits: 0,
-  }).format(price)
+  const formattedPrice = variantPricing ? fmt(variantPricing.total_price) : "—"
 
   // Image navigation
   const images = product?.images || []
@@ -385,8 +391,21 @@ function ProductPage() {
               </div>
 
               {/* Price */}
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl lg:text-4xl font-bold text-header">{formattedPrice}</span>
+              <div className="space-y-1">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl lg:text-4xl font-bold text-header">{formattedPrice}</span>
+                </div>
+                {variantPricing && (
+                  <div className="text-sm text-gray-500 space-y-0.5">
+                    <div className="flex gap-4">
+                      <span>Metal cost: <span className="text-gray-700">{fmt(variantPricing.metal_cost)}</span></span>
+                      <span>Making charge: <span className="text-gray-700">{fmt(variantPricing.making_charge)}</span></span>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Incl. {variantPricing.tax_rate}% tax ({fmt(variantPricing.tax_amount)})
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Stock Status */}
@@ -395,7 +414,7 @@ function ProductPage() {
                   <>
                     <Check className="w-5 h-5 text-green-500" />
                     <span className="text-green-600 font-medium">
-                      In Stock ({selectedVariant.stock_quantity} available)
+                      In Stock
                     </span>
                   </>
                 ) : (

@@ -73,11 +73,24 @@ class ProductService:
         # Extract variants for separate creation
         variants_data = data.variants
         product_data = data.model_dump(exclude={"variants"})
-        
+
         try:
+            # Stage product (no commit yet)
             product = Product(**product_data)
-            product = await self.repository.create(product)
+            self.session.add(product)
+            await self.session.flush()  # assigns product.id without committing
+
+            # Stage all variants in the same transaction
+            if variants_data:
+                for v_data in variants_data:
+                    variant = ProductVariant(**v_data.model_dump(), product_id=product.id)
+                    self.session.add(variant)
+
+            # Single atomic commit — if any variant fails, everything rolls back
+            await self.session.commit()
+
         except IntegrityError as e:
+            await self.session.rollback()
             error_str = str(e.orig)
             if "products_sku_base" in error_str or "ix_products_sku_base" in error_str:
                 raise ValidationError(
@@ -92,16 +105,11 @@ class ProductService:
                     field="slug"
                 )
             raise
-        
-        # Create variants if provided
-        if variants_data:
-            variants = []
-            for v_data in variants_data:
-                variant = ProductVariant(**v_data.model_dump(), product_id=product.id)
-                variants.append(variant)
-            await self.variant_repository.create_many(variants)
-        
-        # Always reload product with variants to avoid lazy loading issues
+        except Exception:
+            await self.session.rollback()
+            raise
+
+        # Reload with variants (flush/commit don't populate relationships)
         product = await self.repository.get_with_variants(product.id)
         
         await self.audit_service.log_action(
