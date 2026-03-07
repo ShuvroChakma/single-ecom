@@ -14,6 +14,7 @@ const DEFAULTS: SiteSettings = {
   contact_address: '',
   support_email: '',
   whatsapp_number: '',
+  map_embed_url: '',
   facebook_url: '',
   instagram_url: '',
   youtube_url: '',

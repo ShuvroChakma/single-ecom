@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Clock, MapPin, Phone, Loader2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getStores, type Store } from "@/api/stores"
+import { useSettings } from "@/contexts/SettingsContext"
 
 // Fallback stores in case API fails
 const FALLBACK_STORES: Array<Store> = [
@@ -26,6 +27,7 @@ const FALLBACK_STORES: Array<Store> = [
 ]
 
 const StoreLocatorPage = () => {
+  const { map_embed_url, store_name } = useSettings()
   const { data: storesResponse, isLoading } = useQuery({
     queryKey: ["stores"],
     queryFn: () => getStores(),
@@ -103,16 +105,25 @@ const StoreLocatorPage = () => {
         <div className="lg:col-span-2 space-y-4">
           {/* MAP */}
           <div className="w-full h-[420px] rounded-2xl overflow-hidden bg-gray-200">
-            {selectedStore && (
-              <iframe
-                title="Google Map"
-                width="100%"
-                height="100%"
-                loading="lazy"
-                allowFullScreen
-                src={`https://www.google.com/maps?q=${selectedStore.latitude},${selectedStore.longitude}&z=15&output=embed`}
-              />
-            )}
+            {selectedStore && (() => {
+              const mapSrc = (selectedStore.latitude && selectedStore.longitude)
+                ? `https://www.google.com/maps?q=${selectedStore.latitude},${selectedStore.longitude}&z=15&output=embed`
+                : map_embed_url || null
+              return mapSrc ? (
+                <iframe
+                  title="Google Map"
+                  width="100%"
+                  height="100%"
+                  loading="lazy"
+                  allowFullScreen
+                  src={mapSrc}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                  <MapPin className="w-5 h-5 mr-2" /> No map location set
+                </div>
+              )
+            })()}
           </div>
 
           {/* SELECTED STORE DETAILS */}

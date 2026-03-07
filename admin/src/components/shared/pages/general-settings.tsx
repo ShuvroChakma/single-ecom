@@ -219,6 +219,14 @@ export default function GeneralSettings() {
               <FormField label="Phone Number" name="contact_phone" type="tel" value={v("contact_phone")} onChange={set} placeholder="+880 1700000000" />
               <FormField label="WhatsApp Number" name="whatsapp_number" value={v("whatsapp_number")} onChange={set} placeholder="8801700000000" hint="International format without +, used for wa.me links" />
               <TextareaField label="Address" name="contact_address" value={v("contact_address")} onChange={set} placeholder="123 Main St, Dhaka, Bangladesh" rows={3} />
+              <FormField
+                label="Google Maps Embed URL"
+                name="map_embed_url"
+                value={v("map_embed_url")}
+                onChange={set}
+                placeholder="https://www.google.com/maps/embed?pb=..."
+                hint='In Google Maps: Share → Embed a map → Copy the src URL from the iframe code'
+              />
             </CardContent>
           </Card>
         </TabsContent>

@@ -18,6 +18,7 @@ export interface SiteSettings {
   contact_address: string
   support_email: string
   whatsapp_number: string
+  map_embed_url: string
   // Social
   facebook_url: string
   instagram_url: string
