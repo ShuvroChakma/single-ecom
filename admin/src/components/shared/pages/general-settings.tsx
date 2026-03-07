@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { getAdminGroupedSettings, bulkUpdateSettings, initializeSettings, SettingsGrouped } from "@/api/settings"
+import { getSettings, bulkUpdateSettings, initializeSettings, SettingsGrouped } from "@/api/settings"
 
 type FlatSettings = Record<string, string>
 
@@ -92,7 +92,7 @@ export default function GeneralSettings() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-settings"],
-    queryFn: () => getAdminGroupedSettings(),
+    queryFn: () => getSettings(),
   })
 
   React.useEffect(() => {
