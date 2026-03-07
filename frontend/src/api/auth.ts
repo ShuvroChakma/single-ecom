@@ -150,6 +150,17 @@ export const resetPassword = createServerFn({ method: "POST" })
     });
   });
 
+// Update user profile
+export const updateProfile = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { first_name?: string; last_name?: string; phone_number?: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+    return apiRequest<ApiResponse<null>>("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token);
+  });
+
 // Change password (when logged in)
 export const changePassword = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: ChangePasswordPayload }) => {

@@ -1,11 +1,11 @@
 import { useState, useContext } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Share2, X, Loader2, Package, Heart, ShoppingBag, MapPin, Plus, Trash2, Star, ChevronRight, Edit2 } from 'lucide-react'
+import { Share2, X, Loader2, Package, Heart, ShoppingBag, MapPin, Plus, Trash2, Star, ChevronRight, Edit2, Save } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { AuthContext } from '@/contexts/AuthContext'
 import { getWishlist, removeFromWishlist, moveToCart, type WishlistItem } from '@/api/wishlist'
 import { getOrdersList, type OrderListItem } from '@/api/orders'
-import { changePassword } from '@/api/auth'
+import { changePassword, updateProfile } from '@/api/auth'
 import {
   getAddresses,
   createAddress,
@@ -37,6 +37,16 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
   const queryClient = useQueryClient()
   const authContext = useContext(AuthContext)
   const [activeSection, setActiveSection] = useState(initialSection)
+
+  // Profile edit state
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [profileForm, setProfileForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+  })
+  const [profileSuccess, setProfileSuccess] = useState('')
+  const [profileError, setProfileError] = useState('')
 
   // Form states
   const [passwordForm, setPasswordForm] = useState({
@@ -117,6 +127,23 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
     },
   })
 
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: { first_name?: string; last_name?: string; phone_number?: string }) =>
+      updateProfile({ data }),
+    onSuccess: () => {
+      setProfileSuccess('Profile updated successfully!')
+      setProfileError('')
+      setIsEditingProfile(false)
+      // Refresh user context
+      authContext?.refetchUser?.()
+    },
+    onError: (error: any) => {
+      setProfileError(error.message || 'Failed to update profile')
+      setProfileSuccess('')
+    },
+  })
+
   // Change password mutation
   const changePasswordMutation = useMutation({
     mutationFn: (data: { current_password: string; new_password: string }) =>
@@ -162,6 +189,26 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
     },
   })
+
+  const handleStartEditProfile = () => {
+    setProfileForm({
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      phone_number: user?.phone_number || '',
+    })
+    setProfileError('')
+    setProfileSuccess('')
+    setIsEditingProfile(true)
+  }
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateProfileMutation.mutate({
+      first_name: profileForm.first_name,
+      last_name: profileForm.last_name,
+      phone_number: profileForm.phone_number || undefined,
+    })
+  }
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault()
@@ -367,47 +414,135 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
             {/* Profile Section */}
             {activeSection === 'profile' && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-semibold mb-6">Profile details</h2>
-
-                <div className="space-y-4 mb-6">
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Name :</span>
-                    <span className="font-medium">{user?.first_name} {user?.last_name}</span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Email ID :</span>
-                    <span className="font-medium">{user?.email}</span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Mobile :</span>
-                    <span className="font-medium">{user?.phone_number || '-'}</span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Verified :</span>
-                    <span className={`font-medium ${user?.is_verified ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {user?.is_verified ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Member Since :</span>
-                    <span className="font-medium">
-                      {user?.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-semibold">Profile details</h2>
+                  {!isEditingProfile && (
+                    <button
+                      onClick={handleStartEditProfile}
+                      className="flex items-center gap-2 text-sm text-header hover:underline"
+                    >
+                      <Edit2 size={14} />
+                      Edit
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setActiveSection('changePassword')}
-                    className="bg-header text-white px-8 py-3 rounded font-medium hover:opacity-90"
-                  >
-                    Change Password
-                  </button>
-                </div>
+                {profileSuccess && !isEditingProfile && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-600 text-sm">
+                    {profileSuccess}
+                  </div>
+                )}
+
+                {isEditingProfile ? (
+                  <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-md">
+                    {profileError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                        {profileError}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label>First Name <span className="text-red-500">*</span></Label>
+                        <Input
+                          value={profileForm.first_name}
+                          onChange={(e) => setProfileForm({ ...profileForm, first_name: e.target.value })}
+                          required
+                          minLength={1}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Last Name <span className="text-red-500">*</span></Label>
+                        <Input
+                          value={profileForm.last_name}
+                          onChange={(e) => setProfileForm({ ...profileForm, last_name: e.target.value })}
+                          required
+                          minLength={1}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Phone Number</Label>
+                      <Input
+                        type="tel"
+                        value={profileForm.phone_number}
+                        onChange={(e) => setProfileForm({ ...profileForm, phone_number: e.target.value })}
+                        placeholder="e.g. 01XXXXXXXXX"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Email</Label>
+                      <Input value={user?.email || ''} disabled className="bg-gray-50 text-gray-500" />
+                      <p className="text-xs text-gray-400">Email cannot be changed</p>
+                    </div>
+
+                    <div className="flex gap-4 pt-2">
+                      <button
+                        type="submit"
+                        disabled={updateProfileMutation.isPending}
+                        className="flex items-center gap-2 bg-header text-white px-8 py-3 rounded font-medium hover:opacity-90 disabled:opacity-50"
+                      >
+                        {updateProfileMutation.isPending ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Save size={16} />
+                        )}
+                        Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingProfile(false)}
+                        className="border-2 border-header text-header px-8 py-3 rounded font-medium hover:bg-pink-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="space-y-4 mb-6">
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Name :</span>
+                        <span className="font-medium">{user?.first_name} {user?.last_name}</span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Email ID :</span>
+                        <span className="font-medium">{user?.email}</span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Mobile :</span>
+                        <span className="font-medium">{user?.phone_number || '-'}</span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Verified :</span>
+                        <span className={`font-medium ${user?.is_verified ? 'text-green-600' : 'text-yellow-600'}`}>
+                          {user?.is_verified ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Member Since :</span>
+                        <span className="font-medium">
+                          {user?.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setActiveSection('changePassword')}
+                        className="bg-header text-white px-8 py-3 rounded font-medium hover:opacity-90"
+                      >
+                        Change Password
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
