@@ -154,6 +154,7 @@ async def get_my_order(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,
@@ -163,7 +164,7 @@ async def get_my_order(
         shipped_at=order.shipped_at,
         delivered_at=order.delivered_at
     )
-    
+
     return create_success_response(
         message="Order retrieved",
         data=response
@@ -207,6 +208,7 @@ async def cancel_my_order(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,
@@ -285,6 +287,7 @@ async def get_order_admin(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,
@@ -338,6 +341,7 @@ async def update_order_status(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,

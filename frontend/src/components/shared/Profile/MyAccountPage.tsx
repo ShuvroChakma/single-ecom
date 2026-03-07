@@ -25,11 +25,15 @@ const BD_DISTRICTS = [
   'Brahmanbaria', 'Narsingdi', 'Savar', 'Tongi', 'Jamalpur', 'Rangamati', 'Pabna', 'Noakhali'
 ].sort()
 
-export default function MyAccountPage() {
+interface MyAccountPageProps {
+  initialSection?: string
+}
+
+export default function MyAccountPage({ initialSection = 'profile' }: MyAccountPageProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const authContext = useContext(AuthContext)
-  const [activeSection, setActiveSection] = useState('profile')
+  const [activeSection, setActiveSection] = useState(initialSection)
 
   // Form states
   const [passwordForm, setPasswordForm] = useState({
@@ -633,7 +637,7 @@ export default function MyAccountPage() {
 
             {/* Wishlist Section */}
             {activeSection === 'wishlist' && (
-              <div className="bg-white rounded-lg shadow-sm p-3">
+              <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-semibold mb-6">Your Wishlist</h2>
 
                 {wishlistLoading ? (
@@ -651,71 +655,63 @@ export default function MyAccountPage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                     {wishlistItems.map((item) => (
-                      <div key={item.id} className="border rounded-lg p-2 relative">
-                        {/* Share and Remove Icons */}
-                        <div className="absolute top-4 left-4 right-4 flex justify-between">
-                          <button className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50">
-                            <Share2 className="w-4 h-4 text-header"/>
-                          </button>
-                          <button
-                            onClick={() => removeFromWishlistMutation.mutate(item.id)}
-                            disabled={removeFromWishlistMutation.isPending}
-                            className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50"
-                          >
-                            {removeFromWishlistMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <X className="w-4 h-4 text-gray-600" />
-                            )}
-                          </button>
-                        </div>
-
+                      <div key={item.id} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                         {/* Product Image */}
-                        <Link to={`/products/${item.product.slug}-${item.product.id}`}>
-                          <div className="mb-4 flex items-center justify-center py-8">
+                        <Link to={`/products/${item.product.slug}-${item.product.id}`} className="block relative">
+                          <div className="h-48 bg-gray-50 overflow-hidden">
                             <img
                               src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                               alt={item.product.name}
-                              className="w-full h-48 object-contain"
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             />
                           </div>
+                          {/* Remove button */}
+                          <button
+                            onClick={(e) => { e.preventDefault(); removeFromWishlistMutation.mutate(item.id) }}
+                            disabled={removeFromWishlistMutation.isPending}
+                            className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50 transition-colors"
+                          >
+                            {removeFromWishlistMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            ) : (
+                              <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
+                            )}
+                          </button>
                         </Link>
 
-                        {/* Price and Details */}
-                        <div className="mb-3">
-                          <h3 className="font-medium text-gray-900 line-clamp-1">{item.product.name}</h3>
+                        {/* Details */}
+                        <div className="p-4">
+                          <h3 className="font-medium text-gray-900 line-clamp-2 mb-1 leading-snug">{item.product.name}</h3>
                           {item.variant && (
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-lg font-semibold">
-                                {item.variant.calculated_price
-                                  ? `৳ ${item.variant.calculated_price.toLocaleString('en-IN')}`
-                                  : 'Price on request'
-                                }
-                              </span>
-                            </div>
-                          )}
-                          <p className="text-sm text-gray-600">SKU: {item.variant?.sku || item.product.slug}</p>
-                          {item.variant && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-400 mb-1">
                               {item.variant.metal_type} {item.variant.metal_purity}
-                              {item.variant.size && ` - Size ${item.variant.size}`}
+                              {item.variant.size && ` · Size ${item.variant.size}`}
                             </p>
                           )}
-                        </div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-base font-semibold text-gray-900">
+                              {item.variant?.calculated_price
+                                ? `৳${item.variant.calculated_price.toLocaleString('en-IN')}`
+                                : 'Price on request'
+                              }
+                            </span>
+                          </div>
 
-                        {/* Move to Cart Button */}
-                        <button
-                          onClick={() => moveToCartMutation.mutate(item.id)}
-                          disabled={moveToCartMutation.isPending}
-                          className="w-full border-2 text-center py-2 rounded font-medium hover:bg-pink-50 transition-colors disabled:opacity-50"
-                          style={{borderColor: '#a61e5a', color: '#a61e5a'}}
-                        >
-                          {moveToCartMutation.isPending ? (
-                            <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                          ) : (
-                            'MOVE TO CART'
-                          )}
-                        </button>
+                          <button
+                            onClick={() => moveToCartMutation.mutate(item.id)}
+                            disabled={moveToCartMutation.isPending}
+                            className="w-full border-2 border-header text-header text-sm text-center py-2 rounded-lg font-medium hover:bg-header hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {moveToCartMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <ShoppingBag size={14} />
+                                Move to Cart
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

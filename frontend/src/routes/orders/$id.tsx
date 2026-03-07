@@ -5,13 +5,14 @@ import {
   Truck, Clock, ShoppingBag, Gift, StickyNote, Tag, AlertTriangle,
 } from 'lucide-react'
 import { getOrder, cancelOrder } from '@/api/orders'
-import { getImageUrl } from '@/api/client'
+import { getImageUrl, getErrorMessage } from '@/api/client'
 import { useState } from 'react'
 import Header from '@/components/shared/Header/Header'
 import Footer from '@/components/shared/Footer/Footer'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/hooks/useAuth'
 
 export const Route = createFileRoute('/orders/$id')({
   component: OrderDetailPage,
@@ -50,10 +51,12 @@ function OrderDetailContent() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const { isAuthenticated } = useAuth()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['order', id],
     queryFn: () => getOrder({ data: { orderId: id } }),
+    enabled: isAuthenticated,
   })
 
   const cancelMutation = useMutation({
@@ -79,8 +82,10 @@ function OrderDetailContent() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500 mb-4">Order not found</p>
-          <Link to="/orders" className="text-header hover:underline">
+          <p className="text-red-500 mb-2">
+            {error ? getErrorMessage(error) : 'Order not found'}
+          </p>
+          <Link to="/orders" className="text-header hover:underline text-sm">
             Back to orders
           </Link>
         </div>
