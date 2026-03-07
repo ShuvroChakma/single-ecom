@@ -123,11 +123,16 @@ function ProductPage() {
     }
   }, [product, productId, urlSlug, navigate])
 
-  // Set default variant when product loads
+  // Set default variant when product loads or changes
   useEffect(() => {
-    if (product?.variants?.length && !selectedVariant) {
-      const defaultVariant = product.variants.find((v) => v.is_default) || product.variants[0]
+    if (product?.variants?.length) {
+      const defaultVariant =
+        product.variants.find((v) => v.is_default && v.is_active) ||
+        product.variants.find((v) => v.is_active) ||
+        product.variants[0]
       setSelectedVariant(defaultVariant)
+    } else if (product) {
+      setSelectedVariant(null)
     }
   }, [product?.id])
 
