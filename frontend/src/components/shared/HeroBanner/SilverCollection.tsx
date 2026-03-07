@@ -4,6 +4,10 @@
 // Images come from backend (using provided CDN links for now)
 
 import React from "react"
+import { useQuery } from '@tanstack/react-query'
+import { getSlides } from '@/api/slides'
+import { SLIDE_POSITIONS } from '@/api/slidePositions'
+import { getImageUrl } from '@/api/client'
 
 /* =====================
    TYPES
@@ -19,11 +23,6 @@ export interface EarringCategory {
   id: string
   image: string
   href?: string
-}
-
-export interface SilverCollectionProps {
-  silverCards?: Array<SilverCard>
-  earringCategories?: Array<EarringCategory>
 }
 
 /* =====================
@@ -76,10 +75,27 @@ const DEFAULT_EARRINGS: Array<EarringCategory> = [
    COMPONENT
 ===================== */
 
-export const SilverCollection: React.FC<SilverCollectionProps> = ({
-  silverCards = DEFAULT_SILVER_CARDS,
-  earringCategories = DEFAULT_EARRINGS,
-}) => {
+export const SilverCollection: React.FC = () => {
+  const { data: silverData } = useQuery({
+    queryKey: ['slides', SLIDE_POSITIONS.SILVER_BANNER],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.SILVER_BANNER } }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const { data: earringData } = useQuery({
+    queryKey: ['slides', SLIDE_POSITIONS.EARRING_COLLECTION],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.EARRING_COLLECTION } }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const silverCards = silverData?.success && silverData.data.length > 0
+    ? silverData.data.map(s => ({ id: s.id, image: getImageUrl(s.image_url, ''), href: s.link_url || '#' }))
+    : DEFAULT_SILVER_CARDS
+
+  const earringCategories = earringData?.success && earringData.data.length > 0
+    ? earringData.data.map(s => ({ id: s.id, image: getImageUrl(s.image_url, ''), href: s.link_url || '#' }))
+    : DEFAULT_EARRINGS
+
   return (
     <section className="mx-auto max-w-7xl px-2 md:px-2 py-10 md:py-8">
   {/* ================= Silver Heading ================= */}
