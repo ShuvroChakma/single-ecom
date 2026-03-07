@@ -1,9 +1,8 @@
-import { deleteProduct, getAdminProducts, Product } from "@/api/products"
+import { deleteProduct, getAdminProducts, Product, updateProduct } from "@/api/products"
 import { getImageUrl } from "@/lib/utils"
 import { DataTable } from "@/components/shared/data-table"
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -25,7 +24,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Eye, Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
+import { Eye, EyeOff, Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -36,6 +35,7 @@ export const Route = createFileRoute("/dashboard/products/")({
 function ProductsPage() {
   const queryClient = useQueryClient()
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 })
   const [globalFilter, setGlobalFilter] = useState("")
 
@@ -57,15 +57,37 @@ function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products"] })
       toast.success("Product deleted successfully")
       setProductToDelete(null)
+      setDeleteError(null)
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to delete product")
+      setDeleteError(error.message || "Failed to delete product")
+    },
+  })
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
+      updateProduct({ data: { id, product: { is_active } } }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] })
+      toast.success(vars.is_active ? "Product activated" : "Product deactivated")
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update product status")
     },
   })
 
   const confirmDelete = () => {
     if (productToDelete) {
+      setDeleteError(null)
       deleteMutation.mutate(productToDelete.id)
+    }
+  }
+
+  const handleDeactivateAndClose = () => {
+    if (productToDelete) {
+      toggleActiveMutation.mutate({ id: productToDelete.id, is_active: false })
+      setProductToDelete(null)
+      setDeleteError(null)
     }
   }
 
@@ -185,6 +207,14 @@ function ProductsPage() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
+                onClick={() => toggleActiveMutation.mutate({ id: product.id, is_active: !product.is_active })}
+              >
+                {product.is_active
+                  ? <><EyeOff className="mr-2 h-4 w-4" />Deactivate</>
+                  : <><Eye className="mr-2 h-4 w-4" />Activate</>
+                }
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
                 onClick={() => setProductToDelete(product)}
               >
@@ -234,7 +264,7 @@ function ProductsPage() {
 
       <AlertDialog
         open={!!productToDelete}
-        onOpenChange={(open) => !open && setProductToDelete(null)}
+        onOpenChange={(open) => { if (!open) { setProductToDelete(null); setDeleteError(null) } }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -245,20 +275,36 @@ function ProductsPage() {
               undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          {deleteError && (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              <p className="font-medium mb-1">Cannot delete</p>
+              <p>{deleteError}</p>
+            </div>
+          )}
+          <AlertDialogFooter className="flex-wrap gap-2">
             <AlertDialogCancel disabled={deleteMutation.isPending}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
+            {deleteError && productToDelete?.is_active && (
+              <Button
+                variant="outline"
+                onClick={handleDeactivateAndClose}
+                disabled={toggleActiveMutation.isPending}
+              >
+                {toggleActiveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Deactivate Instead
+              </Button>
+            )}
+            <Button
+              variant="destructive"
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Delete
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

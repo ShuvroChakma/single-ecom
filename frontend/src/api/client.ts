@@ -230,11 +230,27 @@ export async function apiRequest<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
+  const fullUrl = `${API_BASE}${endpoint}`;
+  const method = options.method || 'GET';
+
+  // Log full request
+  console.log(`\n[API REQUEST] ${method} ${fullUrl}`);
+  console.log('[API REQUEST] Headers:', JSON.stringify(headers, null, 2));
+  if (options.body) {
+    console.log('[API REQUEST] Body:', options.body);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers,
       credentials: "include", // Include cookies for HttpOnly refresh token
-  });
+    });
+  } catch (err) {
+    console.error(`[API] Network error: ${method} ${fullUrl}`, err);
+    throw err;
+  }
 
     // Handle 401 Unauthorized - try to refresh token
     if (response.status === 401 && retryOnUnauthorized && token) {
@@ -246,21 +262,40 @@ export async function apiRequest<T>(
         }
 
         // Refresh failed - throw auth error
+        console.error(`[API] 401 Unauthorized (token refresh failed): ${options.method || 'GET'} ${fullUrl}`);
         throw new AuthenticationError("Session expired. Please login again.");
     }
 
+  // Log response status
+  console.log(`[API RESPONSE] ${response.status} ${response.statusText} ← ${method} ${fullUrl}`);
+
   if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json().catch(() => ({
+      const rawText = await response.text().catch(() => '');
+      let errorData: ApiErrorResponse;
+      try {
+        errorData = JSON.parse(rawText);
+      } catch {
+        errorData = {
           success: false,
           error: {
-              code: "UNKNOWN_ERROR",
-              message: response.statusText || `HTTP ${response.status}`,
-              field: null,
+            code: "UNKNOWN_ERROR",
+            message: response.statusText || `HTTP ${response.status}`,
+            field: null,
           },
-    }));
+        };
+      }
 
       // Extract detailed error message
       const message = extractErrorMessage(errorData);
+
+      console.error(
+        `\n[API ERROR] ${response.status} ${method} ${fullUrl}`,
+        '\n  message:', message,
+        '\n  code:', errorData.error?.code,
+        '\n  raw response:', rawText,
+        errorData.errors?.length ? '\n  errors:' : '',
+        errorData.errors?.length ? errorData.errors : ''
+      );
 
       throw new ApiError(
           message,

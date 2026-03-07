@@ -14,7 +14,8 @@ from app.core.exceptions import PermissionDeniedError
 from app.constants.enums import UserType
 from app.constants.error_codes import ErrorCode
 from app.constants.permissions import PermissionEnum
-from app.modules.users.models import User
+from app.modules.users.models import User, Customer
+from app.modules.users.repository import CustomerRepository
 from app.modules.audit.service import AuditService
 from app.modules.orders.service import OrderService
 from app.modules.orders.models import OrderStatus
@@ -45,22 +46,22 @@ def get_order_service(
 
 
 async def get_current_customer(
-    current_user: User = Depends(get_current_verified_user)
-) -> User:
-    """Verify user is a customer."""
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_db),
+) -> Customer:
+    """Verify user is a customer and return Customer record (no lazy load)."""
     if current_user.user_type != UserType.CUSTOMER:
         raise PermissionDeniedError(
             error_code=ErrorCode.PERMISSION_DENIED,
             message="Orders are only available for customers"
         )
-    
-    if not current_user.customer:
+    customer = await CustomerRepository(db).get_by_user_id(current_user.id)
+    if not customer:
         raise PermissionDeniedError(
             error_code=ErrorCode.PERMISSION_DENIED,
             message="Customer profile not found"
         )
-    
-    return current_user
+    return customer
 
 
 # ============ CUSTOMER ENDPOINTS ============
@@ -86,7 +87,7 @@ async def create_order(
     payment_service = PaymentGatewayService(session)
     
     result = await order_service.create_order(
-        customer_id=current_user.customer.id,
+        customer_id=current_user.id,
         request=data,
         cart_service=cart_service,
         address_service=address_service,
@@ -111,7 +112,7 @@ async def list_my_orders(
 ):
     """List current customer's orders."""
     orders = await service.get_customer_orders(
-        customer_id=current_user.customer.id,
+        customer_id=current_user.id,
         limit=limit,
         offset=offset
     )
@@ -129,7 +130,7 @@ async def get_my_order(
     service: OrderService = Depends(get_order_service)
 ):
     """Get a specific order (customer view)."""
-    order = await service.get_order(order_id, customer_id=current_user.customer.id)
+    order = await service.get_order(order_id, customer_id=current_user.id)
     
     # Build response
     items = [OrderItemResponse.model_validate(i) for i in order.items]
@@ -153,6 +154,7 @@ async def get_my_order(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,
@@ -162,7 +164,7 @@ async def get_my_order(
         shipped_at=order.shipped_at,
         delivered_at=order.delivered_at
     )
-    
+
     return create_success_response(
         message="Order retrieved",
         data=response
@@ -180,7 +182,7 @@ async def cancel_my_order(
     """Cancel an order (if still possible)."""
     order = await service.cancel_order(
         order_id=order_id,
-        customer_id=current_user.customer.id,
+        customer_id=current_user.id,
         reason=reason,
         http_request=request
     )
@@ -206,6 +208,7 @@ async def cancel_my_order(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,
@@ -284,6 +287,7 @@ async def get_order_admin(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,
@@ -337,6 +341,7 @@ async def update_order_status(
         promo_code=order.promo_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_transaction_id=order.payment_transaction_id,
         paid_at=order.paid_at,
         status=order.status,
         customer_notes=order.customer_notes,

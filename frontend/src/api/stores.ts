@@ -1,8 +1,8 @@
 /**
- * Stores API functions
+ * Stores API - Server Functions (public, no auth needed)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { apiRequest, ApiResponse } from './client'
 
 export interface Store {
   id: string
@@ -23,31 +23,19 @@ export interface Store {
   updated_at: string
 }
 
-/**
- * Get all active stores
- */
-export async function getStores(city?: string): Promise<APIResponse<Store[]>> {
-  const url = city ? `/stores?city=${encodeURIComponent(city)}` : '/stores'
-  return apiClient.get<Store[]>(url)
-}
+export const getStores = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data?: { city?: string } }) => {
+    const url = data?.city ? `/stores?city=${encodeURIComponent(data.city)}` : '/stores'
+    return apiRequest<ApiResponse<Store[]>>(url)
+  })
 
-/**
- * Get store by ID
- */
-export async function getStore(storeId: string): Promise<APIResponse<Store>> {
-  return apiClient.get<Store>(`/stores/${storeId}`)
-}
+export const getStore = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { storeId: string } }) => {
+    return apiRequest<ApiResponse<Store>>(`/stores/${data.storeId}`)
+  })
 
-/**
- * Find nearby stores
- */
-export async function findNearbyStores(lat: number, lng: number, radiusKm: number = 50): Promise<APIResponse<Store[]>> {
-  return apiClient.get<Store[]>(`/stores/nearby?lat=${lat}&lng=${lng}&radius=${radiusKm}`)
-}
-
-/**
- * Search stores by city (alias for getStores with city param)
- */
-export async function searchStoresByCity(city: string): Promise<APIResponse<Store[]>> {
-  return getStores(city)
-}
+export const findNearbyStores = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { lat: number; lng: number; radiusKm?: number } }) => {
+    const { lat, lng, radiusKm = 50 } = data
+    return apiRequest<ApiResponse<Store[]>>(`/stores/nearby?lat=${lat}&lng=${lng}&radius=${radiusKm}`)
+  })

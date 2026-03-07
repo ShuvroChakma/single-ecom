@@ -7,6 +7,7 @@ import {
   FaWhatsapp,
   FaXTwitter,
 } from 'react-icons/fa6'
+import { useSettings } from '@/contexts/SettingsContext'
 
 interface FooterLink {
   label: string
@@ -60,31 +61,26 @@ const FOOTER_SECTIONS: Array<FooterSection> = [
   },
 ]
 
-const SOCIAL_LINKS: Array<SocialLink> = [
-  {
-    icon: FaFacebookF,
-    href: 'https://facebook.com/nazumeahjewellers',
-    label: 'Facebook'
-  },
-  {
-    icon: FaXTwitter,
-    href: 'https://twitter.com/nazumeahjewellers',
-    label: 'Twitter'
-  },
-  {
-    icon: FaPinterestP,
-    href: 'https://pinterest.com/nazumeahjewellers',
-    label: 'Pinterest'
-  },
-  {
-    icon: FaInstagram,
-    href: 'https://instagram.com/nazumeahjewellers',
-    label: 'Instagram'
-  }
-]
-
 export default function Footer() {
   const [openSection, setOpenSection] = useState<number | null>(null)
+  const {
+    store_name,
+    contact_phone,
+    whatsapp_number,
+    contact_email,
+    contact_address,
+    facebook_url,
+    instagram_url,
+    twitter_url,
+    pinterest_url,
+  } = useSettings()
+
+  const socialLinks: Array<SocialLink> = [
+    facebook_url && { icon: FaFacebookF, href: facebook_url, label: 'Facebook' },
+    twitter_url && { icon: FaXTwitter, href: twitter_url, label: 'Twitter' },
+    pinterest_url && { icon: FaPinterestP, href: pinterest_url, label: 'Pinterest' },
+    instagram_url && { icon: FaInstagram, href: instagram_url, label: 'Instagram' },
+  ].filter(Boolean) as Array<SocialLink>
 
   const toggleSection = (index: number) => {
     setOpenSection(openSection === index ? null : index)
@@ -143,40 +139,42 @@ export default function Footer() {
                   {/* CUSTOMER SERVICE */}
                   {section.isCustomerService && (
                     <div className="space-y-2 text-sm text-header pt-3">
-                      <div className="flex gap-1">
-                        <Phone className="w-3 h-4 mt-0.5" />
-                        <span>
-                          +123456789{' '}
-                          <span className="text-gray-600">
-                            (10.00am–7.00pm)
+                      {contact_phone && (
+                        <div className="flex gap-1">
+                          <Phone className="w-3 h-4 mt-0.5" />
+                          <span>
+                            {contact_phone}{' '}
+                            <span className="text-gray-600">
+                              (10.00am–7.00pm)
+                            </span>
                           </span>
-                        </span>
-                      </div>
+                        </div>
+                      )}
 
-                      <div className="flex gap-2 text-green-600">
-                        <FaWhatsapp className="w-4 h-4 mt-0.5" />
-                        <span>
-                          9167780916{' '}
-                          <span className="text-gray-600">
-                            (9.00am – 6.00pm)
+                      {whatsapp_number && (
+                        <div className="flex gap-2 text-green-600">
+                          <FaWhatsapp className="w-4 h-4 mt-0.5" />
+                          <span>
+                            {whatsapp_number}{' '}
+                            <span className="text-gray-600">
+                              (9.00am – 6.00pm)
+                            </span>
                           </span>
-                        </span>
-                      </div>
+                        </div>
+                      )}
 
-                      <div className="flex gap-1">
-                        <Mail className="w-4 h-4 mt-0.5" />
-                        <span>nazumeahjewellers.com</span>
-                      </div>
+                      {contact_email && (
+                        <div className="flex gap-1">
+                          <Mail className="w-4 h-4 mt-0.5" />
+                          <span>{contact_email}</span>
+                        </div>
+                      )}
 
-                      <p className="text-sm text-gray-600 leading-relaxed pt-2">
-                        Nazu Meah Jewellers
-                        <br />
-                        Plot No 44, 45, Street Number 14,
-                        <br />
-                        Marol MIDC Industry Estate,
-                        <br />
-                        Andheri East, Mumbai – 400093
-                      </p>
+                      {contact_address && (
+                        <p className="text-sm text-gray-600 leading-relaxed pt-2 whitespace-pre-line">
+                          {contact_address}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -193,7 +191,7 @@ export default function Footer() {
             {/* SOCIAL ICONS */}
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700 mr-2">Follow Us:</span>
-              {SOCIAL_LINKS.map((social, i) => {
+              {socialLinks.map((social, i) => {
                 const Icon = social.icon
                 return (
                   <a
@@ -265,18 +263,20 @@ export default function Footer() {
 
       {/* COPYRIGHT */}
       <div className="py-8 text-center text-xs text-gray-900 border-t border-gray-300">
-        © 2025 <span className='text-header'>Nazu Meah Jewellers.</span> All Rights Reserved.
+        © {new Date().getFullYear()} <span className='text-header'>{store_name}.</span> All Rights Reserved.
       </div>
 
       {/* FLOATING WHATSAPP */}
-      <a
-        href="https://wa.me/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-1 right-0.5 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg z-50"
-      >
-        <FaWhatsapp className="w-6 h-6 text-white" />
-      </a>
+      {whatsapp_number && (
+        <a
+          href={`https://wa.me/${whatsapp_number.replace(/\D/g, '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-1 right-0.5 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg z-50"
+        >
+          <FaWhatsapp className="w-6 h-6 text-white" />
+        </a>
+      )}
     </footer>
   )
 }

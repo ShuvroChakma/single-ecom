@@ -1,8 +1,8 @@
 /**
- * Delivery API functions
+ * Delivery API - Server Functions (public, no auth needed)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { apiRequest, ApiResponse } from './client'
 
 export interface DeliveryZone {
   id: string
@@ -31,32 +31,21 @@ export interface DeliveryChargeResponse {
   estimated_days: string
 }
 
-/**
- * Get active delivery zones (public)
- */
-export async function getDeliveryZones(): Promise<APIResponse<DeliveryZone[]>> {
-  return apiClient.get<DeliveryZone[]>('/delivery/zones')
-}
-
-/**
- * Calculate delivery charge for a district (public)
- */
-export async function calculateDeliveryCharge(
-  district: string,
-  orderAmount: number,
-  weightKg: number = 0
-): Promise<APIResponse<DeliveryChargeResponse>> {
-  const params = new URLSearchParams({
-    district,
-    order_amount: String(orderAmount),
-    weight_kg: String(weightKg),
+export const getDeliveryZones = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    return apiRequest<ApiResponse<DeliveryZone[]>>('/delivery/zones')
   })
-  return apiClient.get<DeliveryChargeResponse>(`/delivery/charges?${params}`)
-}
 
-/**
- * Get all unique districts from delivery zones
- */
+export const calculateDeliveryCharge = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { district: string; order_amount: number; weight_kg?: number } }) => {
+    const params = new URLSearchParams({
+      district: data.district,
+      order_amount: String(data.order_amount),
+      weight_kg: String(data.weight_kg ?? 0),
+    })
+    return apiRequest<ApiResponse<DeliveryChargeResponse>>(`/delivery/charges?${params}`)
+  })
+
 export function getDistrictsFromZones(zones: DeliveryZone[]): string[] {
   const districts = new Set<string>()
   for (const zone of zones) {

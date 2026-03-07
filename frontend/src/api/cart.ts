@@ -1,10 +1,10 @@
 /**
- * Cart API functions
+ * Cart API - Server Functions (token from HttpOnly cookie)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
+import { apiRequest, ApiResponse } from './client'
 
-// Cart Item from backend
 export interface CartItemProduct {
   id: string
   name: string
@@ -56,11 +56,6 @@ export interface AddToCartRequest {
   quantity?: number
 }
 
-export interface UpdateCartItemRequest {
-  quantity: number
-}
-
-// Promo validation
 export interface PromoValidationResult {
   valid: boolean
   code: string
@@ -70,44 +65,57 @@ export interface PromoValidationResult {
   message: string
 }
 
-/**
- * Get current cart
- */
-export async function getCart(): Promise<APIResponse<Cart>> {
-  return apiClient.get<Cart>('/cart')
-}
+export const getCart = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Cart>>('/cart', {}, token)
+  })
 
-/**
- * Add item to cart
- */
-export async function addToCart(data: AddToCartRequest): Promise<APIResponse<CartItemAddedResponse>> {
-  return apiClient.post<CartItemAddedResponse>('/cart/items', data)
-}
+export const addToCart = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: AddToCartRequest }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<CartItemAddedResponse>>('/cart/items', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token)
+  })
 
-/**
- * Update cart item quantity
- */
-export async function updateCartItem(itemId: string, quantity: number): Promise<APIResponse<CartItem>> {
-  return apiClient.put<CartItem>(`/cart/items/${itemId}`, { quantity })
-}
+export const updateCartItem = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { itemId: string; quantity: number } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<CartItem>>(`/cart/items/${data.itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity: data.quantity }),
+    }, token)
+  })
 
-/**
- * Remove item from cart
- */
-export async function removeFromCart(itemId: string): Promise<APIResponse<{ removed: boolean }>> {
-  return apiClient.delete<{ removed: boolean }>(`/cart/items/${itemId}`)
-}
+export const removeFromCart = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { itemId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<{ removed: boolean }>>(`/cart/items/${data.itemId}`, {
+      method: 'DELETE',
+    }, token)
+  })
 
-/**
- * Clear entire cart
- */
-export async function clearCart(): Promise<APIResponse<{ cleared: boolean }>> {
-  return apiClient.delete<{ cleared: boolean }>('/cart')
-}
+export const clearCart = createServerFn({ method: 'POST' })
+  .handler(async () => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<{ cleared: boolean }>>('/cart', {
+      method: 'DELETE',
+    }, token)
+  })
 
-/**
- * Validate promo code (does not apply, just validates)
- */
-export async function validatePromoCode(code: string, orderAmount: number): Promise<APIResponse<PromoValidationResult>> {
-  return apiClient.post<PromoValidationResult>('/promo/validate', { code, order_amount: orderAmount })
-}
+export const validatePromoCode = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { code: string; order_amount: number } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<PromoValidationResult>>('/promo/validate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token)
+  })

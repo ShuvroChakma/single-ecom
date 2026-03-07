@@ -158,9 +158,9 @@ class ProductAttributeValueRepository:
         """Create a new product attribute value."""
         self.session.add(value)
         await self.session.commit()
-        await self.session.refresh(value)
-        return value
-    
+        # Re-fetch with relationships to avoid lazy-load (MissingGreenlet) on serialization
+        return await self.get(value.id)
+
     async def update(self, value: ProductAttributeValue, data: dict) -> ProductAttributeValue:
         """Update an existing product attribute value."""
         for key, val in data.items():
@@ -168,8 +168,8 @@ class ProductAttributeValueRepository:
                 setattr(value, key, val)
         value.updated_at = datetime.utcnow()
         await self.session.commit()
-        await self.session.refresh(value)
-        return value
+        # Re-fetch with relationships to avoid lazy-load (MissingGreenlet) on serialization
+        return await self.get(value.id)
     
     async def delete(self, value: ProductAttributeValue) -> None:
         """Delete a product attribute value."""

@@ -3,6 +3,7 @@ import { Phone, Tag, X, Minus, Plus, Loader2, AlertCircle, CheckCircle } from 'l
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCart, updateCartItem, removeFromCart, validatePromoCode, type Cart, type PromoValidationResult } from '@/api/cart';
+import { getImageUrl } from '@/api/client';
 
 export default function ShoppingCart() {
   const [showProductDetails, setShowProductDetails] = useState<string | null>(null);
@@ -13,23 +14,23 @@ export default function ShoppingCart() {
 
   const { data: cartResponse, isLoading } = useQuery({
     queryKey: ['cart'],
-    queryFn: getCart,
+    queryFn: () => getCart(),
     staleTime: 60 * 1000, // 1 minute
   });
 
   const updateItemMutation = useMutation({
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
-      updateCartItem(itemId, quantity),
+      updateCartItem({ data: { itemId, quantity } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: removeFromCart,
+    mutationFn: (itemId: string) => removeFromCart({ data: { itemId } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const validatePromoMutation = useMutation({
-    mutationFn: (code: string) => validatePromoCode(code, cart?.subtotal || 0),
+    mutationFn: (code: string) => validatePromoCode({ data: { code, order_amount: cart?.subtotal || 0 } }),
     onSuccess: (response) => {
       if (response.data) {
         setPromoResult(response.data);
@@ -42,9 +43,9 @@ export default function ShoppingCart() {
 
   const cart = cartResponse?.data;
   const cartItems = cart?.items || [];
-  const subtotal = cart?.subtotal || 0;
-  const taxAmount = cart?.tax_amount || 0;
-  const discount = promoResult?.valid ? promoResult.discount_amount : 0;
+  const subtotal = Number(cart?.subtotal || 0);
+  const taxAmount = Number(cart?.tax_amount || 0);
+  const discount = promoResult?.valid ? Number(promoResult.discount_amount) : 0;
   const total = subtotal + taxAmount - discount;
 
   const promiseFeatures = [
@@ -150,7 +151,7 @@ export default function ShoppingCart() {
                   <div key={item.id} className="border rounded-lg p-4">
                     <div className="flex gap-4">
                       <img
-                        src={item.product.image || '/placeholder-product.jpg'}
+                        src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                         alt={item.product.name}
                         className="w-24 h-24 object-contain bg-white rounded"
                       />
@@ -195,7 +196,7 @@ export default function ShoppingCart() {
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            <span className="font-semibold text-lg">৳ {item.line_total.toLocaleString('en-BD')}</span>
+                            <span className="font-semibold text-lg">৳ {Number(item.line_total).toLocaleString('en-BD')}</span>
                             <button
                               onClick={() => removeItemMutation.mutate(item.id)}
                               disabled={removeItemMutation.isPending}
@@ -331,14 +332,14 @@ export default function ShoppingCart() {
           <div key={item.id} className="bg-white mt-2 p-4">
             <div className="flex gap-3 mb-3">
               <img
-                src={item.product.image || '/placeholder-product.jpg'}
+                src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                 alt={item.product.name}
                 className="w-24 h-24 object-contain rounded"
               />
               <div className="flex-1">
                 <h3 className="font-semibold mb-1">{item.product.name}</h3>
                 <p className="text-xs text-gray-500 mb-2">{item.variant.sku}</p>
-                <p className="text-lg font-semibold">৳ {item.line_total.toLocaleString('en-BD')}</p>
+                <p className="text-lg font-semibold">৳ {Number(item.line_total).toLocaleString('en-BD')}</p>
               </div>
             </div>
 

@@ -16,6 +16,7 @@ from app.constants.permissions import PermissionEnum
 from app.constants.enums import UserType
 from app.constants.error_codes import ErrorCode
 from app.modules.users.models import User
+from app.modules.users.repository import CustomerRepository
 from app.modules.audit.service import AuditService
 from app.modules.promo_codes.service import PromoCodeService
 from app.modules.promo_codes.schemas import (
@@ -45,16 +46,19 @@ def get_promo_service(
 async def validate_promo_code(
     data: ValidatePromoRequest,
     current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_db),
     service: PromoCodeService = Depends(get_promo_service)
 ):
     """
     Validate a promo code for the current customer.
-    
+
     Returns discount calculation and eligibility.
     """
     customer_id = None
-    if current_user.user_type == UserType.CUSTOMER and current_user.customer:
-        customer_id = current_user.customer.id
+    if current_user.user_type == UserType.CUSTOMER:
+        customer = await CustomerRepository(db).get_by_user_id(current_user.id)
+        if customer:
+            customer_id = customer.id
     
     result = await service.validate_promo(
         code=data.code,

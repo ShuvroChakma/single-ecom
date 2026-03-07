@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.exceptions import add_exception_handlers
 from app.core.docs import create_error_responses
 from app.core.lifespan import lifespan
+from app.core.logging_config import logger
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -46,6 +47,29 @@ from app.core.rate_limit import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware, limit=60, window=60)
 
 add_exception_handlers(app)
+
+# Request/response logging middleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+import time
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: StarletteRequest, call_next):
+        start = time.time()
+        body = await request.body()
+        logger.info(
+            "→ %s %s | auth: %s | body: %s",
+            request.method,
+            request.url,
+            request.headers.get("authorization", "none"),
+            body.decode("utf-8") if body else "",
+        )
+        response = await call_next(request)
+        elapsed = (time.time() - start) * 1000
+        logger.info("← %s %s %.1fms", response.status_code, request.url, elapsed)
+        return response
+
+app.add_middleware(RequestLoggingMiddleware)
 
 from app.core.schemas.response import SuccessResponse
 from app.core.docs import doc_responses

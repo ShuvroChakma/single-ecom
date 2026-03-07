@@ -14,7 +14,7 @@ const NewArrivals: React.FC = () => {
 
   const { data: productsResponse, isLoading } = useQuery({
     queryKey: ['new-arrivals'],
-    queryFn: () => getNewArrivals(8),
+    queryFn: () => getNewArrivals({ data: { limit: 8 } }),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -26,9 +26,17 @@ const NewArrivals: React.FC = () => {
       name: product.name,
       slug: product.slug,
       code: product.variants?.[0]?.sku || product.id.substring(0, 10),
-      price: product.variants?.[0]?.calculated_price
-        ? `৳ ${product.variants[0].calculated_price.toLocaleString('en-BD')}`
-        : 'Price on request',
+      price: (() => {
+        const prices = (product.variants || [])
+          .map(v => v.calculated_price)
+          .filter((p): p is number => p != null && p > 0)
+        if (!prices.length) return null
+        const min = Math.min(...prices)
+        const max = Math.max(...prices)
+        return min === max
+          ? `৳ ${min.toLocaleString('en-BD')}`
+          : `৳ ${min.toLocaleString('en-BD')} – ৳ ${max.toLocaleString('en-BD')}`
+      })(),
       image: getImageUrl(product.images?.[0], '/placeholder-product.jpg'),
     }));
   }, [productsResponse]);
@@ -181,7 +189,7 @@ const NewArrivals: React.FC = () => {
                               {product.name}
                             </h3>
                             <p className="text-sm text-gray-500 mb-2">{product.code}</p>
-                            <p className="text-lg font-semibold text-top_bar">{product.price}</p>
+                            {product.price && <p className="text-lg font-semibold text-top_bar">{product.price}</p>}
                           </div>
                         </Link>
                       ))}

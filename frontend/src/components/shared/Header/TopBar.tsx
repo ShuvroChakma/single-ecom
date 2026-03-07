@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { X } from "lucide-react";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const TopBar = () => {
   const [isVisible, setIsVisible] = useState(true);
+  const { contact_phone } = useSettings();
 
-  if (!isVisible) return null;
+  if (!isVisible || !contact_phone) return null;
 
   return (
     <div className="bg-top_bar text-white text-sm">
@@ -12,7 +14,7 @@ const TopBar = () => {
         <div className="flex-1" />
         
         <div className="flex items-center justify-center text-center">
-          <span>For Store and Scheme Queries - 9562-916-916</span>
+          <span>For queries, call us at <a href={`tel:${contact_phone}`} className="font-semibold hover:underline">{contact_phone}</a></span>
         </div>
         
         <div className="flex-1 flex items-center justify-end">

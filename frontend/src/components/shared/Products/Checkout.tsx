@@ -1,20 +1,113 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronRight, Loader2, MapPin, Plus, CreditCard, Truck, ShoppingBag, Trash2 } from 'lucide-react'
+import { Check, ChevronRight, ChevronDown, Loader2, MapPin, Plus, CreditCard, Truck, ShoppingBag, Search, X } from 'lucide-react'
 import { getCart, validatePromoCode } from '@/api/cart'
 import { createOrder, type CreateOrderRequest } from '@/api/orders'
 import { getAddresses, createAddress, type Address, type AddressCreateRequest } from '@/api/addresses'
-import { getDeliveryZones, calculateDeliveryCharge, type DeliveryChargeResponse } from '@/api/delivery'
+import { getDeliveryZones, calculateDeliveryCharge, type DeliveryZone, type DeliveryChargeResponse } from '@/api/delivery'
 import { getPaymentMethods, getPaymentLogo, type PaymentMethod } from '@/api/payments'
 import { getImageUrl } from '@/api/client'
 
-// Bangladesh districts
-const BD_DISTRICTS = [
-  'Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Barisal', 'Sylhet', 'Rangpur', 'Mymensingh',
-  'Comilla', 'Gazipur', 'Narayanganj', 'Tangail', 'Bogra', 'Jessore', 'Cox\'s Bazar', 'Dinajpur',
-  'Brahmanbaria', 'Narsingdi', 'Savar', 'Tongi', 'Jamalpur', 'Rangamati', 'Pabna', 'Noakhali'
-].sort()
+
+// Searchable Select component
+const SearchableSelect = ({
+  options,
+  value,
+  onChange,
+  placeholder = 'Select an option',
+  required,
+}: {
+  options: { value: string; label: string }[]
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  required?: boolean
+}) => {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const filtered = options.filter(o =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const selected = options.find(o => o.value === value)
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+        setSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`w-full flex items-center justify-between px-3 py-2 border rounded-lg bg-white text-left transition-colors
+          ${open ? 'border-header ring-2 ring-header/20' : 'border-gray-300 hover:border-gray-400'}
+          ${!selected ? 'text-gray-400' : 'text-gray-900'}`}
+      >
+        <span className="truncate">{selected ? selected.label : placeholder}</span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {/* Search input */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="flex-1 text-sm outline-none placeholder-gray-400"
+            />
+            {search && (
+              <button type="button" onClick={() => setSearch('')}>
+                <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+              </button>
+            )}
+          </div>
+
+          {/* Options list */}
+          <ul className="max-h-52 overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-gray-400 text-center">No results found</li>
+            ) : (
+              filtered.map(opt => (
+                <li key={opt.value}>
+                  <button
+                    type="button"
+                    onClick={() => { onChange(opt.value); setOpen(false); setSearch('') }}
+                    className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-50 transition-colors
+                      ${opt.value === value ? 'bg-header/5 text-header font-medium' : 'text-gray-700'}`}
+                  >
+                    {opt.label}
+                    {opt.value === value && <Check className="w-4 h-4 text-header" />}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Step indicator component
 const StepIndicator = ({ step, currentStep, label }: { step: number; currentStep: number; label: string }) => {
@@ -78,11 +171,13 @@ const AddressCard = ({
 const AddAddressForm = ({
   onSave,
   onCancel,
-  isLoading
+  isLoading,
+  zones = []
 }: {
   onSave: (data: AddressCreateRequest) => void
   onCancel: () => void
   isLoading: boolean
+  zones: DeliveryZone[]
 }) => {
   const [formData, setFormData] = useState<AddressCreateRequest>({
     label: 'Home',
@@ -117,16 +212,15 @@ const AddAddressForm = ({
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-sm text-gray-600 mb-1">Label</label>
-          <select
-            name="label"
+          <SearchableSelect
+            options={[
+              { value: 'Home', label: 'Home' },
+              { value: 'Office', label: 'Office' },
+              { value: 'Other', label: 'Other' },
+            ]}
             value={formData.label}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          >
-            <option value="Home">Home</option>
-            <option value="Office">Office</option>
-            <option value="Other">Other</option>
-          </select>
+            onChange={v => setFormData(prev => ({ ...prev, label: v }))}
+          />
         </div>
         <div>
           <label className="block text-sm text-gray-600 mb-1">Full Name *</label>
@@ -154,19 +248,14 @@ const AddAddressForm = ({
           />
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-1">District *</label>
-          <select
-            name="district"
+          <label className="block text-sm text-gray-600 mb-1">Delivery Area *</label>
+          <SearchableSelect
+            options={zones.filter(z => !z.districts.includes('*')).map(z => ({ value: z.name, label: z.name }))}
             value={formData.district}
-            onChange={handleChange}
+            onChange={v => setFormData(prev => ({ ...prev, district: v }))}
+            placeholder="Select delivery area"
             required
-            className="w-full border rounded px-3 py-2"
-          >
-            <option value="">Select District</option>
-            {BD_DISTRICTS.map(d => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 
@@ -292,27 +381,28 @@ const Checkout = () => {
   // Fetch cart
   const { data: cartResponse, isLoading: cartLoading } = useQuery({
     queryKey: ['cart'],
-    queryFn: getCart,
+    queryFn: () => getCart(),
   })
   const cart = cartResponse?.data
 
   // Fetch addresses
   const { data: addressResponse, isLoading: addressLoading } = useQuery({
     queryKey: ['addresses'],
-    queryFn: getAddresses,
+    queryFn: () => getAddresses(),
   })
   const addresses = addressResponse?.data?.addresses || []
 
   // Fetch delivery zones
   const { data: zonesResponse } = useQuery({
     queryKey: ['delivery-zones'],
-    queryFn: getDeliveryZones,
+    queryFn: () => getDeliveryZones(),
   })
+  const deliveryZones = zonesResponse?.data || []
 
   // Fetch payment methods
   const { data: paymentResponse, isLoading: paymentLoading } = useQuery({
     queryKey: ['payment-methods', cart?.total],
-    queryFn: () => getPaymentMethods(cart?.total),
+    queryFn: () => getPaymentMethods({ data: { order_amount: cart?.total } }),
     enabled: !!cart,
   })
   const paymentMethods = paymentResponse?.data?.methods || []
@@ -337,7 +427,7 @@ const Checkout = () => {
   useEffect(() => {
     const selectedAddress = addresses.find(a => a.id === selectedAddressId)
     if (selectedAddress && cart) {
-      calculateDeliveryCharge(selectedAddress.district, cart.subtotal)
+      calculateDeliveryCharge({ data: { district: selectedAddress.district, order_amount: cart.subtotal } })
         .then(res => {
           if (res.success) {
             setDeliveryInfo(res.data)
@@ -361,7 +451,7 @@ const Checkout = () => {
 
   // Create address mutation
   const createAddressMutation = useMutation({
-    mutationFn: createAddress,
+    mutationFn: (data: AddressCreateRequest) => createAddress({ data }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
       if (response.data) {
@@ -373,7 +463,7 @@ const Checkout = () => {
 
   // Validate promo mutation
   const validatePromoMutation = useMutation({
-    mutationFn: (code: string) => validatePromoCode(code, cart?.subtotal || 0),
+    mutationFn: (code: string) => validatePromoCode({ data: { code, order_amount: cart?.subtotal || 0 } }),
     onSuccess: (response) => {
       if (response.success && response.data?.valid) {
         setPromoDiscount({
@@ -395,7 +485,7 @@ const Checkout = () => {
 
   // Create order mutation
   const createOrderMutation = useMutation({
-    mutationFn: createOrder,
+    mutationFn: (data: CreateOrderRequest) => createOrder({ data }),
     onSuccess: (response) => {
       if (response.success && response.data) {
         queryClient.invalidateQueries({ queryKey: ['cart'] })
@@ -429,9 +519,9 @@ const Checkout = () => {
   }
 
   const selectedAddress = addresses.find(a => a.id === selectedAddressId)
-  const deliveryCharge = deliveryInfo?.total_charge || 0
-  const discount = promoDiscount?.amount || 0
-  const grandTotal = (cart?.subtotal || 0) + deliveryCharge - discount
+  const deliveryCharge = Number(deliveryInfo?.total_charge || 0)
+  const discount = Number(promoDiscount?.amount || 0)
+  const grandTotal = Number(cart?.subtotal || 0) + deliveryCharge - discount
 
   // Order success view
   if (orderSuccess) {
@@ -546,6 +636,7 @@ const Checkout = () => {
                         onSave={(data) => createAddressMutation.mutate(data)}
                         onCancel={() => setShowAddForm(false)}
                         isLoading={createAddressMutation.isPending}
+                        zones={deliveryZones}
                       />
                     ) : (
                       <button
@@ -686,7 +777,7 @@ const Checkout = () => {
                           </p>
                           <p className="text-gray-500">Qty: {item.quantity}</p>
                         </div>
-                        <p className="font-medium">৳{item.line_total.toLocaleString()}</p>
+                        <p className="font-medium">৳{Number(item.line_total).toLocaleString()}</p>
                       </div>
                     ))}
                   </div>
@@ -777,7 +868,7 @@ const Checkout = () => {
 
                 {createOrderMutation.isError && (
                   <p className="text-red-500 text-sm mt-4 text-center">
-                    Failed to place order. Please try again.
+                    {(createOrderMutation.error as any)?.message || 'Failed to place order. Please try again.'}
                   </p>
                 )}
               </div>
@@ -811,7 +902,7 @@ const Checkout = () => {
               <div className="border-t pt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span>৳{cart.subtotal.toLocaleString()}</span>
+                  <span>৳{Number(cart.subtotal).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Delivery</span>

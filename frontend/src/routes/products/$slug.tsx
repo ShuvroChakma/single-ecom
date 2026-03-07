@@ -18,9 +18,12 @@ import {
 import Header from "@/components/shared/Header/Header"
 import Footer from "@/components/shared/Footer/Footer"
 import { getProductById, getProductBySlug, getProducts, type Product, type ProductVariant } from "@/api/categories"
+import { getProductPricing, getProductAttributes, getAttributeGroups, type PriceBreakdown } from "@/api/products"
 import { getImageUrl } from "@/api/client"
 import { addToCart } from "@/api/cart"
 import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
+import { useAuth } from "@/hooks/useAuth"
+import { useLoginModal } from "@/contexts/LoginModalContext"
 
 export const Route = createFileRoute("/products/$slug")({
   component: ProductPage,
@@ -65,6 +68,8 @@ function ProductPage() {
   const { slug: urlSlug } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isAuthenticated } = useAuth()
+  const { showLoginModal } = useLoginModal()
 
   const [selectedImage, setSelectedImage] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
@@ -78,20 +83,34 @@ function ProductPage() {
   // Fetch product data - by ID if available, otherwise by slug
   const { data: productResponse, isLoading, error } = useQuery({
     queryKey: ["product", productId || urlSlug],
-    queryFn: () => productId ? getProductById(productId) : getProductBySlug(urlSlug),
+    queryFn: () => productId ? getProductById({ data: { id: productId } }) : getProductBySlug({ data: { slug: urlSlug } }),
     staleTime: 5 * 60 * 1000,
   })
 
   const product = productResponse?.success ? productResponse.data : null
 
-  // Check if product is in wishlist
+  // Check if product is in wishlist (only when authenticated)
   const { data: wishlistCheck } = useQuery({
     queryKey: ["wishlist-check", product?.id],
-    queryFn: () => checkWishlist(product!.id),
+    queryFn: () => checkWishlist({ data: { productId: product!.id } }),
+    enabled: !!product?.id && isAuthenticated,
+  })
+
+  const isInWishlist = wishlistCheck?.success ? wishlistCheck.data?.in_wishlist ?? false : false
+  const wishlistItemId = wishlistCheck?.success ? wishlistCheck.data?.item_id ?? null : null
+
+  // Fetch real pricing for all variants
+  const { data: pricingResponse } = useQuery({
+    queryKey: ["product-pricing", product?.id],
+    queryFn: () => getProductPricing({ data: { productId: product!.id } }),
     enabled: !!product?.id,
   })
 
-  const isInWishlist = wishlistCheck?.success ? wishlistCheck.data.in_wishlist : false
+  const variantPricing: PriceBreakdown | null = useMemo(() => {
+    if (!pricingResponse?.success || !selectedVariant) return null
+    const match = pricingResponse.data.variants.find(v => v.variant_id === selectedVariant.id)
+    return match?.pricing ?? null
+  }, [pricingResponse, selectedVariant])
 
   // Redirect to canonical URL if slug doesn't match
   useEffect(() => {
@@ -105,17 +124,55 @@ function ProductPage() {
   }, [product, productId, urlSlug, navigate])
 
   // Set default variant when product loads
-  useMemo(() => {
+  useEffect(() => {
     if (product?.variants?.length && !selectedVariant) {
       const defaultVariant = product.variants.find((v) => v.is_default) || product.variants[0]
       setSelectedVariant(defaultVariant)
     }
-  }, [product, selectedVariant])
+  }, [product?.id])
+
+  // Fetch product attributes (EAV)
+  const { data: attributesResponse } = useQuery({
+    queryKey: ["product-attributes", product?.id],
+    queryFn: () => getProductAttributes({ data: { productId: product!.id } }),
+    enabled: !!product?.id,
+  })
+
+  const { data: attrGroupsResponse } = useQuery({
+    queryKey: ["attribute-groups"],
+    queryFn: () => getAttributeGroups(),
+    staleTime: 10 * 60 * 1000,
+    enabled: !!product?.id,
+  })
+
+  // Group attributes by group name
+  const attributeGroups = useMemo(() => {
+    const values = attributesResponse?.success ? attributesResponse.data : []
+    const groups = attrGroupsResponse?.success ? attrGroupsResponse.data : []
+    const groupMap: Record<string, string> = {}
+    for (const g of groups) groupMap[g.id] = g.name
+
+    const result: { groupName: string; sortOrder: number; items: { name: string; value: string }[] }[] = []
+    const seen: Record<string, number> = {}
+
+    for (const item of values) {
+      if (!item.attribute) continue
+      const groupId = item.attribute.group_id
+      const groupName = groupMap[groupId] || 'Details'
+      if (seen[groupId] === undefined) {
+        const g = groups.find(g => g.id === groupId)
+        seen[groupId] = result.length
+        result.push({ groupName, sortOrder: g?.sort_order ?? 0, items: [] })
+      }
+      result[seen[groupId]].items.push({ name: item.attribute.name, value: item.value })
+    }
+    return result.sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [attributesResponse, attrGroupsResponse])
 
   // Fetch related products
   const { data: relatedResponse } = useQuery({
     queryKey: ["related-products", product?.category_id],
-    queryFn: () => getProducts({ category_id: product?.category_id, per_page: 4 }),
+    queryFn: () => getProducts({ data: { category_id: product?.category_id, per_page: 4 } }),
     enabled: !!product?.category_id,
     staleTime: 5 * 60 * 1000,
   })
@@ -126,7 +183,7 @@ function ProductPage() {
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
-    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart(data),
+    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] })
     },
@@ -134,25 +191,25 @@ function ProductPage() {
 
   // Wishlist mutations
   const addWishlistMutation = useMutation({
-    mutationFn: (data: { product_id: string; variant_id?: string }) => addToWishlist(data.product_id, data.variant_id),
+    mutationFn: (data: { product_id: string; variant_id?: string }) => addToWishlist({ data: { product_id: data.product_id, variant_id: data.variant_id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist-check", product?.id] })
       queryClient.invalidateQueries({ queryKey: ["wishlist"] })
     },
   })
 
-  // Calculate price from variant
-  const calculatePrice = (variant: ProductVariant | null) => {
-    if (!variant) return 0
-    return variant.net_weight * 100
-  }
+  const removeWishlistMutation = useMutation({
+    mutationFn: (itemId: string) => removeFromWishlist({ data: { itemId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist-check", product?.id] })
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] })
+    },
+  })
 
-  const price = calculatePrice(selectedVariant)
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "BDT",
-    minimumFractionDigits: 0,
-  }).format(price)
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", minimumFractionDigits: 0 }).format(n)
+
+  const formattedPrice = variantPricing ? fmt(variantPricing.total_price) : "—"
 
   // Image navigation
   const images = product?.images || []
@@ -169,20 +226,42 @@ function ProductPage() {
 
   const handleAddToCart = () => {
     if (!selectedVariant) return
+    if (!isAuthenticated) {
+      showLoginModal('Please login to add items to your cart', () => {
+        addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
+      })
+      return
+    }
     addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
   }
 
   const handleBuyNow = () => {
+    if (!selectedVariant) return
+    if (!isAuthenticated) {
+      showLoginModal('Please login to purchase this item', () => {
+        addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
+        navigate({ to: "/cart" })
+      })
+      return
+    }
     handleAddToCart()
     navigate({ to: "/cart" })
   }
 
   const handleToggleWishlist = () => {
     if (!product) return
-    addWishlistMutation.mutate({
-      product_id: product.id,
-      variant_id: selectedVariant?.id
-    })
+    if (!isAuthenticated) {
+      showLoginModal('Please login to save items to your wishlist')
+      return
+    }
+    if (isInWishlist && wishlistItemId) {
+      removeWishlistMutation.mutate(wishlistItemId)
+    } else {
+      addWishlistMutation.mutate({
+        product_id: product.id,
+        variant_id: selectedVariant?.id,
+      })
+    }
   }
 
   // Loading state
@@ -250,10 +329,10 @@ function ProductPage() {
                 {/* Wishlist button */}
                 <button
                   onClick={handleToggleWishlist}
-                  disabled={addWishlistMutation.isPending}
+                  disabled={addWishlistMutation.isPending || removeWishlistMutation.isPending}
                   className="absolute top-4 right-4 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform disabled:opacity-50"
                 >
-                  {addWishlistMutation.isPending ? (
+                  {(addWishlistMutation.isPending || removeWishlistMutation.isPending) ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <Heart
@@ -350,8 +429,21 @@ function ProductPage() {
               </div>
 
               {/* Price */}
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl lg:text-4xl font-bold text-header">{formattedPrice}</span>
+              <div className="space-y-1">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl lg:text-4xl font-bold text-header">{formattedPrice}</span>
+                </div>
+                {variantPricing && (
+                  <div className="text-sm text-gray-500 space-y-0.5">
+                    <div className="flex gap-4">
+                      <span>Metal cost: <span className="text-gray-700">{fmt(variantPricing.metal_cost)}</span></span>
+                      <span>Making charge: <span className="text-gray-700">{fmt(variantPricing.making_charge)}</span></span>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Incl. {variantPricing.tax_rate}% tax ({fmt(variantPricing.tax_amount)})
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Stock Status */}
@@ -360,7 +452,7 @@ function ProductPage() {
                   <>
                     <Check className="w-5 h-5 text-green-500" />
                     <span className="text-green-600 font-medium">
-                      In Stock ({selectedVariant.stock_quantity} available)
+                      In Stock
                     </span>
                   </>
                 ) : (
@@ -382,7 +474,7 @@ function ProductPage() {
                           variant.size ? `Size ${variant.size}` : null,
                         ]
                           .filter(Boolean)
-                          .join(" - ")
+                          .join(" · ")
 
                         return (
                           <button
@@ -401,6 +493,29 @@ function ProductPage() {
                   </div>
                 </div>
               )}
+
+              {/* Selected Variant Attributes */}
+              {selectedVariant && (() => {
+                const attrs = [
+                  { label: 'Metal', value: selectedVariant.metal_type },
+                  { label: 'Purity', value: selectedVariant.metal_purity },
+                  { label: 'Color', value: selectedVariant.metal_color },
+                  { label: 'Size', value: selectedVariant.size },
+                  { label: 'Gross Weight', value: selectedVariant.gross_weight ? `${selectedVariant.gross_weight}g` : null },
+                  { label: 'Net Weight', value: selectedVariant.net_weight ? `${selectedVariant.net_weight}g` : null },
+                ].filter(a => a.value)
+                if (!attrs.length) return null
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {attrs.map(({ label, value }) => (
+                      <div key={label} className="bg-gray-50 rounded-lg px-3 py-2">
+                        <p className="text-xs text-gray-400">{label}</p>
+                        <p className="text-sm font-medium text-gray-800 mt-0.5">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
 
               {/* Quantity */}
               <div className="flex items-center gap-4">
@@ -482,68 +597,56 @@ function ProductPage() {
             </div>
           </div>
 
-          {/* Product Specifications */}
-          {selectedVariant && (
-            <div className="border-t p-6 lg:p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Product Specifications</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Basic Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Basic Information</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">SKU</span>
-                      <span className="font-medium">{selectedVariant.sku}</span>
-                    </div>
-                    {product.gender && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Gender</span>
-                        <span className="font-medium">{product.gender}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          {/* Product Specifications & Attributes */}
+          {(selectedVariant || attributeGroups.length > 0) && (
+            <div className="border-t p-6 lg:p-8 space-y-8">
 
-                {/* Metal Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Metal Information</h3>
-                  <div className="space-y-2 text-sm">
-                    {selectedVariant.metal_type && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Metal Type</span>
-                        <span className="font-medium">{selectedVariant.metal_type}</span>
+              {/* Variant specs */}
+              {selectedVariant && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Product Specifications</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: 'SKU', value: selectedVariant.sku },
+                      { label: 'Gender', value: product.gender },
+                      { label: 'Metal Type', value: selectedVariant.metal_type },
+                      { label: 'Purity', value: selectedVariant.metal_purity },
+                      { label: 'Metal Color', value: selectedVariant.metal_color },
+                      { label: 'Size', value: selectedVariant.size },
+                      { label: 'Gross Weight', value: selectedVariant.gross_weight ? `${selectedVariant.gross_weight}g` : null },
+                      { label: 'Net Weight', value: selectedVariant.net_weight ? `${selectedVariant.net_weight}g` : null },
+                    ].filter(r => r.value).map(({ label, value }) => (
+                      <div key={label} className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                        <span className="text-gray-500">{label}</span>
+                        <span className="font-medium text-gray-900">{value}</span>
                       </div>
-                    )}
-                    {selectedVariant.metal_purity && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Purity</span>
-                        <span className="font-medium">{selectedVariant.metal_purity}</span>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
+              )}
 
-                {/* Weight Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Weight Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Gross Weight</span>
-                      <span className="font-medium">{selectedVariant.gross_weight}g</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Net Weight</span>
-                      <span className="font-medium">{selectedVariant.net_weight}g</span>
-                    </div>
-                    {selectedVariant.size && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Size</span>
-                        <span className="font-medium">{selectedVariant.size}</span>
+              {/* EAV Attributes grouped */}
+              {attributeGroups.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Additional Details</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {attributeGroups.map(({ groupName, items }) => (
+                      <div key={groupName} className="bg-gray-50 rounded-xl p-4">
+                        <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">{groupName}</h3>
+                        <div className="space-y-2">
+                          {items.map(({ name, value }) => (
+                            <div key={name} className="flex justify-between text-sm">
+                              <span className="text-gray-500">{name}</span>
+                              <span className="font-medium text-gray-900 text-right max-w-[60%]">{value}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
+
             </div>
           )}
         </div>

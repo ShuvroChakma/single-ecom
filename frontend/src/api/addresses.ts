@@ -1,8 +1,9 @@
 /**
- * Addresses API functions
+ * Addresses API - Server Functions (token from HttpOnly cookie)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
+import { apiRequest, ApiResponse } from './client'
 
 export interface Address {
   id: string
@@ -52,44 +53,55 @@ export interface AddressUpdateRequest {
   is_default?: boolean
 }
 
-/**
- * Get all addresses for current customer
- */
-export async function getAddresses(): Promise<APIResponse<AddressListResponse>> {
-  return apiClient.get<AddressListResponse>('/addresses')
-}
+export const getAddresses = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<AddressListResponse>>('/addresses', {}, token)
+  })
 
-/**
- * Get a single address by ID
- */
-export async function getAddress(addressId: string): Promise<APIResponse<Address>> {
-  return apiClient.get<Address>(`/addresses/${addressId}`)
-}
+export const getAddress = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { addressId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Address>>(`/addresses/${data.addressId}`, {}, token)
+  })
 
-/**
- * Create a new address
- */
-export async function createAddress(data: AddressCreateRequest): Promise<APIResponse<Address>> {
-  return apiClient.post<Address>('/addresses', data)
-}
+export const createAddress = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: AddressCreateRequest }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Address>>('/addresses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token)
+  })
 
-/**
- * Update an existing address
- */
-export async function updateAddress(addressId: string, data: AddressUpdateRequest): Promise<APIResponse<Address>> {
-  return apiClient.put<Address>(`/addresses/${addressId}`, data)
-}
+export const updateAddress = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { addressId: string; updates: AddressUpdateRequest } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Address>>(`/addresses/${data.addressId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data.updates),
+    }, token)
+  })
 
-/**
- * Delete an address
- */
-export async function deleteAddress(addressId: string): Promise<APIResponse<{ deleted: boolean }>> {
-  return apiClient.delete<{ deleted: boolean }>(`/addresses/${addressId}`)
-}
+export const deleteAddress = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { addressId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<{ deleted: boolean }>>(`/addresses/${data.addressId}`, {
+      method: 'DELETE',
+    }, token)
+  })
 
-/**
- * Set an address as default
- */
-export async function setDefaultAddress(addressId: string): Promise<APIResponse<Address>> {
-  return apiClient.patch<Address>(`/addresses/${addressId}/default`, {})
-}
+export const setDefaultAddress = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { addressId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Address>>(`/addresses/${data.addressId}/default`, {
+      method: 'PATCH',
+      body: JSON.stringify({}),
+    }, token)
+  })

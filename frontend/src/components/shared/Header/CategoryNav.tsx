@@ -10,7 +10,7 @@ const CategoryNav = () => {
   // Fetch categories from API with caching
   const { data: categoriesResponse, isLoading } = useQuery({
     queryKey: ["category-tree"],
-    queryFn: getCategoryTree,
+    queryFn: () => getCategoryTree(),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     refetchOnWindowFocus: false,
   })

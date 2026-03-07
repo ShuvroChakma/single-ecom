@@ -1,8 +1,8 @@
 /**
- * Payments API functions
+ * Payments API - Server Functions (public, no auth needed)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { apiRequest, ApiResponse } from './client'
 
 export interface PaymentMethod {
   code: string
@@ -17,23 +17,14 @@ export interface PaymentMethodsResponse {
   methods: PaymentMethod[]
 }
 
-/**
- * Get available payment methods (public)
- * Optionally filter by order amount
- */
-export async function getPaymentMethods(orderAmount?: number): Promise<APIResponse<PaymentMethodsResponse>> {
-  const params = orderAmount ? `?order_amount=${orderAmount}` : ''
-  return apiClient.get<PaymentMethodsResponse>(`/payments/methods${params}`)
-}
+export const getPaymentMethods = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data?: { order_amount?: number } }) => {
+    const params = data?.order_amount ? `?order_amount=${data.order_amount}` : ''
+    return apiRequest<ApiResponse<PaymentMethodsResponse>>(`/payments/methods${params}`)
+  })
 
-/**
- * Get logo URL for a payment method
- */
 export function getPaymentLogo(method: PaymentMethod): string {
-  if (method.logo_url) {
-    return method.logo_url
-  }
-  // Default logos based on code
+  if (method.logo_url) return method.logo_url
   const defaultLogos: Record<string, string> = {
     cod: 'https://cdn-icons-png.flaticon.com/128/2331/2331941.png',
     bkash: 'https://www.logo.wine/a/logo/BKash/BKash-Icon-Logo.wine.svg',

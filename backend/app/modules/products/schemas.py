@@ -142,6 +142,9 @@ class SortOrder(str):
 
 class ProductListParams(BaseModel):
     """Query parameters for product listing."""
+    # EAV attribute filters: {attribute_code: [value1, value2]}
+    attribute_filters: Optional[dict] = None  # Dict[str, List[str]]
+
     # Category filtering (supports single or multiple)
     category_id: Optional[UUID] = None
     category_ids: Optional[List[UUID]] = None  # Multiple categories

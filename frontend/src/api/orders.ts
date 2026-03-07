@@ -1,8 +1,9 @@
 /**
- * Orders API functions
+ * Orders API - Server Functions (token from HttpOnly cookie)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
+import { apiRequest, ApiResponse } from './client'
 
 export interface OrderItem {
   id: string
@@ -11,10 +12,14 @@ export interface OrderItem {
   product_name: string
   product_image: string | null
   variant_sku: string
-  variant_info: string
+  metal_type: string | null
+  metal_purity: string | null
+  metal_color: string | null
+  size: string | null
   quantity: number
   unit_price: number
-  subtotal: number
+  line_total: number
+  net_weight: number | null
 }
 
 export interface OrderListItem {
@@ -78,37 +83,38 @@ export interface OrderCreatedResponse {
   message: string
 }
 
-/**
- * Create a new order from cart
- */
-export async function createOrder(data: CreateOrderRequest): Promise<APIResponse<OrderCreatedResponse>> {
-  return apiClient.post<OrderCreatedResponse>('/orders', data)
-}
+export const createOrder = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: CreateOrderRequest }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<OrderCreatedResponse>>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token)
+  })
 
-/**
- * Get order by ID
- */
-export async function getOrder(orderId: string): Promise<APIResponse<Order>> {
-  return apiClient.get<Order>(`/orders/${orderId}`)
-}
+export const getOrder = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { orderId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Order>>(`/orders/${data.orderId}`, {}, token)
+  })
 
-/**
- * Get list of orders (simpler response)
- */
-export async function getOrdersList(limit: number = 20, offset: number = 0): Promise<APIResponse<OrderListItem[]>> {
-  return apiClient.get<OrderListItem[]>(`/orders?limit=${limit}&offset=${offset}`)
-}
+export const getOrdersList = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data?: { limit?: number; offset?: number } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    const limit = data?.limit ?? 20
+    const offset = data?.offset ?? 0
+    return apiRequest<ApiResponse<OrderListItem[]>>(`/orders?limit=${limit}&offset=${offset}`, {}, token)
+  })
 
-/**
- * Get user's orders
- */
-export async function getMyOrders(limit: number = 20, offset: number = 0): Promise<APIResponse<Order[]>> {
-  return apiClient.get<Order[]>(`/orders?limit=${limit}&offset=${offset}`)
-}
-
-/**
- * Cancel an order
- */
-export async function cancelOrder(orderId: string): Promise<APIResponse<Order>> {
-  return apiClient.post<Order>(`/orders/${orderId}/cancel`, {})
-}
+export const cancelOrder = createServerFn({ method: 'POST' })
+  .handler(async ({ data }: { data: { orderId: string } }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Order>>(`/orders/${data.orderId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }, token)
+  })

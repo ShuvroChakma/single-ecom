@@ -70,6 +70,7 @@ DEFAULT_SETTINGS = [
     {"key": "contact_address", "value": "123 Jewelry Lane, Dhaka", "category": "CONTACT"},
     {"key": "support_email", "value": "support@store.com", "category": "CONTACT"},
     {"key": "whatsapp_number", "value": "+8801711000000", "category": "CONTACT"},
+    {"key": "map_embed_url", "value": "", "category": "CONTACT", "description": "Google Maps embed URL for store location"},
     
     # Social
     {"key": "facebook_url", "value": "", "category": "SOCIAL"},

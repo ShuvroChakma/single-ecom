@@ -131,11 +131,13 @@ export const deleteCategory = createServerFn({ method: "POST" })
     );
   });
 
-export const toggleCategoryActive = createServerFn({ method: "PATCH" })
-  .handler(async ({ data }: { data: { id: string; is_active: boolean; token: string } }) => {
+export const toggleCategoryActive = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { id: string; is_active: boolean } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
     return apiRequest<ApiResponse<Category>>(
-        `/catalog/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
+      `/catalog/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
       { method: "PATCH" },
-      data.token
+      token
     );
   });
