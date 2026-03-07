@@ -141,26 +141,8 @@ const data = {
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/dashboard/settings/general",
       icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "/dashboard/settings/general",
-        },
-        {
-          title: "Store Info",
-          url: "/dashboard/settings/store",
-        },
-        {
-          title: "Payment Gateways",
-          url: "/dashboard/settings/payments",
-        },
-        {
-          title: "Appearance",
-          url: "/dashboard/settings/appearance",
-        },
-      ],
     },
   ],
 }

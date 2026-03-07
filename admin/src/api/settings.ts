@@ -2,6 +2,7 @@
  * Settings API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
 
 export interface SettingsGrouped {
@@ -30,48 +31,65 @@ export const getSettings = createServerFn({ method: "GET" })
   });
 
 export const getAdminSettings = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    return apiRequest<ApiResponse<Setting[]>>("/settings/admin/all", {}, data.token);
+  .handler(async () => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+    return apiRequest<ApiResponse<Setting[]>>("/settings/admin/all", {}, token);
   });
 
-export const getSettingsByCategory = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { category: string; token: string } }) => {
+export const getAdminGroupedSettings = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+    return apiRequest<ApiResponse<SettingsGrouped>>("/settings/admin/grouped", {}, token);
+  });
+
+export const getSettingsByCategory = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { category: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
     return apiRequest<ApiResponse<Setting[]>>(
       `/settings/admin/category/${data.category}`,
       {},
-      data.token
+      token
     );
   });
 
-export const updateSetting = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { key: string; value: string; token: string } }) => {
+export const updateSetting = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { key: string; value: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
     return apiRequest<ApiResponse<Setting>>(
       `/settings/admin/${data.key}`,
       {
         method: "PUT",
         body: JSON.stringify({ value: data.value }),
       },
-      data.token
+      token
     );
   });
 
-export const bulkUpdateSettings = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { settings: Record<string, string>; token: string } }) => {
+export const bulkUpdateSettings = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { settings: Record<string, string> } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
     return apiRequest<ApiResponse<{ updated_count: number }>>(
       "/settings/admin/bulk",
       {
         method: "PUT",
         body: JSON.stringify({ settings: data.settings }),
       },
-      data.token
+      token
     );
   });
 
 export const initializeSettings = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { token: string } }) => {
+  .handler(async () => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
     return apiRequest<ApiResponse<{ created_count: number }>>(
       "/settings/admin/initialize",
       { method: "POST" },
-      data.token
+      token
     );
   });
