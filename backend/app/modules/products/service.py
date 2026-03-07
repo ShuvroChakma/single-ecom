@@ -7,7 +7,7 @@ from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-from app.core.exceptions import ValidationError, NotFoundError
+from app.core.exceptions import ValidationError, NotFoundError, ConflictError
 from app.constants.error_codes import ErrorCode
 from app.modules.audit.service import AuditService
 from app.modules.products.models import Product, ProductVariant, MetalType
@@ -178,7 +178,13 @@ class ProductService:
     ) -> None:
         """Delete a product and its variants."""
         product = await self.get_product(product_id)
-        await self.repository.delete(product)
+        try:
+            await self.repository.delete(product)
+        except IntegrityError:
+            raise ConflictError(
+                message="Cannot delete this product because it is referenced by one or more orders. Deactivate it instead.",
+                error_code="PRODUCT_HAS_ORDERS"
+            )
         
         await self.audit_service.log_action(
             action="delete_product",
@@ -287,7 +293,13 @@ class ProductVariantService:
     ) -> None:
         """Delete a product variant."""
         variant = await self.get_variant(variant_id)
-        await self.repository.delete(variant)
+        try:
+            await self.repository.delete(variant)
+        except IntegrityError:
+            raise ConflictError(
+                message="Cannot delete this variant because it is referenced by one or more orders or cart items. Set it as inactive instead.",
+                error_code="VARIANT_HAS_REFERENCES"
+            )
         
         await self.audit_service.log_action(
             action="delete_variant",
