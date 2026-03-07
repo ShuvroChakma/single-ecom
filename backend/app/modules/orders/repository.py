@@ -46,6 +46,7 @@ class OrderRepository:
         """Get orders for a customer."""
         query = (
             select(Order)
+            .options(selectinload(Order.items))
             .where(Order.customer_id == customer_id)
             .order_by(Order.created_at.desc())
             .offset(offset)
@@ -61,7 +62,7 @@ class OrderRepository:
         offset: int = 0
     ) -> List[Order]:
         """Get all orders with optional status filter."""
-        query = select(Order).order_by(Order.created_at.desc())
+        query = select(Order).options(selectinload(Order.items)).order_by(Order.created_at.desc())
         
         if status:
             query = query.where(Order.status == status)

@@ -12,10 +12,14 @@ export interface OrderItem {
   product_name: string
   product_image: string | null
   variant_sku: string
-  variant_info: string
+  metal_type: string | null
+  metal_purity: string | null
+  metal_color: string | null
+  size: string | null
   quantity: number
   unit_price: number
-  subtotal: number
+  line_total: number
+  net_weight: number | null
 }
 
 export interface OrderListItem {
