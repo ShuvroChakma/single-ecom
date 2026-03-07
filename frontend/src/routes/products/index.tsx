@@ -1,14 +1,54 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect, useMemo } from 'react'
-import { Search, SlidersHorizontal, Grid, List, ChevronDown, Heart, ShoppingCart, Loader2 } from 'lucide-react'
+import { Search, SlidersHorizontal, Grid, List, ChevronDown, ChevronUp, Heart, Loader2, X, Check } from 'lucide-react'
 import Header from '@/components/shared/Header/Header'
 import Footer from '@/components/shared/Footer/Footer'
-import { getProducts, getCategoryTree, findCategoryBySlug, type Category } from '@/api/categories'
+import { getProducts, getCategoryTree, findCategoryBySlug } from '@/api/categories'
+import { getMetals } from '@/api/products'
 import { getImageUrl } from '@/api/client'
 import { addToWishlist } from '@/api/wishlist'
 import { useAuth } from '@/hooks/useAuth'
 import { useLoginModal } from '@/contexts/LoginModalContext'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+
+const GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
+
+function resolveGenders(selected: string[]): string[] {
+  const result = new Set(selected)
+  if (selected.includes('Men') || selected.includes('Women')) result.add('Unisex')
+  return Array.from(result)
+}
+
+function FilterSection({ title, children, defaultOpen = true }: {
+  title: string; children: React.ReactNode; defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border-b border-gray-100 pb-4">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="flex w-full items-center justify-between py-3 text-sm font-semibold text-gray-900">
+        {title}
+        {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+      </button>
+      {open && <div className="mt-1">{children}</div>}
+    </div>
+  )
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+        active ? 'bg-header text-white border-header' : 'bg-white text-gray-600 border-gray-200 hover:border-header/40 hover:text-header'
+      )}>
+      {active && <Check size={10} />}
+      {children}
+    </button>
+  )
+}
 
 // Search params type
 type ProductsSearch = {
@@ -31,11 +71,24 @@ function ProductsPage() {
   const queryClient = useQueryClient()
   const { q, category } = Route.useSearch()
   const [searchQuery, setSearchQuery] = useState(q || '')
+  const [debouncedSearch, setDebouncedSearch] = useState(q || '')
   const [sortBy, setSortBy] = useState('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([])
+  const [selectedMetals, setSelectedMetals] = useState<string[]>([])
+  const [selectedPurities, setSelectedPurities] = useState<string[]>([])
+  const [minWeight, setMinWeight] = useState('')
+  const [maxWeight, setMaxWeight] = useState('')
+  const [inStockOnly, setInStockOnly] = useState(false)
   const { isAuthenticated } = useAuth()
   const { showLoginModal } = useLoginModal()
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 400)
+    return () => clearTimeout(t)
+  }, [searchQuery])
 
   // Sync URL query param with local state
   useEffect(() => {
@@ -61,6 +114,28 @@ function ProductsPage() {
     return findCategoryBySlug(categoryTree, category)
   }, [category, categoryTree])
 
+  // Fetch metals from API
+  const { data: metalsData } = useQuery({
+    queryKey: ['metals'],
+    queryFn: () => getMetals(),
+    staleTime: 10 * 60 * 1000,
+  })
+  // Metal objects with code (for filtering) and purities
+  const metalObjects: { name: string; code: string; purities: { name: string; code: string }[] }[] =
+    metalsData?.success ? metalsData.data.map((m: any) => ({
+      name: m.name,
+      code: m.code,
+      purities: (m.purities || []).filter((p: any) => p.is_active),
+    })) : []
+
+  // Purities available for selected metals (or all purities if none selected)
+  const availablePurities = selectedMetals.length
+    ? metalObjects.filter(m => selectedMetals.includes(m.code)).flatMap(m => m.purities)
+    : metalObjects.flatMap(m => m.purities)
+
+  // Deduplicate purities by code
+  const uniquePurities = availablePurities.filter((p, i, arr) => arr.findIndex(x => x.code === p.code) === i)
+
   // Add to wishlist mutation
   const addWishlistMutation = useMutation({
     mutationFn: (productId: string) => addToWishlist({ data: { product_id: productId } }),
@@ -76,6 +151,22 @@ function ProductsPage() {
   })
 
   // Fetch products with infinite query
+  const effectiveGenders = resolveGenders(selectedGenders)
+
+  const clearAllFilters = () => {
+    setSelectedGenders([])
+    setSelectedMetals([])
+    setSelectedPurities([])
+    setMinWeight('')
+    setMaxWeight('')
+    setInStockOnly(false)
+    setSearchQuery('')
+  }
+
+  const activeFilterCount =
+    selectedGenders.length + selectedMetals.length + selectedPurities.length +
+    (inStockOnly ? 1 : 0) + (minWeight ? 1 : 0) + (maxWeight ? 1 : 0)
+
   const {
     data,
     fetchNextPage,
@@ -84,14 +175,20 @@ function ProductsPage() {
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ['products', searchQuery, sortBy, selectedCategory?.id],
+    queryKey: ['products', debouncedSearch, sortBy, selectedCategory?.id, selectedGenders, selectedMetals, selectedPurities, minWeight, maxWeight, inStockOnly],
     queryFn: async ({ pageParam = 1 }) => {
       const result = await getProducts({
         data: {
           page: pageParam,
           per_page: 12,
-          search: searchQuery || undefined,
+          search: debouncedSearch || undefined,
           category_id: selectedCategory?.id || undefined,
+          genders: effectiveGenders.length ? effectiveGenders : undefined,
+          metal_types: selectedMetals.length ? selectedMetals : undefined,
+          metal_purities: selectedPurities.length ? selectedPurities : undefined,
+          min_weight: minWeight ? Number(minWeight) : undefined,
+          max_weight: maxWeight ? Number(maxWeight) : undefined,
+          in_stock: inStockOnly || undefined,
         },
       })
       return result
@@ -156,66 +253,279 @@ function ProductsPage() {
           )}
         </nav>
 
-        {/* Page Title */}
-        <div className="mb-6">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            {selectedCategory ? selectedCategory.name : 'All Products'}
-          </h1>
-          <p className="text-gray-600 mt-1">{totalProducts} products available</p>
-        </div>
-
-        {/* Filters Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        {/* Top toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {selectedCategory ? selectedCategory.name : 'All Products'}
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">{totalProducts} products</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Search */}
-            <form onSubmit={handleSearch} className="flex-1 w-full sm:max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-header focus:border-transparent"
-                />
-              </div>
-            </form>
-
-            {/* Sort & View */}
-            <div className="flex items-center gap-4">
-              {/* Sort */}
-              <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-header focus:border-transparent bg-white"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="popular">Most Popular</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-
-              {/* View Toggle */}
-              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-header text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <Grid className="w-5 h-5" />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-48 sm:w-56"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <X size={13} className="text-gray-400 hover:text-gray-600" />
                 </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-header text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <List className="w-5 h-5" />
-                </button>
-              </div>
+              )}
             </div>
+            {/* Sort */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-10 appearance-none pl-3 pr-8 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-header/20 focus:border-header transition-colors"
+              >
+                <option value="newest">Newest First</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="popular">Most Popular</option>
+              </select>
+              <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+            {/* View toggle */}
+            <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+              <button onClick={() => setViewMode('grid')}
+                className={cn('p-2.5', viewMode === 'grid' ? 'bg-header text-white' : 'bg-white text-gray-400 hover:bg-gray-50')}>
+                <Grid size={16} />
+              </button>
+              <button onClick={() => setViewMode('list')}
+                className={cn('p-2.5', viewMode === 'list' ? 'bg-header text-white' : 'bg-white text-gray-400 hover:bg-gray-50')}>
+                <List size={16} />
+              </button>
+            </div>
+            {/* Mobile filter toggle */}
+            <button onClick={() => setShowFilters(v => !v)}
+              className={cn(
+                'lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium',
+                showFilters ? 'bg-header text-white border-header' : 'bg-white border-gray-200 text-gray-700'
+              )}>
+              <SlidersHorizontal size={15} />
+              Filters
+              {activeFilterCount > 0 && <span className="bg-white text-header rounded-full w-4 h-4 text-xs flex items-center justify-center font-bold">{activeFilterCount}</span>}
+            </button>
           </div>
         </div>
+
+        {/* Active filter chips */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {selectedGenders.map(g => (
+              <span key={g} className="inline-flex items-center gap-1 px-2.5 py-1 bg-header/10 text-header text-xs rounded-full font-medium">
+                {g} <button onClick={() => setSelectedGenders(p => p.filter(x => x !== g))}><X size={10} /></button>
+              </span>
+            ))}
+            {selectedMetals.map(code => {
+              const metal = metalObjects.find(m => m.code === code)
+              return (
+                <span key={code} className="inline-flex items-center gap-1 px-2.5 py-1 bg-header/10 text-header text-xs rounded-full font-medium">
+                  {metal?.name ?? code} <button onClick={() => setSelectedMetals(p => p.filter(x => x !== code))}><X size={10} /></button>
+                </span>
+              )
+            })}
+            {selectedPurities.map(p => (
+              <span key={p} className="inline-flex items-center gap-1 px-2.5 py-1 bg-header/10 text-header text-xs rounded-full font-medium">
+                {p} <button onClick={() => setSelectedPurities(prev => prev.filter(x => x !== p))}><X size={10} /></button>
+              </span>
+            ))}
+            {(minWeight || maxWeight) && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-header/10 text-header text-xs rounded-full font-medium">
+                Weight: {minWeight || '0'}g – {maxWeight || '∞'}g
+                <button onClick={() => { setMinWeight(''); setMaxWeight('') }}><X size={10} /></button>
+              </span>
+            )}
+            {inStockOnly && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-header/10 text-header text-xs rounded-full font-medium">
+                In Stock <button onClick={() => setInStockOnly(false)}><X size={10} /></button>
+              </span>
+            )}
+            <button onClick={clearAllFilters} className="text-xs text-gray-400 hover:text-red-500 underline">Clear all</button>
+          </div>
+        )}
+
+        <div className="flex gap-6">
+          {/* Sidebar — desktop */}
+          <aside className="hidden lg:block w-52 shrink-0">
+            <div className="bg-white rounded-xl shadow-sm p-4 sticky top-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 text-sm">Filters</h2>
+                {activeFilterCount > 0 && (
+                  <span className="text-xs bg-header text-white rounded-full px-2 py-0.5">{activeFilterCount}</span>
+                )}
+              </div>
+
+              <FilterSection title="Gender">
+                <div className="flex flex-wrap gap-1.5">
+                  {GENDERS.map(g => (
+                    <Chip key={g} active={selectedGenders.includes(g)}
+                      onClick={() => setSelectedGenders(p => p.includes(g) ? p.filter(x => x !== g) : [...p, g])}>
+                      {g}
+                    </Chip>
+                  ))}
+                </div>
+                {selectedGenders.length > 0 && (
+                  <p className="text-xs text-gray-400 mt-2">Includes: {resolveGenders(selectedGenders).join(', ')}</p>
+                )}
+              </FilterSection>
+
+              <FilterSection title="Metal Type">
+                <div className="flex flex-wrap gap-1.5">
+                  {metalObjects.map(m => (
+                    <Chip key={m.code} active={selectedMetals.includes(m.code)}
+                      onClick={() => {
+                        setSelectedMetals(p => p.includes(m.code) ? p.filter(x => x !== m.code) : [...p, m.code])
+                        setSelectedPurities([])
+                      }}>
+                      {m.name}
+                    </Chip>
+                  ))}
+                </div>
+              </FilterSection>
+
+              {uniquePurities.length > 0 && (
+                <FilterSection title="Purity">
+                  <div className="flex flex-wrap gap-1.5">
+                    {uniquePurities.map(p => (
+                      <Chip key={p.code} active={selectedPurities.includes(p.code)}
+                        onClick={() => setSelectedPurities(prev => prev.includes(p.code) ? prev.filter(x => x !== p.code) : [...prev, p.code])}>
+                        {p.name}
+                      </Chip>
+                    ))}
+                  </div>
+                </FilterSection>
+              )}
+
+              <FilterSection title="Weight (g)" defaultOpen={false}>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min="0" placeholder="Min"
+                    value={minWeight}
+                    onChange={e => setMinWeight(e.target.value)}
+                    className="w-full h-8 px-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-header/30 focus:border-header"
+                  />
+                  <span className="text-gray-400 text-xs shrink-0">–</span>
+                  <input
+                    type="number" min="0" placeholder="Max"
+                    value={maxWeight}
+                    onChange={e => setMaxWeight(e.target.value)}
+                    className="w-full h-8 px-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-header/30 focus:border-header"
+                  />
+                </div>
+              </FilterSection>
+
+              <FilterSection title="Availability" defaultOpen={false}>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <button type="button" onClick={() => setInStockOnly(v => !v)}
+                    className={cn('w-9 h-5 rounded-full transition-colors relative', inStockOnly ? 'bg-header' : 'bg-gray-200')}>
+                    <span className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
+                      inStockOnly ? 'translate-x-4' : 'translate-x-0.5')} />
+                  </button>
+                  <span className="text-sm text-gray-700">In Stock Only</span>
+                </label>
+              </FilterSection>
+
+              {activeFilterCount > 0 && (
+                <button onClick={clearAllFilters} className="mt-2 text-xs text-red-500 hover:text-red-600 flex items-center gap-1">
+                  <X size={11} /> Clear all
+                </button>
+              )}
+            </div>
+          </aside>
+
+          {/* Mobile filter drawer */}
+          {showFilters && (
+            <div className="lg:hidden fixed inset-0 z-40 flex">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setShowFilters(false)} />
+              <div className="relative ml-auto w-72 bg-white h-full overflow-y-auto shadow-xl p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-semibold text-gray-900">Filters</h2>
+                  <button onClick={() => setShowFilters(false)}><X size={20} className="text-gray-500" /></button>
+                </div>
+
+                <FilterSection title="Gender">
+                  <div className="flex flex-wrap gap-1.5">
+                    {GENDERS.map(g => (
+                      <Chip key={g} active={selectedGenders.includes(g)}
+                        onClick={() => setSelectedGenders(p => p.includes(g) ? p.filter(x => x !== g) : [...p, g])}>
+                        {g}
+                      </Chip>
+                    ))}
+                  </div>
+                  {selectedGenders.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-2">Includes: {resolveGenders(selectedGenders).join(', ')}</p>
+                  )}
+                </FilterSection>
+
+                <FilterSection title="Metal Type">
+                  <div className="flex flex-wrap gap-1.5">
+                    {metalObjects.map(m => (
+                      <Chip key={m.code} active={selectedMetals.includes(m.code)}
+                        onClick={() => {
+                          setSelectedMetals(p => p.includes(m.code) ? p.filter(x => x !== m.code) : [...p, m.code])
+                          setSelectedPurities([])
+                        }}>
+                        {m.name}
+                      </Chip>
+                    ))}
+                  </div>
+                </FilterSection>
+
+                {uniquePurities.length > 0 && (
+                  <FilterSection title="Purity">
+                    <div className="flex flex-wrap gap-1.5">
+                      {uniquePurities.map(p => (
+                        <Chip key={p.code} active={selectedPurities.includes(p.code)}
+                          onClick={() => setSelectedPurities(prev => prev.includes(p.code) ? prev.filter(x => x !== p.code) : [...prev, p.code])}>
+                          {p.name}
+                        </Chip>
+                      ))}
+                    </div>
+                  </FilterSection>
+                )}
+
+                <FilterSection title="Weight (g)" defaultOpen={false}>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number" min="0" placeholder="Min"
+                      value={minWeight}
+                      onChange={e => setMinWeight(e.target.value)}
+                      className="w-full h-8 px-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-header/30 focus:border-header"
+                    />
+                    <span className="text-gray-400 text-xs shrink-0">–</span>
+                    <input
+                      type="number" min="0" placeholder="Max"
+                      value={maxWeight}
+                      onChange={e => setMaxWeight(e.target.value)}
+                      className="w-full h-8 px-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-header/30 focus:border-header"
+                    />
+                  </div>
+                </FilterSection>
+
+                <FilterSection title="Availability" defaultOpen={false}>
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <button type="button" onClick={() => setInStockOnly(v => !v)}
+                      className={cn('w-9 h-5 rounded-full transition-colors relative', inStockOnly ? 'bg-header' : 'bg-gray-200')}>
+                      <span className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
+                        inStockOnly ? 'translate-x-4' : 'translate-x-0.5')} />
+                    </button>
+                    <span className="text-sm text-gray-700">In Stock Only</span>
+                  </label>
+                </FilterSection>
+              </div>
+            </div>
+          )}
+
+          {/* Products */}
+          <div className="flex-1 min-w-0">
 
         {/* Products Grid */}
         {isLoading ? (
@@ -353,6 +663,8 @@ function ProductsPage() {
             )}
           </>
         )}
+          </div>
+        </div>
       </main>
 
       <Footer />

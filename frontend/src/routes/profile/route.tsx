@@ -13,6 +13,8 @@ import { getWishlist } from '@/api/wishlist'
 import { getAddresses } from '@/api/addresses'
 import { useState } from 'react'
 import { changePassword } from '@/api/auth'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useMutation } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/profile')({
@@ -229,15 +231,14 @@ function RouteComponent() {
                   { label: 'New Password', key: 'new_password' },
                   { label: 'Confirm New Password', key: 'confirm_password' },
                 ].map(({ label, key }) => (
-                  <div key={key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                    <input
+                  <div key={key} className="space-y-1.5">
+                    <Label>{label}</Label>
+                    <Input
                       type="password"
                       value={pwForm[key as keyof typeof pwForm]}
                       onChange={(e) => setPwForm(f => ({ ...f, [key]: e.target.value }))}
                       required
                       minLength={key === 'new_password' ? 8 : undefined}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-header"
                     />
                   </div>
                 ))}

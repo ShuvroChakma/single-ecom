@@ -89,6 +89,18 @@ export const getAttributeGroups = createServerFn({ method: 'GET' })
     apiRequest<ApiResponse<AttributeGroup[]>>(`/products/attribute-groups`)
   )
 
+export interface Metal {
+  id: string
+  name: string
+  code: string
+  purities?: { id: string; label: string; value: string }[]
+}
+
+export const getMetals = createServerFn({ method: 'GET' })
+  .handler(async () =>
+    apiRequest<ApiResponse<Metal[]>>(`/products/metals`)
+  )
+
 export const searchProducts = createServerFn({ method: 'GET' })
   .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
     const { query, limit = 20 } = data

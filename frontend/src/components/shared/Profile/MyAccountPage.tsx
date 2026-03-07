@@ -17,6 +17,9 @@ import {
   type AddressUpdateRequest
 } from '@/api/addresses'
 import { getImageUrl } from '@/api/client'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Combobox } from '@/components/ui/combobox'
 
 // Bangladesh districts
 const BD_DISTRICTS = [
@@ -428,99 +431,97 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
                     </h3>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Label</label>
-                        <select
+                      <div className="space-y-1.5">
+                        <Label>Label</Label>
+                        <Combobox
+                          options={[
+                            { value: 'Home', label: 'Home' },
+                            { value: 'Office', label: 'Office' },
+                            { value: 'Other', label: 'Other' },
+                          ]}
                           value={addressForm.label}
-                          onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
-                        >
-                          <option value="Home">Home</option>
-                          <option value="Office">Office</option>
-                          <option value="Other">Other</option>
-                        </select>
+                          onChange={(v) => setAddressForm({ ...addressForm, label: v || 'Home' })}
+                          placeholder="Select label"
+                          searchPlaceholder="Search..."
+                        />
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Full Name *</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>Full Name <span className="text-red-500">*</span></Label>
+                        <Input
                           type="text"
                           value={addressForm.full_name}
                           onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })}
                           required
-                          className="w-full border rounded px-3 py-2"
+                          placeholder="Enter full name"
                         />
                       </div>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Phone *</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>Phone <span className="text-red-500">*</span></Label>
+                        <Input
                           type="tel"
                           value={addressForm.phone}
                           onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
                           required
-                          className="w-full border rounded px-3 py-2"
                           placeholder="01XXXXXXXXX"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">District *</label>
-                        <select
+                      <div className="space-y-1.5">
+                        <Label>District <span className="text-red-500">*</span></Label>
+                        <Combobox
+                          options={BD_DISTRICTS.map(d => ({ value: d, label: d }))}
                           value={addressForm.district}
-                          onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
-                          required
-                          className="w-full border rounded px-3 py-2"
-                        >
-                          <option value="">Select District</option>
-                          {BD_DISTRICTS.map(d => (
-                            <option key={d} value={d}>{d}</option>
-                          ))}
-                        </select>
+                          onChange={(v) => setAddressForm({ ...addressForm, district: v })}
+                          placeholder="Select district"
+                          searchPlaceholder="Search district..."
+                        />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Address *</label>
+                    <div className="space-y-1.5">
+                      <Label>Address <span className="text-red-500">*</span></Label>
                       <textarea
                         value={addressForm.address_line1}
                         onChange={(e) => setAddressForm({ ...addressForm, address_line1: e.target.value })}
                         required
                         rows={2}
-                        className="w-full border rounded px-3 py-2"
                         placeholder="House/Flat No., Street, Area"
+                        className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-header/20 focus:border-header transition-colors resize-none"
                       />
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">City *</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>City <span className="text-red-500">*</span></Label>
+                        <Input
                           type="text"
                           value={addressForm.city}
                           onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                           required
-                          className="w-full border rounded px-3 py-2"
+                          placeholder="Enter city"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Postal Code</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>Postal Code</Label>
+                        <Input
                           type="text"
                           value={addressForm.postal_code}
                           onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          placeholder="e.g. 1200"
                         />
                       </div>
                     </div>
 
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={addressForm.is_default}
                         onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
+                        className="rounded border-gray-300 text-header focus:ring-header/20"
                       />
-                      <span className="text-sm">Set as default address</span>
+                      <span className="text-sm text-gray-700">Set as default address</span>
                     </label>
 
                     <div className="flex gap-4 pt-4">
@@ -737,42 +738,33 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Current Password<span className="text-red-500">*</span>
-                    </label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label>Current Password <span className="text-red-500">*</span></Label>
+                    <Input
                       type="password"
                       value={passwordForm.current_password}
                       onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:border-header"
                       required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      New Password<span className="text-red-500">*</span>
-                    </label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label>New Password <span className="text-red-500">*</span></Label>
+                    <Input
                       type="password"
                       value={passwordForm.new_password}
                       onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:border-header"
                       required
                       minLength={8}
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Confirm New Password<span className="text-red-500">*</span>
-                    </label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label>Confirm New Password <span className="text-red-500">*</span></Label>
+                    <Input
                       type="password"
                       value={passwordForm.confirm_password}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:border-header"
                       required
                     />
                   </div>
