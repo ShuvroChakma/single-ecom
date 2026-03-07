@@ -78,18 +78,21 @@ class SlideRepository:
             "pages": (total + limit - 1) // limit if limit > 0 else 0
         }
     
-    async def list_active(self) -> List[Slide]:
-        """List active slides within their schedule."""
+    async def list_active(self, position: Optional[str] = None) -> List[Slide]:
+        """List active slides within their schedule, optionally filtered by position."""
         now = datetime.utcnow()
         query = select(Slide).where(Slide.is_active == True)
-        
+
         # Filter by schedule
         query = query.where(
             (Slide.start_date == None) | (Slide.start_date <= now)
         ).where(
             (Slide.end_date == None) | (Slide.end_date >= now)
         )
-        
+
+        if position:
+            query = query.where(Slide.position == position)
+
         query = query.order_by(Slide.sort_order)
         result = await self.session.execute(query)
         return list(result.scalars().all())
