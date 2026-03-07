@@ -60,6 +60,35 @@ export const getProductPricing = createServerFn({ method: 'GET' })
     apiRequest<ApiResponse<ProductPricing>>(`/products/products/${data.productId}/pricing`)
   )
 
+export interface ProductAttributeValue {
+  id: string
+  attribute_id: string
+  value: string
+  attribute: {
+    code: string
+    name: string
+    group_id: string
+    type: string
+  } | null
+}
+
+export const getProductAttributes = createServerFn({ method: 'GET' })
+  .handler(async ({ data }: { data: { productId: string } }) =>
+    apiRequest<ApiResponse<ProductAttributeValue[]>>(`/products/products/${data.productId}/attributes`)
+  )
+
+export interface AttributeGroup {
+  id: string
+  name: string
+  sort_order: number
+  attributes: { id: string; code: string; name: string; type: string }[]
+}
+
+export const getAttributeGroups = createServerFn({ method: 'GET' })
+  .handler(async () =>
+    apiRequest<ApiResponse<AttributeGroup[]>>(`/products/attribute-groups`)
+  )
+
 export const searchProducts = createServerFn({ method: 'GET' })
   .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
     const { query, limit = 20 } = data
