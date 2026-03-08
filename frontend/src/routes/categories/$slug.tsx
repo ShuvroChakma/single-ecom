@@ -354,7 +354,7 @@ function CategoryPage() {
           <div className="relative h-48 md:h-64 rounded-xl overflow-hidden mb-6">
             <img src={getImageUrl(currentCategory.banner)} alt={currentCategory.name}
               loading="lazy" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-0 left-0 p-6">
               <h1 className="text-3xl md:text-4xl font-bold text-white">{currentCategory.name}</h1>
               <p className="text-white/80 mt-1">{totalProducts} Products</p>

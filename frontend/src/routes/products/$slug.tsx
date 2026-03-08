@@ -463,7 +463,7 @@ function ProductPage() {
                             }}
                             className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
                           >
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
+                            <div className="w-7 h-7 rounded-full bg-linear-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
                               <Share2 className="w-3.5 h-3.5 text-white" />
                             </div>
                             <span className="text-sm text-gray-700">Instagram & more</span>
