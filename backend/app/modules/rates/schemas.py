@@ -74,3 +74,11 @@ class CurrentRatesResponse(BaseModel):
     """Current rates for all metals/purities."""
     rates: List[DailyRateResponse]
     last_updated: datetime
+
+
+class SyncResult(BaseModel):
+    """Result of a BAJUS rate sync operation."""
+    synced: int
+    skipped: int
+    source: str = "BAJUS"
+    message: str

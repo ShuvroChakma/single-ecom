@@ -14,7 +14,7 @@ from app.constants.permissions import PermissionEnum
 from app.modules.users.models import User
 from app.modules.audit.service import AuditService
 from app.modules.rates.service import DailyRateService, PriceCalculationService
-from app.modules.rates.schemas import DailyRateCreate, DailyRateResponse, CurrentRatesResponse
+from app.modules.rates.schemas import DailyRateCreate, DailyRateResponse, CurrentRatesResponse, SyncResult
 from app.modules.products.service import ProductService
 
 router = APIRouter(prefix="/products", tags=["Daily Rates"])
@@ -106,6 +106,24 @@ async def add_rates_batch(
     return create_success_response(
         message="Rates added successfully",
         data=[DailyRateResponse.model_validate(r) for r in rates]
+    )
+
+
+@router.post(
+    "/admin/rates/sync-bajus",
+    response_model=SuccessResponse[SyncResult],
+    status_code=200
+)
+async def sync_rates_from_bajus(
+    request: Request,
+    current_user: User = Depends(require_permissions([PermissionEnum.RATES_WRITE])),
+    service: DailyRateService = Depends(get_rate_service)
+):
+    """Scrape BAJUS website and save current gold/silver rates (admin)."""
+    result = await service.sync_from_bajus(str(current_user.id), request)
+    return create_success_response(
+        message=result.message,
+        data=result
     )
 
 

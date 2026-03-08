@@ -103,6 +103,39 @@ class DailyRateService:
         )
         return rates
 
+    async def sync_from_bajus(
+        self,
+        actor_id: str,
+        request=None
+    ):
+        """Scrape BAJUS website and save current rates. Returns SyncResult."""
+        from app.modules.rates.bajus_scraper import fetch_bajus_rates
+        from app.modules.rates.schemas import SyncResult
+        from app.modules.rates.models import RateSource
+
+        scraped = await fetch_bajus_rates()
+
+        if not scraped:
+            return SyncResult(synced=0, skipped=0, message="No rates found on BAJUS page")
+
+        rates_to_create = [
+            DailyRateCreate(
+                metal_type=r.metal_type,
+                purity=r.purity,
+                rate_per_gram=r.rate_per_gram,
+                currency=r.currency,
+                source=RateSource.BAJUS,
+            )
+            for r in scraped
+        ]
+
+        saved = await self.add_rates_batch(rates_to_create, actor_id, request)
+        return SyncResult(
+            synced=len(saved),
+            skipped=len(scraped) - len(saved),
+            message=f"Successfully synced {len(saved)} rates from BAJUS"
+        )
+
 
 class PriceCalculationService:
     """Service for calculating product prices based on current rates."""
