@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as _errorRouteImport } from './routes/__error'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as WishlistRouteRouteImport } from './routes/wishlist/route'
 import { Route as StoresRouteRouteImport } from './routes/stores/route'
@@ -31,6 +32,10 @@ import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custo
 import { Route as FooterAboutRouteImport } from './routes/footer/about'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
 
+const _errorRoute = _errorRouteImport.update({
+  id: '/__error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
@@ -191,6 +196,7 @@ export interface FileRoutesById {
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/$': typeof SplatRoute
+  '/__error': typeof _errorRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -260,6 +266,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/wishlist'
     | '/$'
+    | '/__error'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -284,6 +291,7 @@ export interface RootRouteChildren {
   StoresRouteRoute: typeof StoresRouteRoute
   WishlistRouteRoute: typeof WishlistRouteRoute
   SplatRoute: typeof SplatRoute
+  _errorRoute: typeof _errorRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   FooterAboutRoute: typeof FooterAboutRoute
   FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
@@ -297,6 +305,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/__error': {
+      id: '/__error'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof _errorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$': {
       id: '/$'
       path: '/$'
@@ -484,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoresRouteRoute: StoresRouteRoute,
   WishlistRouteRoute: WishlistRouteRoute,
   SplatRoute: SplatRoute,
+  _errorRoute: _errorRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   FooterAboutRoute: FooterAboutRoute,
   FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,

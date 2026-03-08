@@ -537,7 +537,7 @@ const Checkout = () => {
               Your order number is: <strong className="text-header">{orderSuccess.orderNumber}</strong>
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              We'll send you updates about your order via SMS.
+              A confirmation has been sent to your email. We'll keep you updated on your order status.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button

@@ -16,6 +16,9 @@ import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/categories/$slug")({
   component: CategoryPage,
+  head: () => ({
+    meta: [{ title: 'Collection | Nazu Meah Jewellers' }],
+  }),
 })
 
 const GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
@@ -84,6 +87,13 @@ function CategoryPage() {
     if (!categoriesResponse?.success || !categoriesResponse.data) return null
     return findCategoryBySlug(categoriesResponse.data, slug)
   }, [categoriesResponse, slug])
+
+  useEffect(() => {
+    if (currentCategory) {
+      document.title = `${currentCategory.name} | Nazu Meah Jewellers`
+    }
+    return () => { document.title = 'Nazu Meah Jewellers' }
+  }, [currentCategory])
 
   // Fetch metals from API
   const { data: metalsData } = useQuery({
@@ -321,7 +331,7 @@ function CategoryPage() {
         {currentCategory?.banner ? (
           <div className="relative h-48 md:h-64 rounded-xl overflow-hidden mb-6">
             <img src={getImageUrl(currentCategory.banner)} alt={currentCategory.name}
-              className="w-full h-full object-cover" />
+              loading="lazy" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-0 left-0 p-6">
               <h1 className="text-3xl md:text-4xl font-bold text-white">{currentCategory.name}</h1>
@@ -517,6 +527,7 @@ function CategoryPage() {
                           <img
                             src={getImageUrl(product.images?.[0], '/placeholder-product.jpg')}
                             alt={product.name}
+                            loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           {product.is_featured && (

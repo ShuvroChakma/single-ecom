@@ -27,6 +27,9 @@ import { useLoginModal } from "@/contexts/LoginModalContext"
 
 export const Route = createFileRoute("/products/$slug")({
   component: ProductPage,
+  head: () => ({
+    meta: [{ title: 'Product | Nazu Meah Jewellers' }],
+  }),
 })
 
 // UUID regex pattern
@@ -111,6 +114,23 @@ function ProductPage() {
     const match = pricingResponse.data.variants.find(v => v.variant_id === selectedVariant.id)
     return match?.pricing ?? null
   }, [pricingResponse, selectedVariant])
+
+  // Dynamic page title + meta description
+  useEffect(() => {
+    if (product) {
+      document.title = `${product.name} | Nazu Meah Jewellers`
+      const desc = document.querySelector('meta[name="description"]')
+      const descContent = product.description?.slice(0, 160) || `Buy ${product.name} at Nazu Meah Jewellers`
+      if (desc) desc.setAttribute('content', descContent)
+      else {
+        const m = document.createElement('meta')
+        m.name = 'description'
+        m.content = descContent
+        document.head.appendChild(m)
+      }
+    }
+    return () => { document.title = 'Nazu Meah Jewellers' }
+  }, [product])
 
   // Redirect to canonical URL if slug doesn't match
   useEffect(() => {
@@ -384,6 +404,7 @@ function ProductPage() {
                   <img
                     src={getImageUrl(images[selectedImage], '/placeholder-product.jpg')}
                     alt={product.name}
+                    loading="eager"
                     className="w-full h-full object-contain p-8"
                     style={{
                       transform: isZoomed ? "scale(2)" : "scale(1)",
@@ -417,6 +438,7 @@ function ProductPage() {
                       <img
                         src={getImageUrl(img, '/placeholder-product.jpg')}
                         alt={`${product.name} ${idx + 1}`}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </button>
