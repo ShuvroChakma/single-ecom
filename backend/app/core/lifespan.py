@@ -17,17 +17,25 @@ async def lifespan(app: FastAPI):
     # MongoDB connection
     from app.core.mongo import mongodb
     mongodb.connect()
-    
+
     # NOTE: Database tables are managed by Alembic migrations
     # Run: alembic upgrade head
     # For development auto-creation, uncomment below:
     # from app.core.database import init_db
     # await init_db()
-    
+
+    from app.core.scheduler import scheduler, setup_scheduler
+    setup_scheduler()
+    scheduler.start()
+    print("Scheduler started")
+
     yield
-    
+
     # Mongo Shutdown
     mongodb.close()
-    
+
+    scheduler.shutdown(wait=False)
+    print("Scheduler stopped")
+
     # Shutdown
     print("👋 Application shutting down...")
