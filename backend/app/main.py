@@ -42,9 +42,9 @@ if settings.BACKEND_CORS_ORIGINS:
             allow_headers=["*"],
         )
 
-# Add rate limiting middleware (60 requests per minute globally)
+# Add rate limiting middleware (200 requests per minute globally)
 from app.core.rate_limit import RateLimitMiddleware
-app.add_middleware(RateLimitMiddleware, limit=60, window=60)
+app.add_middleware(RateLimitMiddleware, limit=200, window=60)
 
 add_exception_handlers(app)
 

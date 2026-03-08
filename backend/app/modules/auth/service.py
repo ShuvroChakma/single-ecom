@@ -185,7 +185,7 @@ class AuthService:
         refresh_token = RefreshToken(
             user_id=user.id,
             token_hash=token_hash,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+            expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
             family_id=family_id,
             revoked=False
         )
@@ -234,7 +234,7 @@ class AuthService:
             )
         
         # Check expiration
-        if db_token.expires_at < datetime.now(timezone.utc):
+        if db_token.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
             raise AuthenticationError(
                 error_code=ErrorCode.TOKEN_EXPIRED,
                 message="Refresh token has expired"
