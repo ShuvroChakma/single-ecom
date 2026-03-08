@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -24,6 +24,12 @@ import { addToCart } from "@/api/cart"
 import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
 import { useAuth } from "@/hooks/useAuth"
 import { useLoginModal } from "@/contexts/LoginModalContext"
+import {
+  WhatsappShareButton, WhatsappIcon,
+  FacebookShareButton, FacebookIcon,
+  TelegramShareButton, TelegramIcon,
+  TwitterShareButton, XIcon,
+} from "react-share"
 
 // UUID regex pattern — must be defined before Route (used in loader)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -95,7 +101,9 @@ function ProductPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [quantity, setQuantity] = useState(1)
-  const [shareCopied, setShareCopied] = useState(false)
+  const [showShareMenu, setShowShareMenu] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const shareRef = useRef<HTMLDivElement>(null)
 
   // Parse URL to extract ID
   const { id: productId } = parseProductUrl(urlSlug)
@@ -156,6 +164,18 @@ function ProductPage() {
       setSelectedVariant(null)
     }
   }, [product?.id])
+
+  // Close share menu on outside click
+  useEffect(() => {
+    if (!showShareMenu) return
+    const handler = (e: MouseEvent) => {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShowShareMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showShareMenu])
 
   // Fetch product attributes (EAV)
   const { data: attributesResponse } = useQuery({
@@ -367,31 +387,89 @@ function ProductPage() {
                   )}
                 </button>
 
-                {/* Share button */}
-                <button
-                  onClick={async () => {
-                    const url = window.location.href
-                    if (navigator.share) {
-                      try {
-                        await navigator.share({
-                          title: product.name,
-                          text: product.description?.slice(0, 100) || product.name,
-                          url,
-                        })
-                        return
-                      } catch { /* user cancelled */ }
-                    }
-                    await navigator.clipboard.writeText(url)
-                    setShareCopied(true)
-                    setTimeout(() => setShareCopied(false), 2000)
-                  }}
-                  title={shareCopied ? 'Link copied!' : 'Share product'}
-                  className="absolute top-4 right-16 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
-                >
-                  {shareCopied
-                    ? <Check className="w-5 h-5 text-green-500" />
-                    : <Share2 className="w-5 h-5 text-gray-600" />}
-                </button>
+                {/* Share button + popover */}
+                <div ref={shareRef} className="absolute top-4 right-16 z-10">
+                  <button
+                    onClick={() => setShowShareMenu(v => !v)}
+                    title="Share product"
+                    className="p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
+                  >
+                    <Share2 className="w-5 h-5 text-gray-600" />
+                  </button>
+
+                  {showShareMenu && (
+                    <div className="absolute top-12 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex flex-col gap-2 w-44">
+                      <p className="text-xs font-semibold text-gray-500 px-1 pb-1">Share via</p>
+                      {[
+                        {
+                          Button: WhatsappShareButton, Icon: WhatsappIcon,
+                          label: 'WhatsApp',
+                          props: { title: product.name, separator: ' – ' },
+                        },
+                        {
+                          Button: FacebookShareButton, Icon: FacebookIcon,
+                          label: 'Facebook',
+                          props: {},
+                        },
+                        {
+                          Button: TelegramShareButton, Icon: TelegramIcon,
+                          label: 'Telegram',
+                          props: { title: product.name },
+                        },
+                        {
+                          Button: TwitterShareButton, Icon: XIcon,
+                          label: 'X (Twitter)',
+                          props: { title: product.name },
+                        },
+                      ].map(({ Button, Icon, label, props }) => (
+                        <Button
+                          key={label}
+                          url={window.location.href}
+                          {...(props as any)}
+                          className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <Icon size={28} round />
+                          <span className="text-sm text-gray-700">{label}</span>
+                        </Button>
+                      ))}
+
+                      <div className="border-t border-gray-100 mt-1 pt-1 flex flex-col gap-0.5">
+                        {'share' in navigator && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await navigator.share({
+                                  title: product.name,
+                                  text: product.description?.slice(0, 100) || product.name,
+                                  url: window.location.href,
+                                })
+                              } catch { /* user cancelled */ }
+                            }}
+                            className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
+                              <Share2 className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <span className="text-sm text-gray-700">Instagram & more</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(window.location.href)
+                            setLinkCopied(true)
+                            setTimeout(() => setLinkCopied(false), 2000)
+                          }}
+                          className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          {linkCopied
+                            ? <Check className="w-7 h-7 text-green-500" />
+                            : <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"><Share2 className="w-3.5 h-3.5 text-gray-600" /></div>}
+                          <span className="text-sm text-gray-700">{linkCopied ? 'Copied!' : 'Copy link'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Navigation arrows */}
                 {images.length > 1 && (
