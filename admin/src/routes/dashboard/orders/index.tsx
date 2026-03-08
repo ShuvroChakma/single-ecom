@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDateTime, fmtDateTimeLong } from "@/lib/date"
 import { CreditCard, Eye, MoreHorizontal, Package, RefreshCw } from "lucide-react"
 import { useState } from "react"
 
@@ -144,7 +144,7 @@ function OrdersPage() {
         {
             accessorKey: "created_at",
             header: "Date",
-            cell: ({ row }) => format(new Date(row.getValue("created_at")), "MMM d, yyyy HH:mm"),
+            cell: ({ row }) => fmtDateTime(row.getValue("created_at")),
         },
         {
             id: "actions",
@@ -241,7 +241,7 @@ function OrdersPage() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Order Date</p>
-                                    <p className="font-medium">{format(new Date(selectedOrder.created_at), "PPP p")}</p>
+                                    <p className="font-medium">{fmtDateTimeLong(selectedOrder.created_at)}</p>
                                 </div>
                             </div>
 

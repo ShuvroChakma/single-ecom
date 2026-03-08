@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDate } from "@/lib/date"
 import { Loader2, MoreHorizontal, Plus, User } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -126,7 +126,7 @@ function CustomersPage() {
         {
             accessorKey: "created_at",
             header: "Joined",
-            cell: ({ row }) => format(new Date(row.getValue("created_at")), "MMM d, yyyy"),
+            cell: ({ row }) => fmtDate(row.getValue("created_at")),
         },
         {
             id: "actions",

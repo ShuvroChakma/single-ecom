@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react'
+import { formatDate } from '@/lib/date'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Share2, X, Loader2, Package, Heart, ShoppingBag, MapPin, Plus, Trash2, Star, ChevronRight, Edit2, Save } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
@@ -528,7 +529,7 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
                       <div className="flex border-b pb-4">
                         <span className="text-gray-600 w-32">Member Since :</span>
                         <span className="font-medium">
-                          {user?.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                          {user?.created_at ? formatDate(user.created_at) : '-'}
                         </span>
                       </div>
                     </div>
@@ -964,7 +965,7 @@ export default function MyAccountPage({ initialSection = 'profile' }: MyAccountP
                           <div>
                             <p className="font-semibold">Order #{order.order_number}</p>
                             <p className="text-sm text-gray-500">
-                              Placed on {new Date(order.created_at).toLocaleDateString()}
+                              Placed on {formatDate(order.created_at)}
                             </p>
                             <p className="text-sm text-gray-500">{order.item_count} item(s)</p>
                           </div>

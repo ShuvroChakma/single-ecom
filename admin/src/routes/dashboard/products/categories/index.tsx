@@ -23,7 +23,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ColumnDef, SortingState } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDateLong } from "@/lib/date"
 import { EyeOff, Eye, Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -152,7 +152,7 @@ function CategoriesPage() {
             accessorKey: "created_at",
             header: "Created At",
             cell: ({ row }) => {
-                return format(new Date(row.getValue("created_at")), "PPP")
+                return fmtDateLong(row.getValue("created_at"))
             },
         },
         {

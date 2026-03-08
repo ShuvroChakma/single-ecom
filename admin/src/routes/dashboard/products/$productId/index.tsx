@@ -53,7 +53,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeft, Eye, EyeOff, Pencil, Plus, Trash2, Loader2, Package } from "lucide-react"
-import { format } from "date-fns"
+import { fmtDateTimeFull } from "@/lib/date"
 import { toast } from "sonner"
 
 export const Route = createFileRoute("/dashboard/products/$productId/")({
@@ -571,14 +571,14 @@ function ProductDetailPage() {
               <div>
                 <span className="text-sm text-muted-foreground">Created</span>
                 <p className="font-medium">
-                  {format(new Date(product.created_at), "PPpp")}
+                  {fmtDateTimeFull(product.created_at)}
                 </p>
               </div>
               <Separator />
               <div>
                 <span className="text-sm text-muted-foreground">Updated</span>
                 <p className="font-medium">
-                  {format(new Date(product.updated_at), "PPpp")}
+                  {fmtDateTimeFull(product.updated_at)}
                 </p>
               </div>
             </CardContent>

@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDateLong, fmtDateTimeLong } from "@/lib/date"
 import { Loader2, MoreHorizontal, Eye } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -140,7 +140,7 @@ function InquiriesPage() {
     {
       accessorKey: "created_at",
       header: "Submitted",
-      cell: ({ row }) => format(new Date(row.getValue("created_at")), "PPP"),
+      cell: ({ row }) => fmtDateLong(row.getValue("created_at")),
     },
     {
       id: "actions",
@@ -263,7 +263,7 @@ function InquiriesPage() {
                 )}
                 <div className="col-span-2">
                   <p className="text-muted-foreground">Submitted</p>
-                  <p className="font-medium">{format(new Date(selected.created_at), "PPPp")}</p>
+                  <p className="font-medium">{fmtDateTimeLong(selected.created_at)}</p>
                 </div>
               </div>
 

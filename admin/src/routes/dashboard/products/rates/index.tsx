@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDateTime, fmtDateTimeLong } from "@/lib/date"
 import { Plus, RefreshCw, TrendingUp } from "lucide-react"
 import { useState } from "react"
 
@@ -76,7 +76,7 @@ function RatesPage() {
         {
             accessorKey: "effective_date",
             header: "Effective Date",
-            cell: ({ row }) => format(new Date(row.getValue("effective_date")), "MMM d, yyyy HH:mm"),
+            cell: ({ row }) => fmtDateTime(row.getValue("effective_date")),
         },
     ]
 
@@ -109,7 +109,7 @@ function RatesPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg">Current Rates</CardTitle>
                         <CardDescription>
-                            Last updated: {format(new Date(lastUpdated), "MMMM d, yyyy 'at' h:mm a")}
+                            Last updated: {fmtDateTimeLong(lastUpdated)}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>

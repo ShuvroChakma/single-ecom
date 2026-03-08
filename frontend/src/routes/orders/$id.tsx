@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { getOrder, cancelOrder } from '@/api/orders'
 import { getImageUrl, getErrorMessage } from '@/api/client'
+import { formatDateTime } from '@/lib/date'
 import { useState } from 'react'
 import Header from '@/components/shared/Header/Header'
 import Footer from '@/components/shared/Footer/Footer'
@@ -122,13 +123,7 @@ function OrderDetailContent() {
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
                 Placed on{' '}
-                {new Date(order.created_at).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {formatDateTime(order.created_at)}
               </p>
             </div>
 

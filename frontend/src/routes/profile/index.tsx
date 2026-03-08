@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { formatDate, formatDateLong } from '@/lib/date'
 import {
   User, Package, Heart, MapPin, LogOut, ChevronRight, ShieldCheck,
   KeyRound, Loader2, ShoppingBag, Calendar, Phone, Mail, Edit2, Save, X,
@@ -368,7 +369,7 @@ function RouteComponent() {
                   <div>
                     <p className="text-gray-500 text-xs">Member Since</p>
                     <p className="font-medium mt-0.5">
-                      {new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {formatDateLong(user.created_at)}
                     </p>
                   </div>
                 </div>
@@ -401,7 +402,7 @@ function RouteComponent() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-gray-900">#{order.order_number}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {formatDate(order.created_at)}
                         {' · '}{order.item_count} item{order.item_count !== 1 ? 's' : ''}
                       </p>
                     </div>

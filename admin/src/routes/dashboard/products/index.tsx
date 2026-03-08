@@ -23,7 +23,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDateShort } from "@/lib/date"
 import { Eye, EyeOff, Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -171,7 +171,7 @@ function ProductsPage() {
     {
       accessorKey: "created_at",
       header: "Created",
-      cell: ({ row }) => format(new Date(row.getValue("created_at")), "PP"),
+      cell: ({ row }) => fmtDateShort(row.getValue("created_at")),
     },
     {
       id: "actions",
