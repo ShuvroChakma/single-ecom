@@ -2,16 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
 import { fmtDateTime, fmtDateTimeLong } from "@/lib/date"
-import { Download, Loader2, Plus, RefreshCw, TrendingUp } from "lucide-react"
+import { Download, History, Loader2, Plus, RefreshCw, TrendingUp } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { DailyRate, getCurrentRates, syncBajusRates } from "@/api/rates"
+import { DailyRate, getCurrentRates, getRateHistory, syncBajusRates } from "@/api/rates"
 import { DataTable } from "@/components/shared/data-table"
 import { RateDialog } from "@/components/shared/rate-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 export const Route = createFileRoute("/dashboard/products/rates/")({
     component: RatesPage,
@@ -20,6 +21,13 @@ export const Route = createFileRoute("/dashboard/products/rates/")({
 function RatesPage() {
     const queryClient = useQueryClient()
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [historyRate, setHistoryRate] = useState<DailyRate | null>(null)
+
+    const { data: historyData, isLoading: historyLoading } = useQuery({
+        queryKey: ['rate-history', historyRate?.metal_type, historyRate?.purity],
+        queryFn: () => (getRateHistory as any)({ data: { metal_type: historyRate!.metal_type, purity: historyRate!.purity, limit: 50 } }),
+        enabled: !!historyRate,
+    })
 
     const { data, isLoading, refetch, isRefetching } = useQuery({
         queryKey: ['rates'],
@@ -90,6 +98,15 @@ function RatesPage() {
             accessorKey: "effective_date",
             header: "Effective Date",
             cell: ({ row }) => fmtDateTime(row.getValue("effective_date")),
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => (
+                <Button variant="ghost" size="sm" onClick={() => setHistoryRate(row.original)}>
+                    <History className="h-4 w-4 mr-1" />
+                    History
+                </Button>
+            ),
         },
     ]
 
@@ -163,6 +180,49 @@ function RatesPage() {
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
             />
+
+            <Sheet open={!!historyRate} onOpenChange={(open) => !open && setHistoryRate(null)}>
+                <SheetContent className="w-[480px] sm:w-[540px] overflow-y-auto">
+                    <SheetHeader>
+                        <SheetTitle>
+                            {historyRate?.metal_type} {historyRate?.purity} — Rate History
+                        </SheetTitle>
+                        <SheetDescription>Last 50 entries, newest first</SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6">
+                        {historyLoading ? (
+                            <div className="flex justify-center py-10">
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : (
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b text-muted-foreground">
+                                        <th className="text-left pb-2">Date</th>
+                                        <th className="text-right pb-2">Rate/Gram</th>
+                                        <th className="text-right pb-2">Source</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(historyData?.success ? historyData.data : [] as DailyRate[]).map((entry: DailyRate) => (
+                                        <tr key={entry.id} className="border-b last:border-0">
+                                            <td className="py-2 text-muted-foreground">{fmtDateTime(entry.effective_date)}</td>
+                                            <td className="py-2 text-right font-semibold text-green-600">
+                                                ৳{parseFloat(String(entry.rate_per_gram)).toLocaleString()}
+                                            </td>
+                                            <td className="py-2 text-right">
+                                                <Badge variant={entry.source === "BAJUS" ? "default" : "outline"}>
+                                                    {entry.source}
+                                                </Badge>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     )
 }
