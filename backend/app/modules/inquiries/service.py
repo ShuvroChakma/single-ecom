@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.inquiries.models import Inquiry, InquiryType, InquiryStatus
 from app.modules.inquiries.schemas import InquiryCreate, CustomJewelleryRequest, InquiryUpdate
+from app.core.email import EmailService
 
 
 class InquiryService:
@@ -64,6 +65,19 @@ class InquiryService:
         self.session.add(inquiry)
         await self.session.commit()
         await self.session.refresh(inquiry)
+
+        # Send acknowledgement email (fire-and-forget)
+        try:
+            await EmailService.send_inquiry_acknowledgement_email(
+                email=data.email,
+                customer_name=data.name,
+                metal_type=data.metal_type,
+                message=data.message,
+                budget_range=data.budget_range,
+            )
+        except Exception:
+            pass
+
         return inquiry
 
     async def get_inquiry(self, inquiry_id: UUID) -> Optional[Inquiry]:

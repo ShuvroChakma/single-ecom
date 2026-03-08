@@ -31,6 +31,8 @@ from app.modules.delivery.service import DeliveryZoneService
 from app.modules.promo_codes.service import PromoCodeService
 from app.modules.payments.service import PaymentGatewayService
 from app.modules.audit.service import AuditService
+from app.modules.users.models import Customer, User
+from app.core.email import EmailService
 
 
 class OrderService:
@@ -288,6 +290,41 @@ class OrderService:
                 },
                 request=http_request
             )
+
+        # Send order confirmation email (fire-and-forget – never block the response)
+        try:
+            customer_record = await self.session.get(Customer, customer_id)
+            if customer_record:
+                user_record = await self.session.get(User, customer_record.user_id)
+                if user_record:
+                    customer_name = f"{customer_record.first_name} {customer_record.last_name}".strip()
+                    addr = address_snapshot
+                    addr_parts = filter(None, [
+                        addr.get("address_line1"), addr.get("city"), addr.get("district")
+                    ])
+                    shipping_str = ", ".join(addr_parts)
+                    email_items = [
+                        {
+                            "name": item.product.name,
+                            "quantity": item.quantity,
+                            "line_total": f"{item.line_total:.2f}",
+                        }
+                        for item in cart_response.items
+                    ]
+                    await EmailService.send_order_confirmation_email(
+                        email=user_record.email,
+                        customer_name=customer_name,
+                        order_number=order_number,
+                        order_id=str(order_id),
+                        items=email_items,
+                        discount_amount=f"{discount_amount:.2f}" if discount_amount else None,
+                        delivery_charge=f"{delivery_charge:.2f}",
+                        total=f"{total:.2f}",
+                        payment_method=request.payment_method,
+                        shipping_address=shipping_str,
+                    )
+        except Exception:
+            pass  # Never let email failures affect order creation
 
         requires_payment = request.payment_method != "cod"
         return OrderCreatedResponse(

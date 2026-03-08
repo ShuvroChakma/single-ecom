@@ -2,10 +2,11 @@
 Email service with Jinja2 template engine.
 """
 import smtplib
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -128,7 +129,85 @@ If you didn't request this code, please ignore this email.
         """.strip()
         
         return await EmailService.send_email(email, subject, html_content, text_content)
-    
+
+    @staticmethod
+    async def send_order_confirmation_email(
+        email: str,
+        customer_name: str,
+        order_number: str,
+        order_id: str,
+        items: List[Dict[str, Any]],
+        delivery_charge: str,
+        total: str,
+        payment_method: str,
+        shipping_address: str,
+        discount_amount: Optional[str] = None,
+    ) -> bool:
+        """Send order confirmation email after successful order creation."""
+        subject = f"Order Confirmed – {order_number}"
+
+        html_content = EmailService.render_template('order_confirmation.html', {
+            'customer_name': customer_name,
+            'order_number': order_number,
+            'order_id': order_id,
+            'items': items,
+            'discount_amount': discount_amount,
+            'delivery_charge': delivery_charge,
+            'total': total,
+            'payment_method': payment_method,
+            'shipping_address': shipping_address,
+            'frontend_url': settings.FRONTEND_URL,
+            'app_name': settings.PROJECT_NAME,
+            'contact_email': settings.SMTP_FROM_EMAIL,
+            'year': datetime.now(timezone.utc).year,
+        })
+
+        text_content = (
+            f"Order Confirmed – {order_number}\n\n"
+            f"Hi {customer_name},\n\n"
+            f"Thank you for your order! Your order {order_number} has been received.\n\n"
+            f"Total: ৳{total}\n"
+            f"Payment: {payment_method}\n"
+            f"Shipping to: {shipping_address}\n\n"
+            f"View your order: {settings.FRONTEND_URL}/orders/{order_id}\n\n"
+            f"© {datetime.now(timezone.utc).year} {settings.PROJECT_NAME}"
+        )
+
+        return await EmailService.send_email(email, subject, html_content, text_content)
+
+    @staticmethod
+    async def send_inquiry_acknowledgement_email(
+        email: str,
+        customer_name: str,
+        metal_type: str,
+        message: Optional[str] = None,
+        budget_range: Optional[str] = None,
+    ) -> bool:
+        """Send acknowledgement email after a custom jewellery inquiry is submitted."""
+        subject = f"We've Received Your Custom Jewellery Request – {settings.PROJECT_NAME}"
+
+        html_content = EmailService.render_template('inquiry_acknowledgement.html', {
+            'customer_name': customer_name,
+            'customer_email': email,
+            'metal_type': metal_type,
+            'budget_range': budget_range,
+            'message': message,
+            'app_name': settings.PROJECT_NAME,
+            'contact_email': settings.SMTP_FROM_EMAIL,
+            'year': datetime.now(timezone.utc).year,
+        })
+
+        text_content = (
+            f"Hi {customer_name},\n\n"
+            f"Thank you for your custom jewellery request!\n\n"
+            f"Metal Type: {metal_type}\n"
+            + (f"Budget Range: {budget_range}\n" if budget_range else "")
+            + f"\nOur team will get back to you within 1–2 business days.\n\n"
+            f"© {datetime.now(timezone.utc).year} {settings.PROJECT_NAME}"
+        )
+
+        return await EmailService.send_email(email, subject, html_content, text_content)
+
     @staticmethod
     async def send_password_reset_email(email: str, otp: str) -> bool:
         """
