@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
 import { fmtDateTime, fmtDateTimeLong } from "@/lib/date"
-import { Download, History, Loader2, Plus, RefreshCw, TrendingUp } from "lucide-react"
+import { ArrowDown, ArrowUp, Download, History, Loader2, Minus, Plus, RefreshCw, TrendingUp } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -182,43 +182,111 @@ function RatesPage() {
             />
 
             <Sheet open={!!historyRate} onOpenChange={(open) => !open && setHistoryRate(null)}>
-                <SheetContent className="w-[480px] sm:w-[540px] overflow-y-auto">
-                    <SheetHeader>
-                        <SheetTitle>
-                            {historyRate?.metal_type} {historyRate?.purity} — Rate History
-                        </SheetTitle>
-                        <SheetDescription>Last 50 entries, newest first</SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-6">
+                <SheetContent className="w-[520px] sm:w-[580px] overflow-y-auto p-0 bg-slate-950 border-slate-800">
+                    {/* Header */}
+                    <div className="relative px-6 pt-8 pb-6 border-b border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+                        <div className="absolute inset-0 opacity-5"
+                            style={{ backgroundImage: 'repeating-linear-gradient(45deg, #f59e0b 0, #f59e0b 1px, transparent 0, transparent 50%)', backgroundSize: '12px 12px' }} />
+                        <SheetHeader className="relative">
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                                    <TrendingUp className="h-4 w-4 text-amber-400" />
+                                </div>
+                                <SheetTitle className="text-slate-100 text-xl font-mono tracking-tight">
+                                    {historyRate?.metal_type} <span className="text-amber-400">{historyRate?.purity}</span>
+                                </SheetTitle>
+                            </div>
+                            <SheetDescription className="text-slate-500 text-xs font-mono ml-11">
+                                RATE HISTORY · LAST 50 ENTRIES · NEWEST FIRST
+                            </SheetDescription>
+                        </SheetHeader>
+
+                        {/* Stats row */}
+                        {!historyLoading && historyData?.success && historyData.data.length > 0 && (() => {
+                            const entries = historyData.data as DailyRate[]
+                            const latest = parseFloat(String(entries[0].rate_per_gram))
+                            const oldest = parseFloat(String(entries[entries.length - 1].rate_per_gram))
+                            const totalChange = latest - oldest
+                            return (
+                                <div className="grid grid-cols-3 gap-3 mt-5 ml-11">
+                                    <div>
+                                        <p className="text-[10px] text-slate-600 font-mono uppercase tracking-widest">Current</p>
+                                        <p className="text-lg font-mono font-bold text-amber-400">৳{latest.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-600 font-mono uppercase tracking-widest">Entries</p>
+                                        <p className="text-lg font-mono font-bold text-slate-300">{entries.length}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-600 font-mono uppercase tracking-widest">Net Change</p>
+                                        <p className={`text-lg font-mono font-bold ${totalChange > 0 ? 'text-emerald-400' : totalChange < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                                            {totalChange > 0 ? '+' : ''}{totalChange.toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            )
+                        })()}
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="px-6 py-4">
                         {historyLoading ? (
-                            <div className="flex justify-center py-10">
-                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <div className="flex flex-col items-center justify-center py-16 gap-3">
+                                <Loader2 className="h-6 w-6 animate-spin text-amber-500/50" />
+                                <p className="text-[11px] text-slate-600 font-mono tracking-widest">LOADING HISTORY</p>
                             </div>
                         ) : (
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b text-muted-foreground">
-                                        <th className="text-left pb-2">Date</th>
-                                        <th className="text-right pb-2">Rate/Gram</th>
-                                        <th className="text-right pb-2">Source</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(historyData?.success ? historyData.data : [] as DailyRate[]).map((entry: DailyRate) => (
-                                        <tr key={entry.id} className="border-b last:border-0">
-                                            <td className="py-2 text-muted-foreground">{fmtDateTime(entry.effective_date)}</td>
-                                            <td className="py-2 text-right font-semibold text-green-600">
-                                                ৳{parseFloat(String(entry.rate_per_gram)).toLocaleString()}
-                                            </td>
-                                            <td className="py-2 text-right">
-                                                <Badge variant={entry.source === "BAJUS" ? "default" : "outline"}>
-                                                    {entry.source}
-                                                </Badge>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <div className="relative">
+                                {/* Timeline spine */}
+                                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-slate-800" />
+
+                                <div className="space-y-1">
+                                    {(historyData?.success ? historyData.data : [] as DailyRate[]).map((entry: DailyRate, idx: number) => {
+                                        const entries = historyData?.success ? historyData.data as DailyRate[] : []
+                                        const curr = parseFloat(String(entry.rate_per_gram))
+                                        const prev = idx < entries.length - 1 ? parseFloat(String(entries[idx + 1].rate_per_gram)) : null
+                                        const delta = prev !== null ? curr - prev : null
+                                        const isLatest = idx === 0
+
+                                        return (
+                                            <div key={entry.id} className="relative flex gap-4 pl-6 py-2.5 rounded-lg hover:bg-slate-900/60 transition-colors group">
+                                                {/* Timeline dot */}
+                                                <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center z-10
+                                                    ${isLatest ? 'bg-amber-400 border-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]' : 'bg-slate-950 border-slate-700 group-hover:border-slate-500'}`} />
+
+                                                {/* Content */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="font-mono font-bold text-base text-slate-100 tabular-nums">
+                                                            ৳{curr.toLocaleString()}
+                                                        </span>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            {delta !== null && (
+                                                                <span className={`flex items-center gap-0.5 text-[11px] font-mono tabular-nums px-1.5 py-0.5 rounded
+                                                                    ${delta > 0 ? 'text-emerald-400 bg-emerald-400/10' : delta < 0 ? 'text-red-400 bg-red-400/10' : 'text-slate-500 bg-slate-800'}`}>
+                                                                    {delta > 0 ? <ArrowUp className="h-2.5 w-2.5" /> : delta < 0 ? <ArrowDown className="h-2.5 w-2.5" /> : <Minus className="h-2.5 w-2.5" />}
+                                                                    {Math.abs(delta).toLocaleString()}
+                                                                </span>
+                                                            )}
+                                                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded border
+                                                                ${entry.source === 'BAJUS' ? 'text-amber-400 border-amber-400/30 bg-amber-400/5' : 'text-slate-500 border-slate-700 bg-slate-800/50'}`}>
+                                                                {entry.source}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-600 font-mono mt-0.5">{fmtDateTime(entry.effective_date)}</p>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {(!historyData?.success || (historyData.data as DailyRate[]).length === 0) && (
+                                    <div className="flex flex-col items-center py-16 gap-2">
+                                        <p className="text-slate-600 font-mono text-xs tracking-widest">NO HISTORY FOUND</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                 </SheetContent>
