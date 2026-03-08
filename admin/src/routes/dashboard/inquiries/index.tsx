@@ -169,16 +169,16 @@ function InquiriesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Inquiries</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select
             value={type || "__all__"}
             onValueChange={(v) =>
               navigate({ search: (prev) => ({ ...prev, type: v === "__all__" ? undefined : v as InquiryType, page: 1 }), replace: true })
             }
           >
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-full sm:w-44">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
@@ -194,7 +194,7 @@ function InquiriesPage() {
               navigate({ search: (prev) => ({ ...prev, status: v === "__all__" ? undefined : v as InquiryStatus, page: 1 }), replace: true })
             }
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
