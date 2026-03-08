@@ -67,7 +67,11 @@ class Order(SQLModel, table=True):
     # Promo
     promo_code_id: Optional[UUID] = Field(default=None, foreign_key="promo_codes.id")
     promo_code: Optional[str] = Field(default=None, max_length=50)
-    
+
+    # Gift Card
+    gift_card_code: Optional[str] = Field(default=None, max_length=20)
+    gift_card_discount: Decimal = Field(default=Decimal("0"), decimal_places=2, max_digits=10)
+
     # Payment
     payment_method: str = Field(max_length=20)  # bkash, sslcommerz, cod etc.
     payment_status: PaymentStatus = Field(default=PaymentStatus.PENDING)

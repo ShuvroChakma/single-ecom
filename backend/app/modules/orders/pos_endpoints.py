@@ -22,6 +22,8 @@ from app.modules.orders.repository import OrderRepository, OrderItemRepository
 from app.modules.orders.schemas import POSOrderRequest, OrderResponse, OrderItemResponse
 from app.modules.products.repository import ProductVariantRepository
 from app.modules.rates.service import PriceCalculationService
+from app.modules.gift_cards.service import GiftCardService
+from app.modules.gift_cards.models import GiftCardChannel
 
 
 router = APIRouter()
@@ -137,7 +139,24 @@ async def create_pos_order(
     
     await item_repo.create_many(db_items)
     order.items = db_items
-    
+
+    # Apply gift card if provided
+    gift_card_discount = Decimal("0")
+    if data.gift_card_code:
+        gift_card_service = GiftCardService(session)
+        _, gift_card_discount = await gift_card_service.redeem(
+            code=data.gift_card_code,
+            amount_to_use=subtotal,
+            order_id=order.id,
+            redeemed_by=str(current_user.id),
+            channel=GiftCardChannel.POS,
+        )
+        order.gift_card_code = data.gift_card_code.upper()
+        order.gift_card_discount = gift_card_discount
+        order.total = max(Decimal("0"), subtotal - gift_card_discount)
+        order = await order_repo.update(order)
+        await session.commit()
+
     # Audit log
     await audit_service.log_action(
         action="create_pos_order",
@@ -173,6 +192,8 @@ async def create_pos_order(
         total=order.total,
         currency=order.currency,
         promo_code=order.promo_code,
+        gift_card_code=order.gift_card_code,
+        gift_card_discount=order.gift_card_discount,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
         paid_at=order.paid_at,

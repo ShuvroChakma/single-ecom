@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # Frontend URL
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # Backend base URL (used to build absolute URLs, e.g. for email assets)
+    BASE_URL: str = "http://localhost:8000"
+
     # Authentication
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -56,6 +59,7 @@ class Settings(BaseSettings):
     
     # App
     DEBUG: bool = False
+    MEDIA_ROOT: str = "media"
 
     # MongoDB
     MONGO_URI: str = "mongodb://localhost:27017"

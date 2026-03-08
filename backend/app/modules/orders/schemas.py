@@ -41,7 +41,10 @@ class CreateOrderRequest(BaseModel):
     
     # Promo (applied in cart, passed here for validation)
     promo_code: Optional[str] = None
-    
+
+    # Gift Card
+    gift_card_code: Optional[str] = Field(default=None, max_length=20)
+
     # Notes
     notes: Optional[str] = Field(default=None, max_length=500)
 
@@ -50,14 +53,17 @@ class POSOrderRequest(BaseModel):
     """Request to create a POS order (admin)."""
     customer_name: str = Field(..., min_length=2, max_length=100)
     customer_phone: str = Field(..., min_length=10, max_length=20)
-    
+
     # Items
     items: List["POSOrderItem"] = Field(..., min_length=1)
-    
+
     # Payment
     payment_method: str = Field(default="cod")
     mark_as_paid: bool = Field(default=True)
-    
+
+    # Gift Card
+    gift_card_code: Optional[str] = Field(default=None, max_length=20)
+
     # Notes
     notes: Optional[str] = None
 
@@ -125,6 +131,10 @@ class OrderResponse(BaseModel):
 
     # Promo
     promo_code: Optional[str] = None
+
+    # Gift Card
+    gift_card_code: Optional[str] = None
+    gift_card_discount: Decimal = Decimal("0")
 
     # Payment
     payment_method: str

@@ -70,6 +70,7 @@ export interface CreateOrderRequest {
   gift_message?: string
   hide_prices?: boolean
   promo_code?: string
+  gift_card_code?: string
   notes?: string
 }
 

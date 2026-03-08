@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronRight, ChevronDown, Loader2, MapPin, Plus, CreditCard, Truck, ShoppingBag, Search, X } from 'lucide-react'
+import { Check, ChevronRight, ChevronDown, Loader2, MapPin, Plus, CreditCard, Truck, ShoppingBag, Search, X, Gift } from 'lucide-react'
 import { getCart, validatePromoCode } from '@/api/cart'
+import { validateGiftCard, type GiftCardValidationResult } from '@/api/gift-cards'
 import { createOrder, type CreateOrderRequest } from '@/api/orders'
 import { getAddresses, createAddress, type Address, type AddressCreateRequest } from '@/api/addresses'
 import { getDeliveryZones, calculateDeliveryCharge, type DeliveryZone, type DeliveryChargeResponse } from '@/api/delivery'
@@ -372,6 +373,9 @@ const Checkout = () => {
   const [promoCode, setPromoCode] = useState('')
   const [promoDiscount, setPromoDiscount] = useState<{ type: string; value: number; amount: number } | null>(null)
   const [promoError, setPromoError] = useState('')
+  const [giftCardCode, setGiftCardCode] = useState('')
+  const [appliedGiftCard, setAppliedGiftCard] = useState<GiftCardValidationResult | null>(null)
+  const [giftCardError, setGiftCardError] = useState('')
   const [notes, setNotes] = useState('')
   const [isGift, setIsGift] = useState(false)
   const [giftMessage, setGiftMessage] = useState('')
@@ -483,6 +487,24 @@ const Checkout = () => {
     },
   })
 
+  // Validate gift card mutation
+  const validateGiftCardMutation = useMutation({
+    mutationFn: (code: string) => validateGiftCard({ data: { code } }),
+    onSuccess: (response) => {
+      if (response.success && response.data?.valid) {
+        setAppliedGiftCard(response.data)
+        setGiftCardError('')
+      } else {
+        setGiftCardError(response.data?.message || 'Invalid gift card code')
+        setAppliedGiftCard(null)
+      }
+    },
+    onError: () => {
+      setGiftCardError('Failed to validate gift card')
+      setAppliedGiftCard(null)
+    },
+  })
+
   // Create order mutation
   const createOrderMutation = useMutation({
     mutationFn: (data: CreateOrderRequest) => createOrder({ data }),
@@ -503,6 +525,18 @@ const Checkout = () => {
     }
   }
 
+  const handleApplyGiftCard = () => {
+    if (giftCardCode.trim()) {
+      validateGiftCardMutation.mutate(giftCardCode.trim())
+    }
+  }
+
+  const handleRemoveGiftCard = () => {
+    setAppliedGiftCard(null)
+    setGiftCardCode('')
+    setGiftCardError('')
+  }
+
   const handlePlaceOrder = () => {
     if (!selectedAddressId || !selectedPaymentMethod) return
 
@@ -512,6 +546,7 @@ const Checkout = () => {
       is_gift: isGift,
       gift_message: isGift ? giftMessage : undefined,
       promo_code: promoDiscount ? promoCode : undefined,
+      gift_card_code: appliedGiftCard ? giftCardCode : undefined,
       notes: notes || undefined,
     }
 
@@ -521,7 +556,11 @@ const Checkout = () => {
   const selectedAddress = addresses.find(a => a.id === selectedAddressId)
   const deliveryCharge = Number(deliveryInfo?.total_charge || 0)
   const discount = Number(promoDiscount?.amount || 0)
-  const grandTotal = Number(cart?.subtotal || 0) + deliveryCharge - discount
+  const subtotal = Number(cart?.subtotal || 0)
+  const giftCardDiscount = appliedGiftCard
+    ? Math.min(Number(appliedGiftCard.remaining_balance), subtotal + deliveryCharge - discount)
+    : 0
+  const grandTotal = subtotal + deliveryCharge - discount - giftCardDiscount
 
   // Order success view
   if (orderSuccess) {
@@ -810,6 +849,60 @@ const Checkout = () => {
                   )}
                 </div>
 
+                {/* Gift Card */}
+                <div className="mb-6">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2">
+                    <Gift size={18} />
+                    Gift Card
+                  </h3>
+                  {appliedGiftCard ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Check size={16} className="text-green-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-green-800">{giftCardCode}</p>
+                          <p className="text-xs text-green-600">
+                            Balance: ৳{Number(appliedGiftCard.remaining_balance).toLocaleString()}
+                            {appliedGiftCard.expires_at && (
+                              <span className="ml-2">
+                                • Expires: {new Date(appliedGiftCard.expires_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveGiftCard}
+                        className="text-gray-400 hover:text-red-500 transition-colors ml-3"
+                        aria-label="Remove gift card"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={giftCardCode}
+                          onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+                          placeholder="Enter gift card code"
+                          className="flex-1 border rounded px-3 py-2"
+                        />
+                        <button
+                          onClick={handleApplyGiftCard}
+                          disabled={!giftCardCode.trim() || validateGiftCardMutation.isPending}
+                          className="px-4 py-2 bg-header text-white rounded disabled:opacity-50"
+                        >
+                          {validateGiftCardMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : 'Apply'}
+                        </button>
+                      </div>
+                      {giftCardError && <p className="text-red-500 text-sm mt-1">{giftCardError}</p>}
+                    </>
+                  )}
+                </div>
+
                 {/* Gift Option */}
                 <div className="mb-6">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -918,6 +1011,12 @@ const Checkout = () => {
                   <div className="flex justify-between text-green-600">
                     <span>Discount</span>
                     <span>-৳{promoDiscount.amount}</span>
+                  </div>
+                )}
+                {appliedGiftCard && giftCardDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Gift Card</span>
+                    <span>-৳{giftCardDiscount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">

@@ -32,6 +32,7 @@ from app.modules.dashboard import endpoints as dashboard
 from app.modules.wishlist import endpoints as wishlist
 from app.modules.stores import endpoints as stores
 from app.modules.inquiries import endpoints as inquiries
+from app.modules.gift_cards import endpoints as gift_cards
 
 
 api_router = APIRouter()
@@ -68,4 +69,5 @@ api_router.include_router(dashboard.router, prefix="/admin/dashboard", tags=["Ad
 api_router.include_router(wishlist.router, prefix="/wishlist", tags=["Wishlist"])
 api_router.include_router(stores.router, prefix="/stores", tags=["Stores"])
 api_router.include_router(inquiries.router, prefix="/inquiries", tags=["Inquiries"])
+api_router.include_router(gift_cards.router, prefix="/gift-cards", tags=["Gift Cards"])
 api_router.include_router(products.router, tags=["Products"])

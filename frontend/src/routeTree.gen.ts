@@ -31,6 +31,7 @@ import { Route as FooterMetalPricesRouteImport } from './routes/footer/metal-pri
 import { Route as FooterFaqRouteImport } from './routes/footer/faq'
 import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custom-jewellery'
 import { Route as FooterAboutRouteImport } from './routes/footer/about'
+import { Route as GiftCardsIndexRouteImport } from './routes/gift-cards/index'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
 
 const _errorRoute = _errorRouteImport.update({
@@ -142,6 +143,11 @@ const FooterAboutRoute = FooterAboutRouteImport.update({
   path: '/footer/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GiftCardsIndexRoute = GiftCardsIndexRouteImport.update({
+  id: '/gift-cards/',
+  path: '/gift-cards/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
   id: '/categories/$slug',
   path: '/categories/$slug',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/$': typeof SplatRoute
+  '/gift-cards/': typeof GiftCardsIndexRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/$': typeof SplatRoute
+  '/gift-cards': typeof GiftCardsIndexRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/wishlist': typeof WishlistRouteRoute
   '/$': typeof SplatRoute
   '/__error': typeof _errorRoute
+  '/gift-cards/': typeof GiftCardsIndexRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/wishlist'
     | '/$'
+    | '/gift-cards/'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/wishlist'
     | '/$'
+    | '/gift-cards'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/wishlist'
     | '/$'
     | '/__error'
+    | '/gift-cards/'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -304,6 +316,7 @@ export interface RootRouteChildren {
   WishlistRouteRoute: typeof WishlistRouteRoute
   SplatRoute: typeof SplatRoute
   _errorRoute: typeof _errorRoute
+  GiftCardsIndexRoute: typeof GiftCardsIndexRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   FooterAboutRoute: typeof FooterAboutRoute
   FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
@@ -479,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gift-cards/': {
+      id: '/gift-cards/'
+      path: '/gift-cards/'
+      fullPath: '/gift-cards/'
+      preLoaderRoute: typeof GiftCardsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -520,6 +540,7 @@ const rootRouteChildren: RootRouteChildren = {
   WishlistRouteRoute: WishlistRouteRoute,
   SplatRoute: SplatRoute,
   _errorRoute: _errorRoute,
+  GiftCardsIndexRoute: GiftCardsIndexRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   FooterAboutRoute: FooterAboutRoute,
   FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,

@@ -109,6 +109,10 @@ const data = {
           url: "/dashboard/marketing/promo-codes",
         },
         {
+          title: "Gift Cards",
+          url: "/dashboard/gift-cards",
+        },
+        {
           title: "Slides",
           url: "/dashboard/marketing/slides",
         },

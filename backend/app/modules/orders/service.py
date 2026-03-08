@@ -30,6 +30,8 @@ from app.modules.addresses.service import AddressService
 from app.modules.delivery.service import DeliveryZoneService
 from app.modules.promo_codes.service import PromoCodeService
 from app.modules.payments.service import PaymentGatewayService
+from app.modules.gift_cards.service import GiftCardService
+from app.modules.gift_cards.models import GiftCardChannel
 from app.modules.audit.service import AuditService
 from app.modules.users.models import Customer, User
 from app.core.email import EmailService
@@ -256,6 +258,24 @@ class OrderService:
                     net_weight=cart_item.variant.net_weight
                 ))
             await self.session.flush()
+
+            # 8b. Apply gift card if provided (inside the same transaction)
+            gift_card_discount = Decimal("0")
+            if request.gift_card_code:
+                gift_card_service = GiftCardService(self.session)
+                _, gift_card_discount = await gift_card_service.redeem(
+                    code=request.gift_card_code,
+                    amount_to_use=total,
+                    order_id=order_id,
+                    redeemed_by=str(customer_id),
+                    channel=GiftCardChannel.ONLINE,
+                )
+                # Store the gift card details and reduce the final total
+                order.gift_card_code = request.gift_card_code.upper()
+                order.gift_card_discount = gift_card_discount
+                total = max(Decimal("0"), total - gift_card_discount)
+                order.total = total
+                await self.session.flush()
 
             # 9. Clear cart using bulk DELETE (bypasses ORM identity map)
             cart_db = await cart_service.cart_repo.get_by_customer_id(customer_id)

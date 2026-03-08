@@ -83,6 +83,10 @@ class PermissionEnum(str, Enum):
     INQUIRIES_READ = "inquiries:read"
     INQUIRIES_WRITE = "inquiries:write"
 
+    # Gift card permissions
+    GIFT_CARDS_READ = "gift_cards:read"
+    GIFT_CARDS_WRITE = "gift_cards:write"
+
     # System permissions
     SYSTEM_CONFIG = "system:config"
 
