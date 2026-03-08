@@ -99,8 +99,7 @@ export default function ShoppingCart() {
   const paymentLogos = [
     { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/320px-Visa_Inc._logo.svg.png", alt: "Visa", height: "h-6" },
     { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/320px-Mastercard-logo.svg.png", alt: "Mastercard", height: "h-8" },
-    { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/601px-American_Express_logo_%282018%29.svg.png", alt: "American Express", height: "h-6" },
-    { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/512px-UPI-Logo-vector.svg.png", alt: "UPI", height: "h-6" }
+    { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/601px-American_Express_logo_%282018%29.svg.png", alt: "American Express", height: "h-6" }
   ];
 
   const handlePlaceOrder = () => {

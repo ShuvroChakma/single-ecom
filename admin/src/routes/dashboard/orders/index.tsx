@@ -271,7 +271,7 @@ function OrdersPage() {
                                     {selectedOrder.paid_at && (
                                         <div>
                                             <p className="text-sm text-muted-foreground">Paid At</p>
-                                            <p className="font-medium">{format(new Date(selectedOrder.paid_at), "PPP p")}</p>
+                                            <p className="font-medium">{fmtDateTimeLong(selectedOrder.paid_at)}</p>
                                         </div>
                                     )}
                                 </div>

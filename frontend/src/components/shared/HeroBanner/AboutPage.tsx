@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { getSlides } from '@/api/slides';
 import { SLIDE_POSITIONS } from '@/api/slidePositions';
 import { getImageUrl } from '@/api/client';
@@ -41,7 +42,7 @@ const AboutPage: React.FC = () => {
     goldSchemeLink: '#',
     goldRateTitle: 'GOLD RATE',
     goldRateDescription: 'Best rate, updated daily!',
-    goldRateLink: '#'
+    goldRateLink: '/footer/metal-prices'
   };
 
   const displayPhone = contact_phone || '9562-916-916'
@@ -112,12 +113,12 @@ const AboutPage: React.FC = () => {
                     {storeData.goldRateDescription}
                   </p>
                 </div>
-                <a
-                  href={storeData.goldRateLink}
+                <Link
+                  to={storeData.goldRateLink}
                   className="text-header font-semibold text-sm md:text-base hover:underline"
                 >
                   View Gold Rate
-                </a>
+                </Link>
               </div>
             </div>
           </div>

@@ -27,6 +27,7 @@ import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as FooterTrackOrderRouteImport } from './routes/footer/track-order'
 import { Route as FooterSizeGuideRouteImport } from './routes/footer/size-guide'
 import { Route as FooterOurPoliciesRouteImport } from './routes/footer/our-policies'
+import { Route as FooterMetalPricesRouteImport } from './routes/footer/metal-prices'
 import { Route as FooterFaqRouteImport } from './routes/footer/faq'
 import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custom-jewellery'
 import { Route as FooterAboutRouteImport } from './routes/footer/about'
@@ -121,6 +122,11 @@ const FooterOurPoliciesRoute = FooterOurPoliciesRouteImport.update({
   path: '/footer/our-policies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FooterMetalPricesRoute = FooterMetalPricesRouteImport.update({
+  id: '/footer/metal-prices',
+  path: '/footer/metal-prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FooterFaqRoute = FooterFaqRouteImport.update({
   id: '/footer/faq',
   path: '/footer/faq',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
+  '/footer/metal-prices': typeof FooterMetalPricesRoute
   '/footer/our-policies': typeof FooterOurPoliciesRoute
   '/footer/size-guide': typeof FooterSizeGuideRoute
   '/footer/track-order': typeof FooterTrackOrderRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
+  '/footer/metal-prices': typeof FooterMetalPricesRoute
   '/footer/our-policies': typeof FooterOurPoliciesRoute
   '/footer/size-guide': typeof FooterSizeGuideRoute
   '/footer/track-order': typeof FooterTrackOrderRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
+  '/footer/metal-prices': typeof FooterMetalPricesRoute
   '/footer/our-policies': typeof FooterOurPoliciesRoute
   '/footer/size-guide': typeof FooterSizeGuideRoute
   '/footer/track-order': typeof FooterTrackOrderRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
+    | '/footer/metal-prices'
     | '/footer/our-policies'
     | '/footer/size-guide'
     | '/footer/track-order'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
+    | '/footer/metal-prices'
     | '/footer/our-policies'
     | '/footer/size-guide'
     | '/footer/track-order'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
+    | '/footer/metal-prices'
     | '/footer/our-policies'
     | '/footer/size-guide'
     | '/footer/track-order'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   FooterAboutRoute: typeof FooterAboutRoute
   FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
   FooterFaqRoute: typeof FooterFaqRoute
+  FooterMetalPricesRoute: typeof FooterMetalPricesRoute
   FooterOurPoliciesRoute: typeof FooterOurPoliciesRoute
   FooterSizeGuideRoute: typeof FooterSizeGuideRoute
   FooterTrackOrderRoute: typeof FooterTrackOrderRoute
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FooterOurPoliciesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/footer/metal-prices': {
+      id: '/footer/metal-prices'
+      path: '/footer/metal-prices'
+      fullPath: '/footer/metal-prices'
+      preLoaderRoute: typeof FooterMetalPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/footer/faq': {
       id: '/footer/faq'
       path: '/footer/faq'
@@ -504,6 +524,7 @@ const rootRouteChildren: RootRouteChildren = {
   FooterAboutRoute: FooterAboutRoute,
   FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,
   FooterFaqRoute: FooterFaqRoute,
+  FooterMetalPricesRoute: FooterMetalPricesRoute,
   FooterOurPoliciesRoute: FooterOurPoliciesRoute,
   FooterSizeGuideRoute: FooterSizeGuideRoute,
   FooterTrackOrderRoute: FooterTrackOrderRoute,

@@ -7,6 +7,7 @@ import {
   FaWhatsapp,
   FaXTwitter,
 } from 'react-icons/fa6'
+import { Link } from '@tanstack/react-router'
 import { useSettings } from '@/contexts/SettingsContext'
 
 interface FooterLink {
@@ -52,6 +53,7 @@ const FOOTER_SECTIONS: Array<FooterSection> = [
     title: 'Useful Links',
     links: [
       { label: 'Build Your Custom Jewellery', href: '/footer/custom-jewellery' },
+      { label: "Today's Metal Prices", href: '/footer/metal-prices' },
       { label: 'Careers', href: '' },
     ],
   },
@@ -128,9 +130,13 @@ export default function Footer() {
                     <ul className="space-y-2 text-sm text-header pt-3">
                       {section.links.map((link, i) => (
                         <li key={i}>
-                          <a href={link.href} className="hover:underline">
-                            {link.label}
-                          </a>
+                          {link.href ? (
+                            <Link to={link.href} className="hover:underline">
+                              {link.label}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-400 cursor-not-allowed">{link.label}</span>
+                          )}
                         </li>
                       ))}
                     </ul>
