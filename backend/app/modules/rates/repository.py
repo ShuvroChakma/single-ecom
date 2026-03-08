@@ -79,7 +79,8 @@ class DailyRateRepository:
                     (DailyRate.purity == "800", 8),
                     (DailyRate.purity == "Traditional", 9),
                     else_=10
-                )
+                ),
+                DailyRate.effective_date.desc()
             )
         )
         return list(result.scalars().all())
