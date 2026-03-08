@@ -2,6 +2,7 @@ import {
   GalleryVerticalEnd,
   Gift,
   Home,
+  MessageSquare,
   Package,
   Settings2,
   Shield,
@@ -112,6 +113,11 @@ const data = {
           url: "/dashboard/marketing/slides",
         },
       ],
+    },
+    {
+      title: "Inquiries",
+      url: "/dashboard/inquiries",
+      icon: MessageSquare,
     },
     {
       title: "Delivery",

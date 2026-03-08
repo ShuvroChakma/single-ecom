@@ -422,6 +422,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                                 our_collection: "3-banner row in the Our Collection section. Upload exactly 3 slides.",
                                 gifting: "6-image grid in the Gifting & More section. Upload exactly 6 slides.",
                                 about_showroom: "Single showroom photo in the About section. Only the first slide is used.",
+                                custom_jewellery_banner: "Full-width banner at the top of the Custom Jewellery page. Only the first slide is used.",
                             }
                             const hint = field.state.value ? hints[field.state.value] : null
                             return (
@@ -447,6 +448,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                                             <SelectItem value="our_collection">Our Collection (3 banners)</SelectItem>
                                             <SelectItem value="gifting">Gifting & More (6 banners)</SelectItem>
                                             <SelectItem value="about_showroom">About — Showroom Image</SelectItem>
+                                        <SelectItem value="custom_jewellery_banner">Custom Jewellery — Banner</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {hint ? (

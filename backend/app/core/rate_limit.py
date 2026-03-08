@@ -124,6 +124,9 @@ RATE_LIMITS = {
     # OAuth
     "oauth:login": {"limit": 10, "window": 60},
     
+    # Public form submissions - strict to prevent spam
+    "inquiries:submit": {"limit": 3, "window": 3600},  # 3 per hour per IP
+
     # Default fallback
     "default": {"limit": 60, "window": 60},
 }

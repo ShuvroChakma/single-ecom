@@ -23,6 +23,7 @@ export interface CustomJewelleryData {
   metal_type: string
   budget_range: string
   message: string
+  website?: string  // honeypot
   design_image?: File
 }
 
@@ -67,6 +68,7 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
   formData.append('metal_type', data.metal_type)
   formData.append('budget_range', data.budget_range)
   formData.append('message', data.message)
+  formData.append('website', data.website || '')
 
   if (data.design_image) {
     formData.append('design_image', data.design_image)

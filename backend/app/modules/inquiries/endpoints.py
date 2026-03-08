@@ -1,14 +1,17 @@
 """
 API endpoints for inquiries.
 """
+import time
+from pathlib import Path
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db, get_current_customer_optional
 from app.core.permissions import require_permissions
+from app.core.rate_limit import rate_limit
 from app.core.schemas.response import SuccessResponse, create_success_response
 from app.modules.users.models import User, Customer
 from app.modules.inquiries.service import InquiryService
@@ -17,6 +20,19 @@ from app.modules.inquiries.schemas import (
     InquiryAdminResponse, InquiryUpdate, InquiryCreatedResponse
 )
 from app.modules.inquiries.models import InquiryType, InquiryStatus
+
+ALLOWED_IMAGE_MIMES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Return a safe filename, stripping path components and non-alphanumeric chars."""
+    stem = Path(filename).stem
+    ext = Path(filename).suffix.lower()
+    safe_stem = "".join(c for c in stem if c.isalnum() or c in ("-", "_"))[:50] or "upload"
+    safe_ext = ext if ext in ALLOWED_IMAGE_EXTENSIONS else ".jpg"
+    return f"{safe_stem}_{int(time.time())}{safe_ext}"
 
 router = APIRouter()
 
@@ -45,26 +61,52 @@ async def create_inquiry(
 
 
 @router.post("/custom-jewellery", response_model=SuccessResponse[InquiryCreatedResponse], status_code=201)
+@rate_limit("inquiries:submit")
 async def create_custom_jewellery_request(
+    request: Request,
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(...),
     metal_type: str = Form(...),
     budget_range: str = Form(...),
     message: str = Form(...),
+    website: str = Form(default=""),  # honeypot — must stay empty
     design_image: Optional[UploadFile] = File(None),
     service: InquiryService = Depends(get_inquiry_service),
     current_customer: Optional[Customer] = Depends(get_current_customer_optional)
 ):
     """Submit a custom jewellery request with optional design image."""
+
+    # Honeypot: bots fill hidden fields, humans don't
+    if website:
+        # Return fake success to not reveal detection
+        return create_success_response(
+            message="Custom jewellery request submitted successfully. Our team will contact you soon.",
+            data=InquiryCreatedResponse(id=uuid4())
+        )
+
     customer_id = current_customer.id if current_customer else None
 
     # Handle file upload if provided
     design_image_path = None
     if design_image and design_image.filename:
-        # In production, save to cloud storage
-        # For now, we'll just store the filename
-        design_image_path = f"/uploads/inquiries/{design_image.filename}"
+        # Validate MIME type
+        if design_image.content_type not in ALLOWED_IMAGE_MIMES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only image files (JPEG, PNG, WebP, GIF) are allowed."
+            )
+
+        # Validate file size
+        contents = await design_image.read()
+        if len(contents) > MAX_IMAGE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Image must be under 5 MB."
+            )
+
+        safe_name = _sanitize_filename(design_image.filename)
+        design_image_path = f"/uploads/inquiries/{safe_name}"
 
     data = CustomJewelleryRequest(
         name=name,

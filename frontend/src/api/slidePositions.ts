@@ -12,4 +12,5 @@ export const SLIDE_POSITIONS = {
   OUR_COLLECTION: 'our_collection',
   GIFTING: 'gifting',
   ABOUT_SHOWROOM: 'about_showroom',
+  CUSTOM_JEWELLERY_BANNER: 'custom_jewellery_banner',
 } as const
