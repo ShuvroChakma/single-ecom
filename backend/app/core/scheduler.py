@@ -4,7 +4,7 @@ Runs BAJUS rate sync every hour.
 """
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def setup_scheduler() -> None:
     """Register all scheduled jobs."""
     scheduler.add_job(
         _sync_bajus_job,
-        trigger=IntervalTrigger(hours=1),
+        trigger=CronTrigger(minute=0),  # top of every hour: 1:00, 2:00, 3:00 ...
         id="bajus_hourly_sync",
         name="BAJUS Hourly Rate Sync",
         replace_existing=True,
