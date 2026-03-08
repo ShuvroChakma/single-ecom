@@ -57,6 +57,14 @@ type ProductsSearch = {
 }
 
 export const Route = createFileRoute('/products/')({
+  head: () => ({
+    meta: [
+      { title: 'All Products | Nazu Meah Jewellers' },
+      { name: 'description', content: 'Browse our full collection of fine jewellery — gold, silver, diamond rings, necklaces, bangles and more at Nazu Meah Jewellers.' },
+      { property: 'og:title', content: 'All Products | Nazu Meah Jewellers' },
+      { property: 'og:description', content: 'Browse our full collection of fine jewellery at Nazu Meah Jewellers.' },
+    ],
+  }),
   component: ProductsPage,
   validateSearch: (search: Record<string, unknown>): ProductsSearch => {
     return {

@@ -20,6 +20,7 @@ import AboutPage from '@/components/shared/HeroBanner/AboutPage'
 
 
 
+// Homepage — title, description, og:* and twitter:* all come from DB settings via root loader
 export const Route = createFileRoute('/')({
   component: App,
 })

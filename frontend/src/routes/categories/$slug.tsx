@@ -15,10 +15,37 @@ import { useLoginModal } from "@/contexts/LoginModalContext"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/categories/$slug")({
+  loader: async ({ params }) => {
+    try {
+      const response = await getCategoryTree()
+      const category = response?.success ? findCategoryBySlug(response.data, params.slug) : null
+      return { category, categoryTree: response?.success ? response : null }
+    } catch {
+      return { category: null, categoryTree: null }
+    }
+  },
+  head: ({ loaderData }) => {
+    const category = loaderData?.category
+    if (!category) return { meta: [{ title: 'Collection | Nazu Meah Jewellers' }] }
+    const title = `${category.name} | Nazu Meah Jewellers`
+    const description = `Shop our ${category.name} collection at Nazu Meah Jewellers. Browse the finest jewellery crafted for every occasion.`
+    const image = category.banner ? getImageUrl(category.banner) : ''
+    return {
+      meta: [
+        { title },
+        { name: 'description', content: description },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:type', content: 'website' },
+        ...(image ? [{ property: 'og:image', content: image }] : []),
+        { name: 'twitter:card', content: image ? 'summary_large_image' : 'summary' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        ...(image ? [{ name: 'twitter:image', content: image }] : []),
+      ],
+    }
+  },
   component: CategoryPage,
-  head: () => ({
-    meta: [{ title: 'Collection | Nazu Meah Jewellers' }],
-  }),
 })
 
 const GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
@@ -60,6 +87,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 
 function CategoryPage() {
   const { slug } = Route.useParams()
+  const loaderData = Route.useLoaderData()
   const queryClient = useQueryClient()
   const { isAuthenticated } = useAuth()
   const { showLoginModal } = useLoginModal()
@@ -76,24 +104,18 @@ function CategoryPage() {
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({})
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null)
 
-  // Fetch category tree
+  // Fetch category tree — use loader data as initialData (no loading flash)
   const { data: categoriesResponse } = useQuery({
     queryKey: ["category-tree"],
     queryFn: () => getCategoryTree(),
     staleTime: 5 * 60 * 1000,
+    initialData: loaderData?.categoryTree ?? undefined,
   })
 
   const currentCategory = useMemo(() => {
     if (!categoriesResponse?.success || !categoriesResponse.data) return null
     return findCategoryBySlug(categoriesResponse.data, slug)
   }, [categoriesResponse, slug])
-
-  useEffect(() => {
-    if (currentCategory) {
-      document.title = `${currentCategory.name} | Nazu Meah Jewellers`
-    }
-    return () => { document.title = 'Nazu Meah Jewellers' }
-  }, [currentCategory])
 
   // Fetch metals from API
   const { data: metalsData } = useQuery({

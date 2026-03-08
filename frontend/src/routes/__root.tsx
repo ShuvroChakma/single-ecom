@@ -7,8 +7,8 @@ import {
   useRouter,
 } from '@tanstack/react-router'
 
-
 import appCss from '../styles.css?url'
+import { getPublicSettings } from '@/api/settings'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -45,30 +45,39 @@ function RootError() {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  loader: async () => {
+    try {
+      const response = await getPublicSettings()
+      return { settings: response?.success ? response.data : null }
+    } catch {
+      return { settings: null }
+    }
+  },
+  head: ({ loaderData }) => {
+    const general = loaderData?.settings?.general ?? {}
+    const seo = loaderData?.settings?.seo ?? {}
+    const storeName = general.store_name || 'Nazu Meah Jewellers'
+    const defaultTitle = seo.meta_title || storeName
+    const defaultDesc = seo.meta_description || ''
+    return {
+      meta: [
+        { charSet: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { title: defaultTitle },
+        ...(defaultDesc ? [{ name: 'description', content: defaultDesc }] : []),
+        { property: 'og:site_name', content: storeName },
+        { property: 'og:title', content: defaultTitle },
+        ...(defaultDesc ? [{ property: 'og:description', content: defaultDesc }] : []),
+        { property: 'og:type', content: 'website' },
+        { name: 'twitter:card', content: 'summary' },
+        { name: 'twitter:title', content: defaultTitle },
+        ...(defaultDesc ? [{ name: 'twitter:description', content: defaultDesc }] : []),
+      ],
+      links: [{ rel: 'stylesheet', href: appCss }],
+    }
+  },
   errorComponent: RootError,
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'Nazu Meah Jewellers',
-      },
-    ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-    ],
-  }),
-
   shellComponent: RootDocument,
-
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {

@@ -25,40 +25,55 @@ import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist
 import { useAuth } from "@/hooks/useAuth"
 import { useLoginModal } from "@/contexts/LoginModalContext"
 
-export const Route = createFileRoute("/products/$slug")({
-  component: ProductPage,
-  head: () => ({
-    meta: [{ title: 'Product | Nazu Meah Jewellers' }],
-  }),
-})
-
-// UUID regex pattern
+// UUID regex pattern — must be defined before Route (used in loader)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/**
- * Parse magic URL to extract product ID
- * URL pattern: /products/product-name-here-550e8400-e29b-41d4-a716-446655440000
- * The last 36 characters (UUID format) are the ID, rest is the slug for SEO
- */
 function parseProductUrl(urlSlug: string): { id: string | null; slugPart: string } {
-  // Check if the URL ends with a UUID (36 chars: 8-4-4-4-12)
   if (urlSlug.length > 37) {
     const possibleId = urlSlug.slice(-36)
     if (UUID_REGEX.test(possibleId)) {
-      // Extract slug part (everything before the UUID, minus the trailing hyphen)
-      const slugPart = urlSlug.slice(0, -37) // -36 for UUID, -1 for hyphen
-      return { id: possibleId, slugPart }
+      return { id: possibleId, slugPart: urlSlug.slice(0, -37) }
     }
   }
-
-  // Check if the whole thing is a UUID
-  if (UUID_REGEX.test(urlSlug)) {
-    return { id: urlSlug, slugPart: '' }
-  }
-
-  // No UUID found, treat as regular slug (backwards compatible)
+  if (UUID_REGEX.test(urlSlug)) return { id: urlSlug, slugPart: '' }
   return { id: null, slugPart: urlSlug }
 }
+
+export const Route = createFileRoute("/products/$slug")({
+  loader: async ({ params }) => {
+    const { id: productId } = parseProductUrl(params.slug)
+    try {
+      const response = productId
+        ? await getProductById({ data: { id: productId } })
+        : await getProductBySlug({ data: { slug: params.slug } })
+      return { product: response?.success ? response.data : null }
+    } catch {
+      return { product: null }
+    }
+  },
+  head: ({ loaderData }) => {
+    const product = loaderData?.product
+    if (!product) return { meta: [{ title: 'Product | Nazu Meah Jewellers' }] }
+    const title = `${product.name} | Nazu Meah Jewellers`
+    const description = product.description?.slice(0, 160) || `Buy ${product.name} at Nazu Meah Jewellers`
+    const image = product.images?.[0] ? getImageUrl(product.images[0]) : ''
+    return {
+      meta: [
+        { title },
+        { name: 'description', content: description },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:image', content: image },
+        { property: 'og:type', content: 'product' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        { name: 'twitter:image', content: image },
+      ],
+    }
+  },
+  component: ProductPage,
+})
 
 /**
  * Generate canonical URL for a product
@@ -69,6 +84,7 @@ function generateProductUrl(product: Product): string {
 
 function ProductPage() {
   const { slug: urlSlug } = Route.useParams()
+  const loaderData = Route.useLoaderData()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { isAuthenticated } = useAuth()
@@ -79,15 +95,17 @@ function ProductPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [shareCopied, setShareCopied] = useState(false)
 
   // Parse URL to extract ID
-  const { id: productId, slugPart } = parseProductUrl(urlSlug)
+  const { id: productId } = parseProductUrl(urlSlug)
 
-  // Fetch product data - by ID if available, otherwise by slug
+  // Fetch product data - use loader data as initialData so there's no loading flash
   const { data: productResponse, isLoading, error } = useQuery({
     queryKey: ["product", productId || urlSlug],
     queryFn: () => productId ? getProductById({ data: { id: productId } }) : getProductBySlug({ data: { slug: urlSlug } }),
     staleTime: 5 * 60 * 1000,
+    initialData: loaderData?.product ? { success: true, message: '', data: loaderData.product } : undefined,
   })
 
   const product = productResponse?.success ? productResponse.data : null
@@ -114,23 +132,6 @@ function ProductPage() {
     const match = pricingResponse.data.variants.find(v => v.variant_id === selectedVariant.id)
     return match?.pricing ?? null
   }, [pricingResponse, selectedVariant])
-
-  // Dynamic page title + meta description
-  useEffect(() => {
-    if (product) {
-      document.title = `${product.name} | Nazu Meah Jewellers`
-      const desc = document.querySelector('meta[name="description"]')
-      const descContent = product.description?.slice(0, 160) || `Buy ${product.name} at Nazu Meah Jewellers`
-      if (desc) desc.setAttribute('content', descContent)
-      else {
-        const m = document.createElement('meta')
-        m.name = 'description'
-        m.content = descContent
-        document.head.appendChild(m)
-      }
-    }
-    return () => { document.title = 'Nazu Meah Jewellers' }
-  }, [product])
 
   // Redirect to canonical URL if slug doesn't match
   useEffect(() => {
@@ -368,12 +369,28 @@ function ProductPage() {
 
                 {/* Share button */}
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href)
+                  onClick={async () => {
+                    const url = window.location.href
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: product.name,
+                          text: product.description?.slice(0, 100) || product.name,
+                          url,
+                        })
+                        return
+                      } catch { /* user cancelled */ }
+                    }
+                    await navigator.clipboard.writeText(url)
+                    setShareCopied(true)
+                    setTimeout(() => setShareCopied(false), 2000)
                   }}
+                  title={shareCopied ? 'Link copied!' : 'Share product'}
                   className="absolute top-4 right-16 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
                 >
-                  <Share2 className="w-5 h-5 text-gray-600" />
+                  {shareCopied
+                    ? <Check className="w-5 h-5 text-green-500" />
+                    : <Share2 className="w-5 h-5 text-gray-600" />}
                 </button>
 
                 {/* Navigation arrows */}
