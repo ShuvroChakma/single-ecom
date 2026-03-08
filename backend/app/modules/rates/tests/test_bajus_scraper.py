@@ -45,3 +45,48 @@ def test_parse_bajus_html_all_metals_detected():
     metal_types = {r.metal_type for r in rates}
     assert "GOLD" in metal_types
     assert "SILVER" in metal_types
+
+
+# Real BAJUS page structure: section headings are <img alt="gold price"> not <h2>
+# and the Product column contains the metal name ("22 KARAT Gold")
+REAL_BAJUS_HTML = """
+<html><body>
+  <img alt="gold price" src="/img/gold-title.png">
+  <table>
+    <tr><th>Product</th><th>Description</th><th>Price</th></tr>
+    <tr><td>22 KARAT Gold</td><td>CADMIUM (HALLMARKED GOLD)</td><td>22,995 BDT/GRAM</td></tr>
+    <tr><td>21 KARAT Gold</td><td>CADMIUM (HALLMARKED GOLD)</td><td>21,950 BDT/GRAM</td></tr>
+    <tr><td>18 KARAT Gold</td><td>CADMIUM (HALLMARKED GOLD)</td><td>18,815 BDT/GRAM</td></tr>
+    <tr><td>Traditional Gold</td><td>CADMIUM</td><td>15,360 BDT/GRAM</td></tr>
+  </table>
+  <img alt="silver price" src="/img/silver-title.png">
+  <table>
+    <tr><th>Product</th><th>Description</th><th>Price</th></tr>
+    <tr><td>22 KARAT Silver</td><td>CADMIUM (HALLMARKED SILVER)</td><td>560 BDT/GRAM</td></tr>
+    <tr><td>21 KARAT Silver</td><td>CADMIUM (HALLMARKED SILVER)</td><td>535 BDT/GRAM</td></tr>
+    <tr><td>18 KARAT Silver</td><td>CADMIUM (HALLMARKED SILVER)</td><td>460 BDT/GRAM</td></tr>
+    <tr><td>Traditional Silver</td><td>CADMIUM</td><td>345 BDT/GRAM</td></tr>
+  </table>
+</body></html>
+"""
+
+def test_real_bajus_structure_img_headings():
+    """BAJUS uses <img alt='gold price'> not <h2> — scraper must handle this."""
+    rates = parse_bajus_html(REAL_BAJUS_HTML)
+    assert len(rates) >= 6
+
+def test_real_bajus_gold_22k():
+    rates = parse_bajus_html(REAL_BAJUS_HTML)
+    gold_22k = next((r for r in rates if r.metal_type == "GOLD" and r.purity == "22K"), None)
+    assert gold_22k is not None
+    assert gold_22k.rate_per_gram == Decimal("22995")
+
+def test_real_bajus_silver_detected():
+    rates = parse_bajus_html(REAL_BAJUS_HTML)
+    silver = [r for r in rates if r.metal_type == "SILVER"]
+    assert len(silver) >= 3
+
+def test_real_bajus_price_strips_unit_suffix():
+    """Price like '22,995 BDT/GRAM' must parse to 22995."""
+    rates = parse_bajus_html(REAL_BAJUS_HTML)
+    assert all(r.rate_per_gram > 0 for r in rates)

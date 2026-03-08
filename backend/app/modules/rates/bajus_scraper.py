@@ -71,23 +71,35 @@ def _parse_price(raw: str) -> Optional[Decimal]:
 def parse_bajus_html(html: str) -> list[ScrapedRate]:
     """
     Parse BAJUS gold price page HTML and return a list of ScrapedRate objects.
-    Walks the DOM: finds section headings to determine metal type, then
-    reads the following table rows for purity + price.
+
+    BAJUS uses <img alt="gold price"> / <img alt="silver price"> as section
+    separators (not text headings). Each table row has three columns:
+      [Product, Description, Price]
+    where Product contains e.g. "22 KARAT Gold" — used to detect metal + purity.
+    Falls back to the nearest img-based section heading if Product column is empty.
     """
     soup = BeautifulSoup(html, "html.parser")
     rates: list[ScrapedRate] = []
     current_metal: Optional[str] = None
 
-    for element in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "table"]):
+    for element in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "img", "table"]):
         tag = element.name
 
+        # Text headings (fallback for test HTML / future site changes)
         if tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
             metal = _detect_metal(element.get_text())
             if metal:
                 current_metal = metal
             continue
 
-        if tag == "table" and current_metal:
+        # BAJUS uses <img alt="gold price"> / <img alt="silver price"> as section headings
+        if tag == "img":
+            metal = _detect_metal(element.get("alt", ""))
+            if metal:
+                current_metal = metal
+            continue
+
+        if tag == "table":
             for row in element.find_all("tr"):
                 cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
                 if len(cells) < 2:
@@ -96,20 +108,24 @@ def parse_bajus_html(html: str) -> list[ScrapedRate]:
                 if cells[0].lower() in ("product", "description", "metal", "type"):
                     continue
 
-                # BAJUS table: [Product, Description, Price] or [Description, Price]
                 if len(cells) >= 3:
-                    description = cells[1]
+                    product_col = cells[0]   # e.g. "22 KARAT Gold"
+                    desc_col = cells[1]      # e.g. "CADMIUM (HALLMARKED GOLD)"
                     price_str = cells[2]
                 else:
-                    description = cells[0]
+                    product_col = ""
+                    desc_col = cells[0]
                     price_str = cells[1]
 
-                purity = _detect_purity(description)
+                # Derive metal from product column first, fall back to section heading
+                metal = _detect_metal(product_col) or current_metal
+                # Derive purity from product column first, fall back to description
+                purity = _detect_purity(product_col) or _detect_purity(desc_col)
                 price = _parse_price(price_str)
 
-                if purity and price:
+                if metal and purity and price:
                     rates.append(ScrapedRate(
-                        metal_type=current_metal,
+                        metal_type=metal,
                         purity=purity,
                         rate_per_gram=price,
                     ))
