@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -104,6 +105,8 @@ function ProductPage() {
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const shareRef = useRef<HTMLDivElement>(null)
+  const shareButtonRef = useRef<HTMLButtonElement>(null)
+  const [shareMenuPos, setShareMenuPos] = useState({ top: 0, right: 0 })
 
   // Parse URL to extract ID
   const { id: productId } = parseProductUrl(urlSlug)
@@ -169,9 +172,10 @@ function ProductPage() {
   useEffect(() => {
     if (!showShareMenu) return
     const handler = (e: MouseEvent) => {
-      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
-        setShowShareMenu(false)
-      }
+      const target = e.target as Node
+      const inDropdown = shareRef.current?.contains(target)
+      const inButton = shareButtonRef.current?.contains(target)
+      if (!inDropdown && !inButton) setShowShareMenu(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -387,18 +391,30 @@ function ProductPage() {
                   )}
                 </button>
 
-                {/* Share button + popover */}
-                <div ref={shareRef} className="absolute top-4 right-16 z-10">
+                {/* Share button + teleported popover */}
+                <div className="absolute top-4 right-16 z-10">
                   <button
-                    onClick={() => setShowShareMenu(v => !v)}
+                    ref={shareButtonRef}
+                    onClick={() => {
+                      if (!showShareMenu && shareButtonRef.current) {
+                        const rect = shareButtonRef.current.getBoundingClientRect()
+                        setShareMenuPos({
+                          top: rect.bottom + 8,
+                          right: window.innerWidth - rect.right,
+                        })
+                      }
+                      setShowShareMenu(v => !v)
+                    }}
                     title="Share product"
                     className="p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
                   >
                     <Share2 className="w-5 h-5 text-gray-600" />
                   </button>
 
-                  {showShareMenu && (
-                    <div className="absolute top-12 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex flex-col gap-2 w-44">
+                  {showShareMenu && createPortal(
+                    <div ref={shareRef} className="fixed z-[9999] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex flex-col gap-2 w-44"
+                      style={{ top: shareMenuPos.top, right: shareMenuPos.right }}
+                    >
                       <p className="text-xs font-semibold text-gray-500 px-1 pb-1">Share via</p>
                       {[
                         {
@@ -467,7 +483,8 @@ function ProductPage() {
                           <span className="text-sm text-gray-700">{linkCopied ? 'Copied!' : 'Copy link'}</span>
                         </button>
                       </div>
-                    </div>
+                    </div>,
+                    document.body
                   )}
                 </div>
 
