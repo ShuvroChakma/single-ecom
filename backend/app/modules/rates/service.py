@@ -40,10 +40,12 @@ class DailyRateService:
         self,
         metal_type: str,
         purity: str,
-        limit: int = 30
-    ) -> List[DailyRate]:
-        """Get rate history for a metal type and purity."""
-        return await self.repository.list_history(metal_type, purity, limit)
+        limit: int = 30,
+        offset: int = 0,
+        date=None,
+    ):
+        """Get paginated rate history. Returns (rows, total_count)."""
+        return await self.repository.list_history(metal_type, purity, limit, offset, date)
     
     async def add_rate(
         self,

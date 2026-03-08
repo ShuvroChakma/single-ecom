@@ -1,11 +1,11 @@
 """
 API endpoints for Daily Rates.
 """
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import datetime, date as DateType
 
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
@@ -56,18 +56,26 @@ async def get_current_rates(
     )
 
 
-@router.get("/rates/history", response_model=SuccessResponse[List[DailyRateResponse]])
+@router.get("/rates/history")
 async def get_rate_history(
     metal_type: str,
     purity: str,
-    limit: int = Query(default=30, ge=1, le=365),
+    limit: int = Query(default=30, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    date: Optional[DateType] = Query(default=None, description="Filter by date (YYYY-MM-DD)"),
     service: DailyRateService = Depends(get_rate_service)
 ):
-    """Get rate history for a metal type and purity (public)."""
-    rates = await service.get_rate_history(metal_type, purity, limit)
+    """Get paginated rate history for a metal type and purity (public)."""
+    date_dt = datetime.combine(date, datetime.min.time()) if date else None
+    rates, total = await service.get_rate_history(metal_type, purity, limit, offset, date_dt)
     return create_success_response(
         message="Rate history retrieved successfully",
-        data=[DailyRateResponse.model_validate(r) for r in rates]
+        data={
+            "items": [DailyRateResponse.model_validate(r) for r in rates],
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
     )
 
 

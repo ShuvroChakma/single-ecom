@@ -41,15 +41,24 @@ export const getCurrentRates = createServerFn({ method: "GET" })
     );
   });
 
-// Public: Get rate history
+export interface RateHistoryPage {
+  items: DailyRate[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// Public: Get rate history (paginated, optional date filter)
 export const getRateHistory = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { metal_type: string; purity: string; limit?: number } }) => {
+  .handler(async ({ data }: { data: { metal_type: string; purity: string; limit?: number; offset?: number; date?: string } }) => {
     const params = new URLSearchParams();
     params.append("metal_type", data.metal_type);
     params.append("purity", data.purity);
     if (data.limit) params.append("limit", data.limit.toString());
+    if (data.offset) params.append("offset", data.offset.toString());
+    if (data.date) params.append("date", data.date);
 
-    return apiRequest<ApiResponse<DailyRate[]>>(
+    return apiRequest<ApiResponse<RateHistoryPage>>(
       `/products/rates/history?${params.toString()}`
     );
   });

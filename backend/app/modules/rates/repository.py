@@ -4,6 +4,7 @@ Repository for Daily Rates.
 from typing import Optional, List
 from uuid import UUID
 from decimal import Decimal
+from typing import Optional, List
 from sqlmodel import select, func
 from sqlalchemy import case
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -89,19 +90,34 @@ class DailyRateRepository:
         self,
         metal_type: str,
         purity: str,
-        limit: int = 30
-    ) -> List[DailyRate]:
-        """Get rate history for a metal type and purity."""
-        result = await self.session.execute(
+        limit: int = 30,
+        offset: int = 0,
+        date: Optional[datetime] = None,
+    ) -> tuple[List[DailyRate], int]:
+        """Get paginated rate history. Returns (rows, total_count)."""
+        from sqlalchemy import func as sa_func
+
+        base = (
             select(DailyRate)
             .where(
                 DailyRate.metal_type == metal_type,
-                DailyRate.purity == purity
+                DailyRate.purity == purity,
             )
-            .order_by(DailyRate.effective_date.desc())
-            .limit(limit)
         )
-        return list(result.scalars().all())
+        if date is not None:
+            day_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            base = base.where(DailyRate.effective_date.between(day_start, day_end))
+
+        count_result = await self.session.execute(
+            select(sa_func.count()).select_from(base.subquery())
+        )
+        total = count_result.scalar_one()
+
+        rows_result = await self.session.execute(
+            base.order_by(DailyRate.effective_date.desc()).offset(offset).limit(limit)
+        )
+        return list(rows_result.scalars().all()), total
     
     async def create(self, rate: DailyRate) -> DailyRate:
         """Create a new daily rate."""
