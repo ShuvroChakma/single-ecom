@@ -62,6 +62,7 @@ class DailyRateRepository:
                 (DailyRate.effective_date == subquery.c.max_date)
             )
             .order_by(
+                DailyRate.effective_date.desc(),
                 case(
                     (DailyRate.metal_type == "GOLD", 1),
                     (DailyRate.metal_type == "SILVER", 2),
@@ -79,8 +80,7 @@ class DailyRateRepository:
                     (DailyRate.purity == "800", 8),
                     (DailyRate.purity == "Traditional", 9),
                     else_=10
-                ),
-                DailyRate.effective_date.desc()
+                )
             )
         )
         return list(result.scalars().all())
