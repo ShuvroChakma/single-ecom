@@ -45,10 +45,15 @@ function RootError() {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  loader: async () => {
+  staleTime: 30 * 60 * 1000,
+  loader: async ({ context: { queryClient } }) => {
     try {
-      const response = await getPublicSettings()
-      return { settings: response?.success ? response.data : null }
+      const data = await queryClient.ensureQueryData({
+        queryKey: ['site-settings'],
+        queryFn: () => getPublicSettings(),
+        staleTime: 30 * 60 * 1000,
+      })
+      return { settings: data?.success ? data.data : null }
     } catch {
       return { settings: null }
     }

@@ -36,7 +36,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { data } = useQuery({
     queryKey: ['site-settings'],
     queryFn: () => getPublicSettings(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   })
 
   const settings: SiteSettings = data?.success
