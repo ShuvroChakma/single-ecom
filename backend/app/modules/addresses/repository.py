@@ -3,7 +3,7 @@ Repository layer for Customer Address database operations.
 """
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,7 +63,7 @@ class AddressRepository:
     
     async def update(self, address: CustomerAddress) -> CustomerAddress:
         """Update an address."""
-        address.updated_at = datetime.now(timezone.utc)
+        address.updated_at = datetime.utcnow()
         self.session.add(address)
         await self.session.commit()
         await self.session.refresh(address)
@@ -80,7 +80,7 @@ class AddressRepository:
             update(CustomerAddress)
             .where(CustomerAddress.customer_id == customer_id)
             .where(CustomerAddress.is_default == True)
-            .values(is_default=False, updated_at=datetime.now(timezone.utc))
+            .values(is_default=False, updated_at=datetime.utcnow())
         )
         await self.session.execute(query)
         await self.session.commit()

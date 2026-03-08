@@ -1,7 +1,7 @@
 """
 Inquiry service for business logic.
 """
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -126,7 +126,7 @@ class InquiryService:
         if data.status is not None:
             inquiry.status = data.status
             if data.status == InquiryStatus.RESOLVED:
-                inquiry.resolved_at = datetime.now(timezone.utc)
+                inquiry.resolved_at = datetime.utcnow()
 
         if data.admin_notes is not None:
             inquiry.admin_notes = data.admin_notes
@@ -134,7 +134,7 @@ class InquiryService:
         if data.assigned_to is not None:
             inquiry.assigned_to = data.assigned_to
 
-        inquiry.updated_at = datetime.now(timezone.utc)
+        inquiry.updated_at = datetime.utcnow()
         await self.session.commit()
         await self.session.refresh(inquiry)
         return inquiry

@@ -1,7 +1,7 @@
 """
 OTP service for email verification and password reset.
 """
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 
 from app.core.config import settings
@@ -67,7 +67,7 @@ class OTPService:
         otp_data = {
             "hash": otp_hash,
             "attempts": 0,
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.utcnow().isoformat()
         }
         
         await set_cache(

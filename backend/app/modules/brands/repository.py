@@ -5,7 +5,7 @@ from typing import Optional, List
 from uuid import UUID
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.modules.brands.models import Brand, Collection
 
@@ -56,7 +56,7 @@ class BrandRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(brand, key, value)
-        brand.updated_at = datetime.now(timezone.utc)
+        brand.updated_at = datetime.utcnow()
         await self.session.commit()
         await self.session.refresh(brand)
         return brand
@@ -113,7 +113,7 @@ class CollectionRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(collection, key, value)
-        collection.updated_at = datetime.now(timezone.utc)
+        collection.updated_at = datetime.utcnow()
         await self.session.commit()
         await self.session.refresh(collection)
         return collection

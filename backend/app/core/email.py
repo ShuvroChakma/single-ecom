@@ -2,7 +2,7 @@
 Email service with Jinja2 template engine.
 """
 import smtplib
-from datetime import datetime, timezone
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
@@ -159,7 +159,7 @@ If you didn't request this code, please ignore this email.
             'frontend_url': settings.FRONTEND_URL,
             'app_name': settings.PROJECT_NAME,
             'contact_email': settings.SMTP_FROM_EMAIL,
-            'year': datetime.now(timezone.utc).year,
+            'year': datetime.utcnow().year,
         })
 
         text_content = (
@@ -170,7 +170,7 @@ If you didn't request this code, please ignore this email.
             f"Payment: {payment_method}\n"
             f"Shipping to: {shipping_address}\n\n"
             f"View your order: {settings.FRONTEND_URL}/orders/{order_id}\n\n"
-            f"© {datetime.now(timezone.utc).year} {settings.PROJECT_NAME}"
+            f"© {datetime.utcnow().year} {settings.PROJECT_NAME}"
         )
 
         return await EmailService.send_email(email, subject, html_content, text_content)
@@ -194,7 +194,7 @@ If you didn't request this code, please ignore this email.
             'message': message,
             'app_name': settings.PROJECT_NAME,
             'contact_email': settings.SMTP_FROM_EMAIL,
-            'year': datetime.now(timezone.utc).year,
+            'year': datetime.utcnow().year,
         })
 
         text_content = (
@@ -203,7 +203,7 @@ If you didn't request this code, please ignore this email.
             f"Metal Type: {metal_type}\n"
             + (f"Budget Range: {budget_range}\n" if budget_range else "")
             + f"\nOur team will get back to you within 1–2 business days.\n\n"
-            f"© {datetime.now(timezone.utc).year} {settings.PROJECT_NAME}"
+            f"© {datetime.utcnow().year} {settings.PROJECT_NAME}"
         )
 
         return await EmailService.send_email(email, subject, html_content, text_content)

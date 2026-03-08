@@ -40,7 +40,7 @@ class UserRepository(BaseRepository[User]):
         Soft delete user by setting is_active=False and renaming email.
         This allows the email to be re-registered.
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
         
         user = await self.get(user_id)
         if not user:
@@ -48,7 +48,7 @@ class UserRepository(BaseRepository[User]):
         
         # Rename email to allow reuse: deleted_{timestamp}_{email}
         # Truncate if too long (email max 255)
-        timestamp = int(datetime.now(timezone.utc).timestamp())
+        timestamp = int(datetime.utcnow().timestamp())
         prefix = f"deleted_{timestamp}_"
         original_email = user.email
         
@@ -63,7 +63,7 @@ class UserRepository(BaseRepository[User]):
         
         user.is_active = False
         user.email = new_email
-        user.deleted_at = datetime.now(timezone.utc)
+        user.deleted_at = datetime.utcnow()
         
         self.db.add(user)
         await self.db.commit()

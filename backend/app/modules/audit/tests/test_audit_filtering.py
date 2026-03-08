@@ -1,7 +1,7 @@
 import pytest
 import uuid
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from app.modules.audit.service import audit_service
 from app.modules.audit.models import AuditLog
 
@@ -32,7 +32,7 @@ async def test_audit_filtering_logic():
     # Or just use unique actor_id to filter our view.
     
     # Let's insert manually to control timestamps
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     yesterday = now - timedelta(days=1)
     
     log1 = {

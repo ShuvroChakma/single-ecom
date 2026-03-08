@@ -3,7 +3,7 @@ Repository layer for Cart database operations.
 """
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,7 +52,7 @@ class CartRepository:
 
     async def update_timestamp(self, cart: Cart) -> Cart:
         """Update cart's updated_at timestamp."""
-        cart.updated_at = datetime.now(timezone.utc)
+        cart.updated_at = datetime.utcnow()
         self.session.add(cart)
         await self.session.commit()
         # Re-fetch with selectinload so Cart.items is available
@@ -109,7 +109,7 @@ class CartItemRepository:
     
     async def update(self, item: CartItem) -> CartItem:
         """Update a cart item."""
-        item.updated_at = datetime.now(timezone.utc)
+        item.updated_at = datetime.utcnow()
         self.session.add(item)
         await self.session.commit()
         await self.session.refresh(item)

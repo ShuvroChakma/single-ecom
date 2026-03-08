@@ -8,7 +8,7 @@ from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import and_, or_, exists
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.modules.products.models import Product, ProductVariant, MetalType
 from app.modules.products.schemas import ProductListParams
@@ -250,7 +250,7 @@ class ProductRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(product, key, value)
-        product.updated_at = datetime.now(timezone.utc)
+        product.updated_at = datetime.utcnow()
         await self.session.commit()
         await self.session.refresh(product)
         return product
@@ -310,7 +310,7 @@ class ProductVariantRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(variant, key, value)
-        variant.updated_at = datetime.now(timezone.utc)
+        variant.updated_at = datetime.utcnow()
         await self.session.commit()
         await self.session.refresh(variant)
         return variant

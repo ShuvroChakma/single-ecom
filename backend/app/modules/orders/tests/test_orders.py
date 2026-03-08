@@ -4,7 +4,7 @@ Tests for Orders.
 import pytest
 from uuid import uuid4
 from decimal import Decimal
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.modules.orders.models import Order, OrderItem, OrderStatus, PaymentStatus
 from app.modules.orders.schemas import (
@@ -132,7 +132,7 @@ class TestOrderSchemas:
             payment_status=PaymentStatus.PAID,
             total=Decimal("5000"),
             item_count=3,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.utcnow()
         )
         
         assert response.status == OrderStatus.CONFIRMED

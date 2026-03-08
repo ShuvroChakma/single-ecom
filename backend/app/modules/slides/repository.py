@@ -5,7 +5,7 @@ from typing import Optional, List
 from uuid import UUID
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.modules.slides.models import Slide, SlideType
 
@@ -80,7 +80,7 @@ class SlideRepository:
     
     async def list_active(self, position: Optional[str] = None) -> List[Slide]:
         """List active slides within their schedule, optionally filtered by position."""
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         query = select(Slide).where(Slide.is_active == True)
 
         # Filter by schedule
@@ -124,7 +124,7 @@ class SlideRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(slide, key, value)
-        slide.updated_at = datetime.now(timezone.utc)
+        slide.updated_at = datetime.utcnow()
         await self.session.commit()
         await self.session.refresh(slide)
         return slide

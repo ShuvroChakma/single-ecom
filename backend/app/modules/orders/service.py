@@ -4,7 +4,7 @@ Service layer for Order business logic.
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 from decimal import Decimal
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Request
@@ -200,7 +200,7 @@ class OrderService:
 
             # 7. Build and flush Order (gets order.id without committing)
             order_number = await self.repo.generate_order_number()
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow()
             order = Order(
                 order_number=order_number,
                 customer_id=customer_id,
@@ -354,7 +354,7 @@ class OrderService:
         order.status = new_status
         
         # Update timestamp based on status
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         if new_status == OrderStatus.CONFIRMED:
             order.confirmed_at = now
         elif new_status == OrderStatus.SHIPPED:
@@ -409,10 +409,10 @@ class OrderService:
             )
         
         order.status = OrderStatus.CANCELLED
-        order.cancelled_at = datetime.now(timezone.utc)
+        order.cancelled_at = datetime.utcnow()
         order.status_history.append({
             "status": OrderStatus.CANCELLED.value,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.utcnow().isoformat(),
             "note": reason or "Cancelled by customer"
         })
         

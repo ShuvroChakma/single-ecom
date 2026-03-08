@@ -6,7 +6,7 @@ from uuid import UUID
 from decimal import Decimal
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.core.exceptions import NotFoundError
 from app.constants.error_codes import ErrorCode
@@ -56,7 +56,7 @@ class DailyRateService:
         rate = DailyRate(
             **rate_data,
             created_by=actor_id,
-            effective_date=data.effective_date or datetime.now(timezone.utc)
+            effective_date=data.effective_date or datetime.utcnow()
         )
         rate = await self.repository.create(rate)
         
@@ -87,7 +87,7 @@ class DailyRateService:
             rate = DailyRate(
                 **rate_data,
                 created_by=actor_id,
-                effective_date=data.effective_date or datetime.now(timezone.utc)
+                effective_date=data.effective_date or datetime.utcnow()
             )
             rates.append(rate)
         

@@ -4,7 +4,7 @@ Tests for Promo Codes.
 import pytest
 from uuid import uuid4
 from decimal import Decimal
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from app.modules.promo_codes.models import PromoCode, DiscountType
 from app.modules.promo_codes.schemas import (
@@ -23,8 +23,8 @@ class TestPromoCodeSchemas:
             discount_type=DiscountType.PERCENTAGE,
             discount_value=Decimal("10"),
             max_discount=Decimal("500"),
-            starts_at=datetime.now(timezone.utc),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+            starts_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(days=30)
         )
         
         assert data.code == "SAVE10"
@@ -38,8 +38,8 @@ class TestPromoCodeSchemas:
             discount_type=DiscountType.FIXED_AMOUNT,
             discount_value=Decimal("500"),
             min_order_amount=Decimal("3000"),
-            starts_at=datetime.now(timezone.utc),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+            starts_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(days=7)
         )
         
         assert data.code == "FLAT500"  # Should be uppercased
@@ -51,8 +51,8 @@ class TestPromoCodeSchemas:
             code="FREESHIP",
             discount_type=DiscountType.FREE_SHIPPING,
             discount_value=Decimal("1"),  # Not used, but required by schema
-            starts_at=datetime.now(timezone.utc),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=14)
+            starts_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(days=14)
         )
         
         assert data.discount_type == DiscountType.FREE_SHIPPING
@@ -67,8 +67,8 @@ class TestPromoCodeModel:
             code="TEST123",
             discount_type=DiscountType.PERCENTAGE,
             discount_value=Decimal("15"),
-            starts_at=datetime.now(timezone.utc),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+            starts_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(days=30)
         )
         
         assert promo.code == "TEST123"
@@ -82,8 +82,8 @@ class TestPromoCodeModel:
             code="NEWUSER",
             discount_type=DiscountType.FIXED_AMOUNT,
             discount_value=Decimal("100"),
-            starts_at=datetime.now(timezone.utc),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+            starts_at=datetime.utcnow(),
+            expires_at=datetime.utcnow() + timedelta(days=7)
         )
         
         assert promo.first_order_only is False

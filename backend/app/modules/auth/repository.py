@@ -1,7 +1,7 @@
 """
 Authentication repository for tokens and OAuth.
 """
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -29,7 +29,7 @@ class RefreshTokenRepository(BaseRepository[RefreshToken]):
             select(RefreshToken)
             .where(RefreshToken.user_id == user_id)
             .where(RefreshToken.revoked == False)
-            .where(RefreshToken.expires_at > datetime.now(timezone.utc))
+            .where(RefreshToken.expires_at > datetime.utcnow())
         )
         return result.scalars().all()
     

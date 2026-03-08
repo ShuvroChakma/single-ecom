@@ -3,7 +3,7 @@ Repository layer for Order database operations.
 """
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime, timezone, date
+from datetime import datetime, date
 from decimal import Decimal
 
 from sqlalchemy import select, func
@@ -93,7 +93,7 @@ class OrderRepository:
 
     async def update(self, order: Order) -> Order:
         """Update an order."""
-        order.updated_at = datetime.now(timezone.utc)
+        order.updated_at = datetime.utcnow()
         self.session.add(order)
         await self.session.commit()
         return await self.get_by_id(order.id)

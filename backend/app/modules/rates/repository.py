@@ -6,7 +6,7 @@ from uuid import UUID
 from decimal import Decimal
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.modules.rates.models import DailyRate
 
@@ -31,7 +31,7 @@ class DailyRateRepository:
             .where(
                 DailyRate.metal_type == metal_type,
                 DailyRate.purity == purity,
-                DailyRate.effective_date <= datetime.now(timezone.utc)
+                DailyRate.effective_date <= datetime.utcnow()
             )
             .order_by(DailyRate.effective_date.desc())
             .limit(1)
@@ -47,7 +47,7 @@ class DailyRateRepository:
                 DailyRate.purity,
                 func.max(DailyRate.effective_date).label("max_date")
             )
-            .where(DailyRate.effective_date <= datetime.now(timezone.utc))
+            .where(DailyRate.effective_date <= datetime.utcnow())
             .group_by(DailyRate.metal_type, DailyRate.purity)
             .subquery()
         )

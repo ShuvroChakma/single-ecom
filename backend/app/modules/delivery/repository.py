@@ -3,7 +3,7 @@ Repository layer for Delivery Zone database operations.
 """
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,7 +63,7 @@ class DeliveryZoneRepository:
     
     async def update(self, zone: DeliveryZone) -> DeliveryZone:
         """Update a zone."""
-        zone.updated_at = datetime.now(timezone.utc)
+        zone.updated_at = datetime.utcnow()
         self.session.add(zone)
         await self.session.commit()
         await self.session.refresh(zone)
