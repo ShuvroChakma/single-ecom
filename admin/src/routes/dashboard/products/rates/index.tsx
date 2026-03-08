@@ -1,11 +1,12 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
 import { fmtDateTime, fmtDateTimeLong } from "@/lib/date"
-import { Plus, RefreshCw, TrendingUp } from "lucide-react"
+import { Download, Loader2, Plus, RefreshCw, TrendingUp } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
-import { DailyRate, getCurrentRates } from "@/api/rates"
+import { DailyRate, getCurrentRates, syncBajusRates } from "@/api/rates"
 import { DataTable } from "@/components/shared/data-table"
 import { RateDialog } from "@/components/shared/rate-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +29,18 @@ function RatesPage() {
     const handleRefresh = () => {
         refetch()
     }
+
+    const syncMutation = useMutation({
+        mutationFn: () => syncBajusRates(),
+        onSuccess: (data) => {
+            const result = data?.data
+            toast.success(`Synced ${result?.synced ?? 0} rates from BAJUS`)
+            queryClient.invalidateQueries({ queryKey: ['rates'] })
+        },
+        onError: (err: any) => {
+            toast.error(err?.message ?? "Failed to sync from BAJUS")
+        },
+    })
 
     const columns: ColumnDef<DailyRate>[] = [
         {
@@ -96,6 +109,18 @@ function RatesPage() {
                     <Button variant="outline" onClick={handleRefresh} disabled={isRefetching}>
                         <RefreshCw className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
                         Refresh
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => syncMutation.mutate()}
+                        disabled={syncMutation.isPending}
+                    >
+                        {syncMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                            <Download className="h-4 w-4 mr-2" />
+                        )}
+                        Sync from BAJUS
                     </Button>
                     <Button onClick={() => setIsDialogOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" />

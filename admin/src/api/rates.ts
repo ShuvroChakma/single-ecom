@@ -85,3 +85,22 @@ export const addRatesBatch = createServerFn({ method: "POST" })
       token
     );
   });
+
+export interface SyncResult {
+  synced: number;
+  skipped: number;
+  source: string;
+  message: string;
+}
+
+export const syncBajusRates = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+
+    return apiRequest<ApiResponse<SyncResult>>(
+      "/products/admin/rates/sync-bajus",
+      { method: "POST" },
+      token
+    );
+  });
