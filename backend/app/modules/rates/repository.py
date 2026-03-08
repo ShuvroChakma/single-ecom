@@ -5,6 +5,7 @@ from typing import Optional, List
 from uuid import UUID
 from decimal import Decimal
 from sqlmodel import select, func
+from sqlalchemy import case
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
@@ -60,7 +61,26 @@ class DailyRateRepository:
                 (DailyRate.purity == subquery.c.purity) &
                 (DailyRate.effective_date == subquery.c.max_date)
             )
-            .order_by(DailyRate.metal_type, DailyRate.purity)
+            .order_by(
+                case(
+                    (DailyRate.metal_type == "GOLD", 1),
+                    (DailyRate.metal_type == "SILVER", 2),
+                    (DailyRate.metal_type == "PLATINUM", 3),
+                    else_=4
+                ),
+                case(
+                    (DailyRate.purity == "22K", 1),
+                    (DailyRate.purity == "21K", 2),
+                    (DailyRate.purity == "18K", 3),
+                    (DailyRate.purity == "14K", 4),
+                    (DailyRate.purity == "999", 5),
+                    (DailyRate.purity == "950", 6),
+                    (DailyRate.purity == "925", 7),
+                    (DailyRate.purity == "800", 8),
+                    (DailyRate.purity == "Traditional", 9),
+                    else_=10
+                )
+            )
         )
         return list(result.scalars().all())
     
