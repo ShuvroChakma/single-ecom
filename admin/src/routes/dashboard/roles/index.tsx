@@ -177,6 +177,7 @@ function RolesPage() {
                 pagination={pagination}
                 onPaginationChange={setPagination}
                 pageCount={Math.ceil(totalCount / pagination.pageSize)}
+                manualPagination={true}
             />
 
             <RoleDialog

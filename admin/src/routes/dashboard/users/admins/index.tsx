@@ -190,6 +190,7 @@ function AdminsPage() {
         pagination={pagination}
         onPaginationChange={setPagination}
         pageCount={Math.ceil(totalCount / pagination.pageSize)}
+        manualPagination={true}
       />
 
       <AdminDialog

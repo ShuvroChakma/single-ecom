@@ -214,6 +214,7 @@ function OrdersPage() {
                 isLoading={isLoading}
                 pagination={pagination}
                 onPaginationChange={setPagination}
+                manualPagination={true}
             />
 
             {/* Order Status Dialog */}

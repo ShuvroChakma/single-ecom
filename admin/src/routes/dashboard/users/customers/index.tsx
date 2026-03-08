@@ -184,6 +184,7 @@ function CustomersPage() {
                 pagination={pagination}
                 onPaginationChange={setPagination}
                 pageCount={Math.ceil(totalCount / pagination.pageSize)}
+                manualPagination={true}
             />
 
             <CustomerDialog

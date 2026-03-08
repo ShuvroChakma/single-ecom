@@ -259,6 +259,7 @@ function CategoriesPage() {
                 onGlobalFilterChange={handleSearchChange}
                 globalFilter={search}
                 isLoading={isLoading}
+                manualPagination={true}
             />
 
             <CategoryDialog
