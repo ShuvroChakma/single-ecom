@@ -155,6 +155,7 @@ const Header = () => {
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
+        headerHeight={headerHeight}
       />
     </>
   );

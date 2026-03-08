@@ -9,9 +9,10 @@ import { useSettings } from '@/contexts/SettingsContext'
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
+  headerHeight?: number
 }
 
-const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+const MobileMenu = ({ isOpen, onClose, headerHeight = 68 }: MobileMenuProps) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const { isAuthenticated, user, logout } = useAuth()
   const { contact_phone } = useSettings()
@@ -151,7 +152,10 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       />
 
       {/* Menu Panel - positioned below header */}
-      <div className="absolute left-0 top-17 bottom-0 w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+      <div
+        className="absolute left-0 bottom-0 w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300"
+        style={{ top: headerHeight }}
+      >
         {/* Categories List */}
         <div className="flex-1 bg-white overflow-y-auto">
           <nav className="py-2">
