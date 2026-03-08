@@ -4,7 +4,7 @@ Admin POS (Point of Sale) endpoints for walk-in customers.
 from typing import List, Optional
 from uuid import UUID
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -99,12 +99,12 @@ async def create_pos_order(
         payment_method=data.payment_method,
         payment_status=PaymentStatus.PAID if data.mark_as_paid else PaymentStatus.PENDING,
         status=OrderStatus.CONFIRMED if data.mark_as_paid else OrderStatus.PENDING,
-        confirmed_at=datetime.utcnow() if data.mark_as_paid else None,
-        paid_at=datetime.utcnow() if data.mark_as_paid else None,
+        confirmed_at=datetime.now(timezone.utc) if data.mark_as_paid else None,
+        paid_at=datetime.now(timezone.utc) if data.mark_as_paid else None,
         customer_notes=data.notes,
         status_history=[{
             "status": OrderStatus.CONFIRMED.value if data.mark_as_paid else OrderStatus.PENDING.value,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "note": f"POS order created by {current_user.id}"
         }]
     )

@@ -3,7 +3,7 @@ import pytest
 import random
 import string
 from uuid import uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -122,7 +122,7 @@ async def test_list_slides_by_type(client: AsyncClient, session: AsyncSession):
 @pytest.mark.asyncio
 async def test_slide_scheduling(client: AsyncClient, session: AsyncSession):
     """Test that scheduled slides respect start/end dates."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Future slide (not yet active)
     future_slide = Slide(

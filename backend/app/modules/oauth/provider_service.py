@@ -3,7 +3,7 @@ OAuth Provider service for managing OAuth providers.
 """
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import Request
 
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -168,7 +168,7 @@ class OAuthProviderService:
             if value is not None:
                 setattr(provider, field, value)
         
-        provider.updated_at = datetime.utcnow()
+        provider.updated_at = datetime.now(timezone.utc)
         await self.provider_repo.update(provider, update_data)
         
         await audit_service.log_action(

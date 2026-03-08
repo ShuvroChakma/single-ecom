@@ -3,7 +3,7 @@ Repository layer for Promo Code database operations.
 """
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import select, func
@@ -42,7 +42,7 @@ class PromoCodeRepository:
     
     async def get_active_codes(self) -> List[PromoCode]:
         """Get currently active and valid promo codes."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         query = (
             select(PromoCode)
             .where(PromoCode.is_active == True)
@@ -62,7 +62,7 @@ class PromoCodeRepository:
     
     async def update(self, promo: PromoCode) -> PromoCode:
         """Update a promo code."""
-        promo.updated_at = datetime.utcnow()
+        promo.updated_at = datetime.now(timezone.utc)
         self.session.add(promo)
         await self.session.commit()
         await self.session.refresh(promo)

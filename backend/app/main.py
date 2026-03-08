@@ -53,6 +53,27 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 import time
 
+_SENSITIVE_FIELDS = {"password", "new_password", "old_password", "token", "access_token",
+                     "refresh_token", "otp", "otp_code", "secret", "card_number", "cvv"}
+
+def _sanitize_body(raw: bytes) -> str:
+    """Mask sensitive fields in request body before logging."""
+    import json
+    if not raw:
+        return ""
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            sanitized = {
+                k: "***" if k.lower() in _SENSITIVE_FIELDS else v
+                for k, v in data.items()
+            }
+            return json.dumps(sanitized)
+    except Exception:
+        pass
+    return "<binary or non-JSON body>"
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: StarletteRequest, call_next):
         start = time.time()
@@ -61,8 +82,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             "→ %s %s | auth: %s | body: %s",
             request.method,
             request.url,
-            request.headers.get("authorization", "none"),
-            body.decode("utf-8") if body else "",
+            "present" if request.headers.get("authorization") else "none",
+            _sanitize_body(body),
         )
         response = await call_next(request)
         elapsed = (time.time() - start) * 1000

@@ -2,7 +2,7 @@
 import pytest
 from uuid import uuid4
 from decimal import Decimal
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -101,7 +101,7 @@ async def test_get_current_rates(client: AsyncClient, session: AsyncSession):
         purity="22K",
         rate_per_gram=Decimal("7500"),
         source=RateSource.MANUAL,
-        effective_date=datetime.utcnow()
+        effective_date=datetime.now(timezone.utc)
     )
     session.add(rate)
     await session.commit()
@@ -125,7 +125,7 @@ async def test_get_rate_history(client: AsyncClient, session: AsyncSession):
             purity="22K",
             rate_per_gram=Decimal(f"{7500 + i * 100}"),
             source=RateSource.MANUAL,
-            effective_date=datetime.utcnow() - timedelta(days=i)
+            effective_date=datetime.now(timezone.utc) - timedelta(days=i)
         )
         session.add(rate)
     await session.commit()
@@ -203,7 +203,7 @@ async def test_product_pricing(client: AsyncClient, session: AsyncSession, setup
         purity="22K",
         rate_per_gram=Decimal("7500"),
         source=RateSource.MANUAL,
-        effective_date=datetime.utcnow()
+        effective_date=datetime.now(timezone.utc)
     )
     session.add(rate)
     await session.commit()

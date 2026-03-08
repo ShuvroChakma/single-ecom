@@ -3,7 +3,7 @@ Repository layer for Settings database operations.
 """
 from typing import Optional, List, Dict
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,7 +64,7 @@ class SettingsRepository:
     
     async def update(self, setting: Setting) -> Setting:
         """Update a setting."""
-        setting.updated_at = datetime.utcnow()
+        setting.updated_at = datetime.now(timezone.utc)
         self.session.add(setting)
         await self.session.commit()
         await self.session.refresh(setting)

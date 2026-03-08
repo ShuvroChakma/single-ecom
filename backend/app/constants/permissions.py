@@ -79,6 +79,10 @@ class PermissionEnum(str, Enum):
     SETTINGS_READ = "settings:read"
     SETTINGS_WRITE = "settings:write"
     
+    # Inquiry permissions
+    INQUIRIES_READ = "inquiries:read"
+    INQUIRIES_WRITE = "inquiries:write"
+
     # System permissions
     SYSTEM_CONFIG = "system:config"
 
@@ -95,11 +99,14 @@ DEFAULT_ROLE_PERMISSIONS = {
         PermissionEnum.PRODUCTS_WRITE,
         PermissionEnum.CATEGORIES_READ,
         PermissionEnum.CATEGORIES_WRITE,
+        PermissionEnum.INQUIRIES_READ,
+        PermissionEnum.INQUIRIES_WRITE,
     ],
     "SUPPORT": [
         PermissionEnum.USERS_READ,
         PermissionEnum.ORDERS_READ,
         PermissionEnum.CATEGORIES_READ,
+        PermissionEnum.INQUIRIES_READ,
     ],
     "CUSTOMER": [
         "profile:read",

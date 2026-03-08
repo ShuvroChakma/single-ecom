@@ -1,6 +1,7 @@
 """
 API endpoints for inquiries.
 """
+import asyncio
 import time
 from pathlib import Path
 from typing import List, Optional
@@ -106,7 +107,13 @@ async def create_custom_jewellery_request(
             )
 
         safe_name = _sanitize_filename(design_image.filename)
-        design_image_path = f"/uploads/inquiries/{safe_name}"
+        upload_dir = Path("static/uploads/inquiries")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        file_path = upload_dir / safe_name
+        await asyncio.get_event_loop().run_in_executor(
+            None, file_path.write_bytes, contents
+        )
+        design_image_path = f"/static/uploads/inquiries/{safe_name}"
 
     data = CustomJewelleryRequest(
         name=name,

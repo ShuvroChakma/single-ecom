@@ -65,7 +65,7 @@ async def bkash_callback(
                 # Record transaction
                 trans_repo = PaymentTransactionRepository(session)
                 from app.modules.payments.models import PaymentTransaction
-                from datetime import datetime
+                from datetime import datetime, timezone
                 
                 transaction = PaymentTransaction(
                     order_id=order.id,
@@ -74,7 +74,7 @@ async def bkash_callback(
                     amount=result.amount,
                     status="SUCCESS",
                     gateway_response=result.gateway_response,
-                    completed_at=datetime.utcnow()
+                    completed_at=datetime.now(timezone.utc)
                 )
                 await trans_repo.create(transaction)
     
@@ -116,7 +116,7 @@ async def sslcommerz_success(
                     # Record transaction
                     trans_repo = PaymentTransactionRepository(session)
                     from app.modules.payments.models import PaymentTransaction
-                    from datetime import datetime
+                    from datetime import datetime, timezone
                     
                     transaction = PaymentTransaction(
                         order_id=order.id,
@@ -125,7 +125,7 @@ async def sslcommerz_success(
                         amount=result.amount,
                         status="SUCCESS",
                         gateway_response=result.gateway_response,
-                        completed_at=datetime.utcnow()
+                        completed_at=datetime.now(timezone.utc)
                     )
                     await trans_repo.create(transaction)
             except ValueError:

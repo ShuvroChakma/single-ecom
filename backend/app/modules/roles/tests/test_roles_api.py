@@ -4,7 +4,7 @@ Run with: pytest tests/test_roles.py -v
 """
 import pytest
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.modules.users.models import User
 from app.modules.roles.models import Role, Permission
@@ -130,8 +130,8 @@ class TestRoleHappyPath:
             name="NEW_ROLE", 
             description="Desc", 
             is_system=False, 
-            created_at=datetime.utcnow(), 
-            updated_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc), 
+            updated_at=datetime.now(timezone.utc)
         )
         # We need to make sure the object returned by create_role behaves like a Pydantic model
         # or compatible for SuccessResponse. The RoleService refactor returns a RoleResponse object.
@@ -143,8 +143,8 @@ class TestRoleHappyPath:
             name="NEW_ROLE", 
             description="Desc", 
             is_system=False, 
-            created_at=datetime.utcnow(), 
-            updated_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc), 
+            updated_at=datetime.now(timezone.utc)
         )
         mock_role_service.create_role.return_value = mock_resp
 
@@ -196,8 +196,8 @@ class TestRoleHappyPath:
                 name="TEST_ROLE",
                 description="Test Description",
                 is_system=False,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
             )
             service_instance.create_role = AsyncMock(return_value=expected_role)
 

@@ -4,7 +4,7 @@ Service layer for Promo Code business logic.
 from typing import List, Optional
 from uuid import UUID
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Request
@@ -183,7 +183,7 @@ class PromoCodeService:
             )
         
         # Check date validity
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if promo.starts_at > now:
             return PromoValidationResult(
                 valid=False,

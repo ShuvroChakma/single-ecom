@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.modules.attributes.models import AttributeGroup, Attribute, ProductAttributeValue
 
@@ -54,7 +54,7 @@ class AttributeGroupRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(group, key, value)
-        group.updated_at = datetime.utcnow()
+        group.updated_at = datetime.now(timezone.utc)
         await self.session.commit()
         await self.session.refresh(group)
         return group
@@ -106,7 +106,7 @@ class AttributeRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(attribute, key, value)
-        attribute.updated_at = datetime.utcnow()
+        attribute.updated_at = datetime.now(timezone.utc)
         await self.session.commit()
         await self.session.refresh(attribute)
         return attribute
@@ -166,7 +166,7 @@ class ProductAttributeValueRepository:
         for key, val in data.items():
             if val is not None:
                 setattr(value, key, val)
-        value.updated_at = datetime.utcnow()
+        value.updated_at = datetime.now(timezone.utc)
         await self.session.commit()
         # Re-fetch with relationships to avoid lazy-load (MissingGreenlet) on serialization
         return await self.get(value.id)

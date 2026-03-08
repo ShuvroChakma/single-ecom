@@ -3,7 +3,7 @@ Repository layer for Payment Gateway database operations.
 """
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -55,7 +55,7 @@ class PaymentGatewayRepository:
     
     async def update(self, gateway: PaymentGateway) -> PaymentGateway:
         """Update a gateway."""
-        gateway.updated_at = datetime.utcnow()
+        gateway.updated_at = datetime.now(timezone.utc)
         self.session.add(gateway)
         await self.session.commit()
         await self.session.refresh(gateway)

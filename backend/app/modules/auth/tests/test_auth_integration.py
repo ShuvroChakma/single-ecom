@@ -137,11 +137,11 @@ async def test_full_auth_flow(client: AsyncClient, session):
     # Manually inject known OTP into Redis (via cache helper)
     # We assume Integration Test environment has working Redis Connection.
     # The `otp_service` stores it as a dict.
-    from datetime import datetime
+    from datetime import datetime, timezone
     otp_data = {
         "hash": otp_hash,
         "attempts": 0,
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     # We need to await set_cache.

@@ -5,7 +5,7 @@ from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.deps import get_db
 from app.core.permissions import require_permissions
@@ -51,7 +51,7 @@ async def get_current_rates(
         message="Current rates retrieved successfully",
         data=CurrentRatesResponse(
             rates=[DailyRateResponse.model_validate(r) for r in rates],
-            last_updated=max([r.effective_date for r in rates]) if rates else datetime.utcnow()
+            last_updated=max([r.effective_date for r in rates]) if rates else datetime.now(timezone.utc)
         )
     )
 

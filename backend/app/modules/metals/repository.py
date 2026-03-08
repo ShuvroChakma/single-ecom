@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.modules.metals.models import Metal, Purity
 
@@ -86,7 +86,7 @@ class MetalRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(metal, key, value)
-        metal.updated_at = datetime.utcnow()
+        metal.updated_at = datetime.now(timezone.utc)
         await self.session.commit()
         await self.session.refresh(metal)
         return metal
@@ -138,7 +138,7 @@ class PurityRepository:
         for key, value in data.items():
             if value is not None:
                 setattr(purity, key, value)
-        purity.updated_at = datetime.utcnow()
+        purity.updated_at = datetime.now(timezone.utc)
         await self.session.commit()
         await self.session.refresh(purity)
         return purity
