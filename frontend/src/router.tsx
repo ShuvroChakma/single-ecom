@@ -6,7 +6,6 @@ import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 import { routeTree } from './routeTree.gen'
 import { AuthProvider } from './contexts/AuthContext'
 import { LoginModalProvider } from './contexts/LoginModalContext'
-import { SettingsProvider } from './contexts/SettingsContext'
 import LoginModal from './components/shared/Auth/LoginModal'
 
 // Create a new router instance
@@ -21,12 +20,10 @@ export const getRouter = () => {
       return (
         <TanstackQuery.Provider {...rqContext}>
           <AuthProvider>
-            <SettingsProvider>
-              <LoginModalProvider>
-                {props.children}
-                <LoginModal />
-              </LoginModalProvider>
-            </SettingsProvider>
+            <LoginModalProvider>
+              {props.children}
+              <LoginModal />
+            </LoginModalProvider>
           </AuthProvider>
         </TanstackQuery.Provider>
       )

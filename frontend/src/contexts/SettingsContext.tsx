@@ -1,11 +1,11 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getPublicSettings, SiteSettings } from '@/api/settings'
+import { getPublicSettings, SettingsGrouped, SiteSettings } from '@/api/settings'
 
 const DEFAULTS: SiteSettings = {
   store_name: 'Jewellery Store',
   store_tagline: 'Exquisite Jewelry for Every Occasion',
-  store_logo: '/NazuMeah.svg',
+  store_logo: '',
   store_favicon: '/favicon.ico',
   currency: 'BDT',
   currency_symbol: '৳',
@@ -32,24 +32,37 @@ const DEFAULTS: SiteSettings = {
 
 const SettingsContext = createContext<SiteSettings>(DEFAULTS)
 
-export function SettingsProvider({ children }: { children: ReactNode }) {
+function flattenSettings(grouped: SettingsGrouped): SiteSettings {
+  return {
+    ...DEFAULTS,
+    ...grouped.general,
+    ...grouped.contact,
+    ...grouped.social,
+    ...grouped.shipping,
+    ...grouped.seo,
+    ...grouped.appearance,
+  }
+}
+
+export function SettingsProvider({
+  children,
+  initialSettings,
+}: {
+  children: ReactNode
+  initialSettings?: SettingsGrouped | null
+}) {
   const { data } = useQuery({
     queryKey: ['site-settings'],
     queryFn: () => getPublicSettings(),
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
+    initialData: initialSettings
+      ? { success: true as const, data: initialSettings, message: '' }
+      : undefined,
   })
 
   const settings: SiteSettings = data?.success
-    ? {
-        ...DEFAULTS,
-        ...data.data.general,
-        ...data.data.contact,
-        ...data.data.social,
-        ...data.data.shipping,
-        ...data.data.seo,
-        ...data.data.appearance,
-      }
+    ? flattenSettings(data.data)
     : DEFAULTS
 
   return (

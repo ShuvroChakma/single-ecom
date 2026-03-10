@@ -1,6 +1,7 @@
 
 import {
   HeadContent,
+  Outlet,
   Scripts,
   createRootRouteWithContext,
   Link,
@@ -9,6 +10,7 @@ import {
 
 import appCss from '../styles.css?url'
 import { getPublicSettings } from '@/api/settings'
+import { SettingsProvider } from '@/contexts/SettingsContext'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -81,9 +83,19 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       links: [{ rel: 'stylesheet', href: appCss }],
     }
   },
+  component: RootComponent,
   errorComponent: RootError,
   shellComponent: RootDocument,
 })
+
+function RootComponent() {
+  const { settings } = Route.useLoaderData()
+  return (
+    <SettingsProvider initialSettings={settings}>
+      <Outlet />
+    </SettingsProvider>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
