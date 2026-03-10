@@ -141,7 +141,7 @@ function RatesPage() {
                         Manage metal rates and pricing
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Button variant="outline" onClick={handleRefresh} disabled={isRefetching}>
                         <RefreshCw className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
                         Refresh
