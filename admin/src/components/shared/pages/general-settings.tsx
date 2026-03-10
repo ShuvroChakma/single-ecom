@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Loader2, Save } from "lucide-react"
+import { FolderOpen, ImageIcon, Loader2, Save, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { getSettings, bulkUpdateSettings, initializeSettings, SettingsGrouped } from "@/api/settings"
+import { uploadCategoryImage } from "@/api/uploads"
+import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
+import { useAuth } from "@/lib/auth"
+import { cn, getImageUrl } from "@/lib/utils"
 
 type FlatSettings = Record<string, string>
 
@@ -80,6 +84,125 @@ function TextareaField({
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
         rows={rows}
+      />
+    </div>
+  )
+}
+
+function ImageField({
+  label,
+  value,
+  onChange,
+  onRemove,
+  hint,
+  previewClass,
+  type = "icon",
+}: {
+  label: string
+  value: string
+  onChange: (url: string) => void
+  onRemove: () => void
+  hint?: string
+  previewClass?: string
+  type?: "icon" | "banner"
+}) {
+  const { token } = useAuth()
+  const [isUploading, setIsUploading] = React.useState(false)
+  const [showGallery, setShowGallery] = React.useState(false)
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setIsUploading(true)
+      const res = await uploadCategoryImage(file, type, token || undefined)
+      onChange(res.url)
+      toast.success("Image uploaded")
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed")
+    } finally {
+      setIsUploading(false)
+      e.target.value = ""
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      <div className="flex items-start gap-4">
+        {/* Preview */}
+        <div
+          className={cn(
+            "relative flex shrink-0 items-center justify-center rounded-lg border bg-[url('/checkerboard.svg')] bg-muted/30 overflow-hidden",
+            previewClass
+          )}
+        >
+          {value ? (
+            <img
+              src={getImageUrl(value)}
+              alt={label}
+              className="h-full w-full object-contain p-2"
+            />
+          ) : (
+            <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col gap-2">
+          <Button variant="outline" size="sm" asChild disabled={isUploading}>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="image/*,.svg"
+                className="sr-only"
+                onChange={handleUpload}
+                disabled={isUploading}
+              />
+              {isUploading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-2 h-4 w-4" />
+              )}
+              Upload
+            </label>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => setShowGallery(true)}
+          >
+            <FolderOpen className="mr-2 h-4 w-4" />
+            Gallery
+          </Button>
+          {value && (
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={onRemove}
+              className="text-destructive hover:text-destructive"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Remove
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {value && (
+        <p className="truncate text-xs text-muted-foreground font-mono">{value}</p>
+      )}
+
+      <ImageGalleryDialog
+        open={showGallery}
+        onOpenChange={setShowGallery}
+        onSelect={(url) => {
+          onChange(url)
+          setShowGallery(false)
+        }}
       />
     </div>
   )
@@ -197,8 +320,22 @@ export default function GeneralSettings() {
             <CardContent className="space-y-4">
               <FormField label="Store Name" name="store_name" value={v("store_name")} onChange={set} placeholder="My Jewellery Store" />
               <FormField label="Store Tagline" name="store_tagline" value={v("store_tagline")} onChange={set} placeholder="Exquisite Jewelry for Every Occasion" />
-              <FormField label="Store Logo URL" name="store_logo" value={v("store_logo")} onChange={set} placeholder="/logo.svg" hint="Path or full URL to your logo image" />
-              <FormField label="Favicon URL" name="store_favicon" value={v("store_favicon")} onChange={set} placeholder="/favicon.ico" />
+              <ImageField
+                label="Store Logo"
+                value={v("store_logo")}
+                onChange={(url) => set("store_logo", url)}
+                onRemove={() => set("store_logo", "")}
+                previewClass="h-24 w-56"
+                hint="Displayed in the site header. SVG or PNG recommended."
+              />
+              <ImageField
+                label="Favicon"
+                value={v("store_favicon")}
+                onChange={(url) => set("store_favicon", url)}
+                onRemove={() => set("store_favicon", "")}
+                previewClass="h-16 w-16"
+                hint="Browser tab icon. Use a square image (32×32 or 64×64)."
+              />
               <Separator />
               <FormField label="Currency Code" name="currency" value={v("currency")} onChange={set} placeholder="BDT" hint="ISO currency code e.g. BDT, USD" />
               <FormField label="Currency Symbol" name="currency_symbol" value={v("currency_symbol")} onChange={set} placeholder="৳" />

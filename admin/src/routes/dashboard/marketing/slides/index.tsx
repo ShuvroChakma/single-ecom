@@ -265,6 +265,7 @@ function SlidesPage() {
       />
 
       <SlideDialog
+        key={selectedSlide?.id || 'new-slide'}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         slide={selectedSlide}

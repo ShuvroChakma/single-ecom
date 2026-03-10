@@ -1,6 +1,7 @@
 "use client"
 
 import { createSlide, Slide, SlidePayload, SlideType, updateSlide, uploadSlideImage } from "@/api/slides"
+import { getImageUrl } from "@/lib/utils"
 import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
 import {
@@ -281,7 +282,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                                     <X className="h-4 w-4" />
                                 </Button>
                                 <img
-                                    src={imageUrl.startsWith("http") ? imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${imageUrl}`}
+                                    src={getImageUrl(imageUrl)}
                                     alt="Slide preview"
                                     className="w-full h-48 object-cover"
                                 />
