@@ -1,19 +1,19 @@
-import * as React from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { FolderOpen, ImageIcon, Loader2, Save, Upload, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
-import { getSettings, bulkUpdateSettings, initializeSettings, SettingsGrouped } from "@/api/settings"
+import { bulkUpdateSettings, getSettings, initializeSettings, SettingsGrouped } from "@/api/settings"
 import { uploadCategoryImage } from "@/api/uploads"
 import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/auth"
 import { cn, getImageUrl } from "@/lib/utils"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { FolderOpen, ImageIcon, Loader2, Save, X } from "lucide-react"
+import * as React from "react"
+import { toast } from "sonner"
 
 type FlatSettings = Record<string, string>
 
@@ -151,23 +151,6 @@ function ImageField({
 
         {/* Actions */}
         <div className="flex flex-col gap-2">
-          <Button variant="outline" size="sm" asChild disabled={isUploading}>
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*,.svg"
-                className="sr-only"
-                onChange={handleUpload}
-                disabled={isUploading}
-              />
-              {isUploading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="mr-2 h-4 w-4" />
-              )}
-              Upload
-            </label>
-          </Button>
           <Button
             variant="outline"
             size="sm"
