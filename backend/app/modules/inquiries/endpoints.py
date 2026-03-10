@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db, get_current_customer_optional
 from app.core.permissions import require_permissions
+from app.constants.permissions import PermissionEnum
 from app.core.rate_limit import rate_limit
 from app.core.schemas.response import SuccessResponse, create_success_response
 from app.modules.users.models import User, Customer
@@ -167,7 +168,7 @@ async def list_inquiries(
     status: Optional[InquiryStatus] = None,
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
-    current_user: User = Depends(require_permissions(["inquiries:read"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.INQUIRIES_READ])),
     service: InquiryService = Depends(get_inquiry_service)
 ):
     """List all inquiries with filters (admin)."""
@@ -189,7 +190,7 @@ async def list_inquiries(
 @router.get("/admin/{inquiry_id}", response_model=SuccessResponse[InquiryAdminResponse])
 async def get_inquiry(
     inquiry_id: UUID,
-    current_user: User = Depends(require_permissions(["inquiries:read"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.INQUIRIES_READ])),
     service: InquiryService = Depends(get_inquiry_service)
 ):
     """Get a specific inquiry (admin)."""
@@ -209,7 +210,7 @@ async def get_inquiry(
 async def update_inquiry(
     inquiry_id: UUID,
     data: InquiryUpdate,
-    current_user: User = Depends(require_permissions(["inquiries:write"])),
+    current_user: User = Depends(require_permissions([PermissionEnum.INQUIRIES_WRITE])),
     service: InquiryService = Depends(get_inquiry_service)
 ):
     """Update an inquiry status/notes (admin)."""
