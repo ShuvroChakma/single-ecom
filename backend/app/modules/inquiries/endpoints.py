@@ -66,6 +66,7 @@ async def create_inquiry(
 @rate_limit("inquiries:submit")
 async def create_custom_jewellery_request(
     request: Request,
+    background_tasks: BackgroundTasks,
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(...),
@@ -74,7 +75,6 @@ async def create_custom_jewellery_request(
     message: str = Form(...),
     website: str = Form(default=""),  # honeypot — must stay empty
     design_image: Optional[UploadFile] = File(None),
-    background_tasks: BackgroundTasks,
     service: InquiryService = Depends(get_inquiry_service),
     current_customer: Optional[Customer] = Depends(get_current_customer_optional)
 ):
