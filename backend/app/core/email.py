@@ -1,6 +1,7 @@
 """
 Email service using fastapi-mail (async SMTP via aiosmtplib).
 """
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -9,6 +10,8 @@ from fastapi_mail import FastMail, MessageSchema, MessageType, ConnectionConfig
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 # Setup Jinja2 environment
@@ -51,9 +54,10 @@ class EmailService:
         html_content: str,
     ) -> bool:
         if not settings.EMAIL_ENABLED:
-            print(f"\n[EMAIL DISABLED] To: {to_email} | Subject: {subject}\n")
+            logger.info(f"[EMAIL DISABLED] To: {to_email} | Subject: {subject}")
             return True
 
+        logger.info(f"[EMAIL] Attempting to send to={to_email} subject='{subject}' host={settings.SMTP_HOST}:{settings.SMTP_PORT} user={settings.SMTP_USER} from={settings.SMTP_FROM_EMAIL}")
         try:
             message = MessageSchema(
                 subject=subject,
@@ -62,9 +66,10 @@ class EmailService:
                 subtype=MessageType.html,
             )
             await _fm.send_message(message)
+            logger.info(f"[EMAIL] Successfully sent to={to_email}")
             return True
         except Exception as e:
-            print(f"Failed to send email to {to_email}: {e}")
+            logger.error(f"[EMAIL] Failed to send to={to_email}: {type(e).__name__}: {e}", exc_info=True)
             return False
 
     @staticmethod
