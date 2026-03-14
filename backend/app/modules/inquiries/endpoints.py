@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db, get_current_customer_optional
@@ -74,6 +74,7 @@ async def create_custom_jewellery_request(
     message: str = Form(...),
     website: str = Form(default=""),  # honeypot — must stay empty
     design_image: Optional[UploadFile] = File(None),
+    background_tasks: BackgroundTasks,
     service: InquiryService = Depends(get_inquiry_service),
     current_customer: Optional[Customer] = Depends(get_current_customer_optional)
 ):
@@ -126,7 +127,7 @@ async def create_custom_jewellery_request(
     )
 
     inquiry = await service.create_custom_jewellery_request(
-        data, customer_id, design_image_path
+        data, customer_id, design_image_path, background_tasks
     )
 
     return create_success_response(

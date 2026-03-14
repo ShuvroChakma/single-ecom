@@ -7,7 +7,7 @@ from decimal import Decimal
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Request
+from fastapi import BackgroundTasks, Request
 
 from app.core.exceptions import NotFoundError, ValidationError, PermissionDeniedError
 from app.constants.error_codes import ErrorCode
@@ -112,7 +112,8 @@ class OrderService:
         delivery_service: DeliveryZoneService,
         promo_service: PromoCodeService,
         payment_service: PaymentGatewayService,
-        http_request: Optional[Request] = None
+        http_request: Optional[Request] = None,
+        background_tasks: Optional[BackgroundTasks] = None
     ) -> OrderCreatedResponse:
         """
         Create an order from customer's cart in a single atomic transaction.
@@ -311,18 +312,33 @@ class OrderService:
                         }
                         for item in cart_response.items
                     ]
-                    await EmailService.send_order_confirmation_email(
-                        email=user_record.email,
-                        customer_name=customer_name,
-                        order_number=order_number,
-                        order_id=str(order_id),
-                        items=email_items,
-                        discount_amount=f"{discount_amount:.2f}" if discount_amount else None,
-                        delivery_charge=f"{delivery_charge:.2f}",
-                        total=f"{total:.2f}",
-                        payment_method=request.payment_method,
-                        shipping_address=shipping_str,
-                    )
+                    if background_tasks:
+                        background_tasks.add_task(
+                            EmailService.send_order_confirmation_email,
+                            email=user_record.email,
+                            customer_name=customer_name,
+                            order_number=order_number,
+                            order_id=str(order_id),
+                            items=email_items,
+                            discount_amount=f"{discount_amount:.2f}" if discount_amount else None,
+                            delivery_charge=f"{delivery_charge:.2f}",
+                            total=f"{total:.2f}",
+                            payment_method=request.payment_method,
+                            shipping_address=shipping_str,
+                        )
+                    else:
+                        await EmailService.send_order_confirmation_email(
+                            email=user_record.email,
+                            customer_name=customer_name,
+                            order_number=order_number,
+                            order_id=str(order_id),
+                            items=email_items,
+                            discount_amount=f"{discount_amount:.2f}" if discount_amount else None,
+                            delivery_charge=f"{delivery_charge:.2f}",
+                            total=f"{total:.2f}",
+                            payment_method=request.payment_method,
+                            shipping_address=shipping_str,
+                        )
         except Exception:
             pass  # Never let email failures affect order creation
 

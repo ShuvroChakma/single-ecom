@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 
+from fastapi import BackgroundTasks
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,7 +48,8 @@ class InquiryService:
         self,
         data: CustomJewelleryRequest,
         customer_id: Optional[UUID] = None,
-        design_image: Optional[str] = None
+        design_image: Optional[str] = None,
+        background_tasks: Optional[BackgroundTasks] = None
     ) -> Inquiry:
         """Create a custom jewellery request."""
         inquiry = Inquiry(
@@ -66,17 +68,27 @@ class InquiryService:
         await self.session.commit()
         await self.session.refresh(inquiry)
 
-        # Send acknowledgement email (fire-and-forget)
-        try:
-            await EmailService.send_inquiry_acknowledgement_email(
+        # Send acknowledgement email in background
+        if background_tasks:
+            background_tasks.add_task(
+                EmailService.send_inquiry_acknowledgement_email,
                 email=data.email,
                 customer_name=data.name,
                 metal_type=data.metal_type,
                 message=data.message,
                 budget_range=data.budget_range,
             )
-        except Exception:
-            pass
+        else:
+            try:
+                await EmailService.send_inquiry_acknowledgement_email(
+                    email=data.email,
+                    customer_name=data.name,
+                    metal_type=data.metal_type,
+                    message=data.message,
+                    budget_range=data.budget_range,
+                )
+            except Exception:
+                pass
 
         return inquiry
 

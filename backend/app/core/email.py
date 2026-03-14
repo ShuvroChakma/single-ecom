@@ -13,6 +13,32 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from app.core.config import settings
 
 
+async def _log_email(
+    recipient: str,
+    subject: str,
+    email_type: Optional[str],
+    status: str,
+    error_message: Optional[str] = None,
+) -> None:
+    """Persist an email log entry using a standalone DB session."""
+    try:
+        from app.core.database import async_session_maker
+        from app.modules.email_logs.models import EmailLog, EmailStatus
+
+        log = EmailLog(
+            recipient=recipient,
+            subject=subject,
+            email_type=email_type,
+            status=EmailStatus.SENT if status == "sent" else EmailStatus.FAILED,
+            error_message=error_message,
+        )
+        async with async_session_maker() as session:
+            session.add(log)
+            await session.commit()
+    except Exception as exc:
+        print(f"⚠️  Failed to write email log: {exc}")
+
+
 # Setup Jinja2 environment
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates" / "emails"
 jinja_env = Environment(

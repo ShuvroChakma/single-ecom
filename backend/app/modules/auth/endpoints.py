@@ -27,7 +27,7 @@ from app.modules.auth.schemas import (
     UserResponse,
 )
 from app.modules.auth.service import AuthService
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 router = APIRouter(tags=["Authentication"])
@@ -48,17 +48,18 @@ router = APIRouter(tags=["Authentication"])
 async def register(
     request: UserRegisterRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Register a new customer user.
-    
+
     - Creates inactive account requiring email verification
     - Sends OTP to provided email
     - Returns success message
     """
     auth_service = AuthService(db)
-    
+
     # Register user
     user = await auth_service.register_customer(
         email=request.email,
@@ -68,9 +69,9 @@ async def register(
         phone_number=request.phone_number,
         request=http_request
     )
-    
+
     # Generate OTP for email verification
-    otp_code = await OTPService.generate_otp(user.email, OTPType.EMAIL_VERIFICATION)
+    otp_code = await OTPService.generate_otp(user.email, OTPType.EMAIL_VERIFICATION, background_tasks)
     
     # TODO: Send email with OTP
     # await send_verification_email(user.email, otp_code)
@@ -207,6 +208,7 @@ async def verify_email(
 async def resend_otp(
     request: ResendOTPRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)  # Injected for finding user
 ):
     """
@@ -220,7 +222,7 @@ async def resend_otp(
     from app.modules.users.repository import UserRepository
     
     otp_type = OTPType(request.type)
-    otp_code = await OTPService.generate_otp(request.email, otp_type)
+    otp_code = await OTPService.generate_otp(request.email, otp_type, background_tasks)
     
     # Send email (TODO)
     # await send_otp_email(request.email, otp_code, otp_type)

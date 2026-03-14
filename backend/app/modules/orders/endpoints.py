@@ -4,7 +4,7 @@ Customer checkout and order management.
 """
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
@@ -70,13 +70,14 @@ async def get_current_customer(
 async def create_order(
     data: CreateOrderRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_customer),
     session: AsyncSession = Depends(get_db),
     audit_service: AuditService = Depends(AuditService)
 ):
     """
     Create an order from the current cart.
-    
+
     Validates cart, address, promo code, and initiates payment if needed.
     """
     order_service = OrderService(session, audit_service)
@@ -85,7 +86,7 @@ async def create_order(
     delivery_service = DeliveryZoneService(session)
     promo_service = PromoCodeService(session)
     payment_service = PaymentGatewayService(session)
-    
+
     result = await order_service.create_order(
         customer_id=current_user.id,
         request=data,
@@ -94,7 +95,8 @@ async def create_order(
         delivery_service=delivery_service,
         promo_service=promo_service,
         payment_service=payment_service,
-        http_request=request
+        http_request=request,
+        background_tasks=background_tasks
     )
     
     return create_success_response(

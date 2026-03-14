@@ -14,9 +14,9 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Application starting up...")
     
-    # MongoDB connection
-    from app.core.mongo import mongodb
-    mongodb.connect()
+    # MongoDB connection (disabled — re-enable when MongoDB is available)
+    # from app.core.mongo import mongodb
+    # mongodb.connect()
 
     # NOTE: Database tables are managed by Alembic migrations
     # Run: alembic upgrade head
@@ -31,8 +31,8 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Mongo Shutdown
-    mongodb.close()
+    # Mongo Shutdown (disabled)
+    # mongodb.close()
 
     scheduler.shutdown(wait=False)
     print("Scheduler stopped")
