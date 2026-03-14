@@ -1,12 +1,15 @@
 """
-Email service using fastapi-mail (async SMTP via aiosmtplib).
+Email service using smtplib via asyncio.to_thread (IPv4-safe, non-blocking).
 """
+import asyncio
 import logging
+import smtplib
 from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-from fastapi_mail import FastMail, MessageSchema, MessageType, ConnectionConfig
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.core.config import settings
@@ -21,26 +24,9 @@ jinja_env = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 
-# fastapi-mail connection config
-_mail_config = ConnectionConfig(
-    MAIL_USERNAME=settings.SMTP_USER,
-    MAIL_PASSWORD=settings.SMTP_PASSWORD,
-    MAIL_FROM=settings.SMTP_FROM_EMAIL,
-    MAIL_FROM_NAME=settings.SMTP_FROM_NAME,
-    MAIL_PORT=settings.SMTP_PORT,
-    MAIL_SERVER=settings.SMTP_HOST,
-    MAIL_STARTTLS=True,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-    SUPPRESS_SEND=not settings.EMAIL_ENABLED,  # console-only when disabled
-)
-
-_fm = FastMail(_mail_config)
-
 
 class EmailService:
-    """Async email service backed by fastapi-mail / aiosmtplib."""
+    """Async email service using smtplib via asyncio.to_thread."""
 
     @staticmethod
     def render_template(template_name: str, context: Dict[str, Any]) -> str:
@@ -57,15 +43,23 @@ class EmailService:
             logger.info(f"[EMAIL DISABLED] To: {to_email} | Subject: {subject}")
             return True
 
-        logger.info(f"[EMAIL] Attempting to send to={to_email} subject='{subject}' host={settings.SMTP_HOST}:{settings.SMTP_PORT} user={settings.SMTP_USER} from={settings.SMTP_FROM_EMAIL}")
+        logger.info(f"[EMAIL] Attempting send to={to_email} subject='{subject}'")
+
+        def _send() -> None:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
+            msg["To"] = to_email
+            msg.attach(MIMEText(html_content, "html"))
+
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+                server.ehlo()
+                server.starttls()
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.sendmail(settings.SMTP_FROM_EMAIL, [to_email], msg.as_string())
+
         try:
-            message = MessageSchema(
-                subject=subject,
-                recipients=[to_email],
-                body=html_content,
-                subtype=MessageType.html,
-            )
-            await _fm.send_message(message)
+            await asyncio.to_thread(_send)
             logger.info(f"[EMAIL] Successfully sent to={to_email}")
             return True
         except Exception as e:
