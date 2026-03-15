@@ -18,36 +18,6 @@ class RolesSeeder(BaseSeeder):
             "is_system": True,
             "permissions": ["*"]  # All permissions
         },
-        {
-            "name": "ADMIN",
-            "description": "Administrator",
-            "is_system": True,
-            "permissions": [
-                "users:read", "users:write",
-                "roles:read",
-                "permissions:read",
-                "orders:read", "orders:write",
-                "products:read", "products:write",
-                "categories:read", "categories:write",
-                "brands:read", "brands:write", "brands:delete",
-                "collections:read", "collections:write", "collections:delete",
-                "metals:read", "metals:write", "metals:delete",
-                "attributes:read", "attributes:write", "attributes:delete",
-                "rates:read", "rates:write",
-                "slides:read", "slides:write", "slides:delete",
-                "settings:read", "settings:write",
-                "inquiries:read", "inquiries:write",
-            ]
-        },
-        {
-            "name": "MODERATOR",
-            "description": "Moderator with limited admin access",
-            "is_system": True,
-            "permissions": [
-                "users:read",
-                "audit_logs:read",
-            ]
-        }
     ]
     
     async def should_run(self) -> bool:
@@ -96,6 +66,21 @@ class RolesSeeder(BaseSeeder):
                     if permission and permission.id not in existing_role_perms:
                         self.session.add(RolePermission(role_id=role.id, permission_id=permission.id))
         
+        # Demote formerly-system roles (ADMIN, MODERATOR) so they become editable/deletable
+        DEMOTE_ROLES = ["ADMIN", "MODERATOR"]
+        demoted = 0
+        for role_name in DEMOTE_ROLES:
+            result = await self.session.execute(
+                select(Role).where(Role.name == role_name)
+            )
+            role = result.scalars().first()
+            if role and role.is_system:
+                role.is_system = False
+                self.session.add(role)
+                demoted += 1
+
         await self.session.commit()
         print(f"  ✅ Seeded/Updated {len(self.DEFAULT_ROLES)} roles")
+        if demoted:
+            print(f"  ✅ Demoted {demoted} legacy system role(s) to user-manageable")
 
