@@ -32,6 +32,8 @@ import {
   BarChart3,
 } from "lucide-react"
 import { getDashboardData, DashboardData } from "@/api/dashboard"
+import { useAuth } from "@/lib/auth"
+import { P } from "@/lib/permissions"
 
 // Memoized stat card component for performance
 const StatCard = memo(function StatCard({
@@ -131,15 +133,21 @@ const OrderRow = memo(function OrderRow({
 // Main dashboard component
 export default function AdminDashboard() {
   const navigate = useNavigate()
+  const { hasPermission, isSuperAdmin } = useAuth()
+
+  const canViewOrders = isSuperAdmin || hasPermission(P.ORDERS_READ)
+  const canViewProducts = isSuperAdmin || hasPermission(P.PRODUCTS_READ)
+  const hasAnyAccess = isSuperAdmin || canViewOrders || canViewProducts
 
   // Single optimized query for all dashboard data
   // Uses stale-while-revalidate pattern with 30 second refresh
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["dashboard"],
     queryFn: () => getDashboardData(),
-    staleTime: 30 * 1000, // Data is fresh for 30 seconds
-    refetchInterval: 60 * 1000, // Auto-refresh every 60 seconds
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
     refetchOnWindowFocus: true,
+    enabled: hasAnyAccess,
   })
 
   const dashboardData = data?.success ? data.data : null
@@ -148,39 +156,67 @@ export default function AdminDashboard() {
   const stats = useMemo(() => {
     if (!dashboardData?.stats) return null
     const s = dashboardData.stats
-    return [
-      {
-        title: "Total Orders",
-        value: s.total_orders.toLocaleString(),
-        subValue: `${s.orders_today} today`,
-        icon: ShoppingCart,
-        trend: s.orders_today > 0 ? "up" as const : "neutral" as const,
-      },
-      {
-        title: "Total Revenue",
-        value: `৳${parseFloat(String(s.total_revenue)).toLocaleString()}`,
-        subValue: `৳${parseFloat(String(s.revenue_today)).toLocaleString()} today`,
-        icon: DollarSign,
-        trend: parseFloat(String(s.revenue_today)) > 0 ? "up" as const : "neutral" as const,
-      },
-      {
-        title: "Customers",
-        value: s.total_customers.toLocaleString(),
-        icon: Users,
-      },
-      {
+    const items = []
+    if (canViewOrders) {
+      items.push(
+        {
+          title: "Total Orders",
+          value: s.total_orders.toLocaleString(),
+          subValue: `${s.orders_today} today`,
+          icon: ShoppingCart,
+          trend: s.orders_today > 0 ? "up" as const : "neutral" as const,
+        },
+        {
+          title: "Total Revenue",
+          value: `৳${parseFloat(String(s.total_revenue)).toLocaleString()}`,
+          subValue: `৳${parseFloat(String(s.revenue_today)).toLocaleString()} today`,
+          icon: DollarSign,
+          trend: parseFloat(String(s.revenue_today)) > 0 ? "up" as const : "neutral" as const,
+        },
+        {
+          title: "Customers",
+          value: s.total_customers.toLocaleString(),
+          icon: Users,
+          trend: undefined,
+        },
+      )
+    }
+    if (canViewProducts) {
+      items.push({
         title: "Products",
         value: s.total_products.toLocaleString(),
         icon: Package,
-      },
-    ]
-  }, [dashboardData?.stats])
+        trend: undefined,
+      })
+    }
+    return items
+  }, [dashboardData?.stats, canViewOrders, canViewProducts])
 
   const pendingOrdersCount = dashboardData?.stats?.pending_orders ?? 0
 
   // Format currency helper
   const formatCurrency = (amount: number) => {
     return `৳${amount.toLocaleString()}`
+  }
+
+  if (!hasAnyAccess) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Overview of your store performance</p>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <BarChart3 className="h-12 w-12 text-muted-foreground/40" />
+            <p className="font-medium">No dashboard access</p>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              Your role doesn't have permission to view dashboard statistics. Contact a super admin to update your permissions.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -205,7 +241,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Pending Orders Alert */}
-      {pendingOrdersCount > 0 && (
+      {canViewOrders && pendingOrdersCount > 0 && (
         <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
           <CardContent className="py-3 px-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -226,227 +262,228 @@ export default function AdminDashboard() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? (
-          <>
-            <StatCard title="" value="" icon={ShoppingCart} isLoading />
-            <StatCard title="" value="" icon={DollarSign} isLoading />
-            <StatCard title="" value="" icon={Users} isLoading />
-            <StatCard title="" value="" icon={Package} isLoading />
-          </>
-        ) : (
-          stats?.map((stat) => (
-            <StatCard
-              key={stat.title}
-              title={stat.title}
-              value={stat.value}
-              subValue={stat.subValue}
-              icon={stat.icon}
-              trend={stat.trend}
-            />
-          ))
-        )}
-      </div>
+      {(canViewOrders || canViewProducts) && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {isLoading ? (
+            <>
+              {canViewOrders && <StatCard title="" value="" icon={ShoppingCart} isLoading />}
+              {canViewOrders && <StatCard title="" value="" icon={DollarSign} isLoading />}
+              {canViewOrders && <StatCard title="" value="" icon={Users} isLoading />}
+              {canViewProducts && <StatCard title="" value="" icon={Package} isLoading />}
+            </>
+          ) : (
+            stats?.map((stat) => (
+              <StatCard
+                key={stat.title}
+                title={stat.title}
+                value={stat.value}
+                subValue={stat.subValue}
+                icon={stat.icon}
+                trend={stat.trend}
+              />
+            ))
+          )}
+        </div>
+      )}
 
       {/* Middle Section */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Orders */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-semibold">Recent Orders</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: "/dashboard/orders" })}
-            >
-              View all
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-4 w-20" />
+      {(canViewOrders || canViewProducts) && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Recent Orders */}
+          {canViewOrders && (
+            <Card className={canViewProducts ? "lg:col-span-2" : "lg:col-span-3"}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold">Recent Orders</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate({ to: "/dashboard/orders" })}
+                >
+                  View all
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-6 w-20" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : dashboardData?.recent_orders && dashboardData.recent_orders.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order #</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {dashboardData.recent_orders.map((order) => (
-                    <OrderRow
-                      key={order.id}
-                      order={order}
-                      onClick={() => navigate({ to: "/dashboard/orders" })}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                <ShoppingCart className="h-12 w-12 mb-2" />
-                <p>No orders yet</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : dashboardData?.recent_orders && dashboardData.recent_orders.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order #</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {dashboardData.recent_orders.map((order) => (
+                        <OrderRow
+                          key={order.id}
+                          order={order}
+                          onClick={() => navigate({ to: "/dashboard/orders" })}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                    <ShoppingCart className="h-12 w-12 mb-2" />
+                    <p>No orders yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Low Stock Alerts */}
+          {/* Low Stock Alerts */}
+          {canViewProducts && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  Low Stock Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                        <Skeleton className="h-6 w-12" />
+                      </div>
+                    ))}
+                  </div>
+                ) : dashboardData?.low_stock_products && dashboardData.low_stock_products.length > 0 ? (
+                  <div className="space-y-4">
+                    {dashboardData.low_stock_products.map((product) => (
+                      <div key={product.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{product.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {product.variant_info || product.sku}
+                          </p>
+                        </div>
+                        <Badge variant="destructive" className="text-xs">
+                          {product.stock_quantity} left
+                        </Badge>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      size="sm"
+                      onClick={() => navigate({ to: "/dashboard/products" })}
+                    >
+                      Manage Inventory
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                    <Package className="h-8 w-8 mb-2" />
+                    <p className="text-sm">All products well stocked</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Sales Chart Section */}
+      {canViewOrders && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              Low Stock Alerts
+              <BarChart3 className="h-4 w-4" />
+              Sales Overview (Last 7 Days)
             </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                    <Skeleton className="h-6 w-12" />
+              <div className="flex items-end justify-between h-48 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                    <Skeleton className="w-full" style={{ height: `${Math.random() * 100 + 50}px` }} />
+                    <Skeleton className="h-3 w-10" />
                   </div>
                 ))}
               </div>
-            ) : dashboardData?.low_stock_products && dashboardData.low_stock_products.length > 0 ? (
+            ) : dashboardData?.sales_chart && dashboardData.sales_chart.length > 0 ? (
               <div className="space-y-4">
-                {dashboardData.low_stock_products.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="font-medium text-sm">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {product.variant_info || product.sku}
-                      </p>
-                    </div>
-                    <Badge variant="destructive" className="text-xs">
-                      {product.stock_quantity} left
-                    </Badge>
+                <div className="flex items-end justify-between h-48 gap-2">
+                  {dashboardData.sales_chart.map((point) => {
+                    const maxRevenue = Math.max(
+                      ...dashboardData.sales_chart.map((p) => parseFloat(String(p.revenue)))
+                    )
+                    const height = maxRevenue > 0
+                      ? (parseFloat(String(point.revenue)) / maxRevenue) * 100
+                      : 0
+
+                    return (
+                      <div key={point.date} className="flex-1 flex flex-col items-center gap-2">
+                        <div
+                          className="w-full bg-primary/20 hover:bg-primary/30 rounded-t transition-colors relative group"
+                          style={{ height: `${Math.max(height, 4)}%` }}
+                        >
+                          <div
+                            className="absolute bottom-0 w-full bg-primary rounded-t transition-all"
+                            style={{ height: `${height > 0 ? 100 : 0}%` }}
+                          />
+                          <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-popover border rounded-md px-2 py-1 text-xs hidden group-hover:block whitespace-nowrap z-10">
+                            <p className="font-semibold">{formatCurrency(parseFloat(String(point.revenue)))}</p>
+                            <p className="text-muted-foreground">{point.orders} orders</p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{point.date}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="flex justify-between pt-2 border-t">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Orders</p>
+                    <p className="text-lg font-semibold">
+                      {dashboardData.sales_chart.reduce((sum, p) => sum + p.orders, 0)}
+                    </p>
                   </div>
-                ))}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  size="sm"
-                  onClick={() => navigate({ to: "/dashboard/products" })}
-                >
-                  Manage Inventory
-                </Button>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Total Revenue</p>
+                    <p className="text-lg font-semibold">
+                      {formatCurrency(
+                        dashboardData.sales_chart.reduce(
+                          (sum, p) => sum + parseFloat(String(p.revenue)),
+                          0
+                        )
+                      )}
+                    </p>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                <Package className="h-8 w-8 mb-2" />
-                <p className="text-sm">All products well stocked</p>
+              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mb-2" />
+                <p>No sales data available</p>
               </div>
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Sales Chart Section */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Sales Overview (Last 7 Days)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-end justify-between h-48 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                  <Skeleton className="w-full" style={{ height: `${Math.random() * 100 + 50}px` }} />
-                  <Skeleton className="h-3 w-10" />
-                </div>
-              ))}
-            </div>
-          ) : dashboardData?.sales_chart && dashboardData.sales_chart.length > 0 ? (
-            <div className="space-y-4">
-              {/* Simple bar chart */}
-              <div className="flex items-end justify-between h-48 gap-2">
-                {dashboardData.sales_chart.map((point) => {
-                  const maxRevenue = Math.max(
-                    ...dashboardData.sales_chart.map((p) => parseFloat(String(p.revenue)))
-                  )
-                  const height = maxRevenue > 0
-                    ? (parseFloat(String(point.revenue)) / maxRevenue) * 100
-                    : 0
-
-                  return (
-                    <div
-                      key={point.date}
-                      className="flex-1 flex flex-col items-center gap-2"
-                    >
-                      <div
-                        className="w-full bg-primary/20 hover:bg-primary/30 rounded-t transition-colors relative group"
-                        style={{ height: `${Math.max(height, 4)}%` }}
-                      >
-                        <div
-                          className="absolute bottom-0 w-full bg-primary rounded-t transition-all"
-                          style={{ height: `${height > 0 ? 100 : 0}%` }}
-                        />
-                        {/* Tooltip on hover */}
-                        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-popover border rounded-md px-2 py-1 text-xs hidden group-hover:block whitespace-nowrap z-10">
-                          <p className="font-semibold">{formatCurrency(parseFloat(String(point.revenue)))}</p>
-                          <p className="text-muted-foreground">{point.orders} orders</p>
-                        </div>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{point.date}</span>
-                    </div>
-                  )
-                })}
-              </div>
-              {/* Summary */}
-              <div className="flex justify-between pt-2 border-t">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
-                  <p className="text-lg font-semibold">
-                    {dashboardData.sales_chart.reduce((sum, p) => sum + p.orders, 0)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total Revenue</p>
-                  <p className="text-lg font-semibold">
-                    {formatCurrency(
-                      dashboardData.sales_chart.reduce(
-                        (sum, p) => sum + parseFloat(String(p.revenue)),
-                        0
-                      )
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
-              <BarChart3 className="h-12 w-12 mb-2" />
-              <p>No sales data available</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      )}
 
       {/* Order Status Distribution */}
-      {dashboardData?.order_status_counts && dashboardData.order_status_counts.length > 0 && (
+      {canViewOrders && dashboardData?.order_status_counts && dashboardData.order_status_counts.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Order Status Distribution</CardTitle>
