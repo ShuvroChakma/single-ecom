@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Loader2, Package, MapPin, CreditCard, ArrowLeft, X, Check,
-  Truck, Clock, ShoppingBag, Gift, StickyNote, Tag, AlertTriangle,
+  Truck, Clock, ShoppingBag, Gift, StickyNote, Tag, AlertTriangle, History,
 } from 'lucide-react'
 import { getOrder, cancelOrder } from '@/api/orders'
 import { getImageUrl, getErrorMessage } from '@/api/client'
@@ -190,6 +190,34 @@ function OrderDetailContent() {
                   )
                 })}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status History Timeline */}
+        {order.status_history?.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>
+                <History size={18} className="text-header" />
+                Order History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol className="relative border-l border-gray-200 space-y-5 ml-2">
+                {[...order.status_history].reverse().map((entry, i) => (
+                  <li key={i} className="pl-5 relative">
+                    <span className="absolute -left-[9px] top-1 w-[14px] h-[14px] rounded-full bg-emerald-500 border-2 border-white ring-1 ring-gray-200" />
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-800">
+                      {entry.status}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">{entry.note}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(entry.timestamp).toLocaleString()}
+                    </p>
+                  </li>
+                ))}
+              </ol>
             </CardContent>
           </Card>
         )}

@@ -134,6 +134,7 @@ class OrderResponse(BaseModel):
 
     # Status
     status: OrderStatus
+    status_history: List[Dict[str, Any]] = []
 
     # Notes
     customer_notes: Optional[str] = None

@@ -57,6 +57,7 @@ export interface Order {
   payment_transaction_id: string | null;
   paid_at: string | null;
   status: OrderStatus;
+  status_history: Array<{ status: string; timestamp: string; note: string }>;
   customer_notes: string | null;
   items: Array<OrderItem>;
   created_at: string;
@@ -114,7 +115,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     return authenticatedRequest<ApiResponse<Order>>(
       `/orders/admin/${data.id}/status`,
       {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify(data.payload),
       }
     );

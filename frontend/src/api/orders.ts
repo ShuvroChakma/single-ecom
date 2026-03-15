@@ -3,7 +3,8 @@
  */
 import { createServerFn } from '@tanstack/react-start'
 import { getCookie } from '@tanstack/react-start/server'
-import { apiRequest, ApiResponse } from './client'
+import { apiRequest } from './client'
+import type { ApiResponse } from './client';
 
 export interface OrderItem {
   id: string
@@ -40,6 +41,7 @@ export interface Order {
   pos_customer_name: string | null
   pos_customer_phone: string | null
   status: string
+  status_history: Array<{ status: string; timestamp: string; note: string }>
   payment_status: string
   payment_method: string
   payment_transaction_id: string | null
@@ -47,7 +49,7 @@ export interface Order {
   is_gift: boolean
   gift_message: string | null
   hide_prices: boolean
-  items: OrderItem[]
+  items: Array<OrderItem>
   subtotal: number
   discount_amount: number
   delivery_charge: number
@@ -84,7 +86,8 @@ export interface OrderCreatedResponse {
 }
 
 export const createOrder = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: CreateOrderRequest }) => {
+  .inputValidator((data: CreateOrderRequest) => data)
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     return apiRequest<ApiResponse<OrderCreatedResponse>>('/orders', {
@@ -94,23 +97,26 @@ export const createOrder = createServerFn({ method: 'POST' })
   })
 
 export const getOrder = createServerFn({ method: 'GET' })
-  .handler(async ({ data }: { data: { orderId: string } }) => {
+  .inputValidator((data: { orderId: string }) => data)
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     return apiRequest<ApiResponse<Order>>(`/orders/${data.orderId}`, {}, token)
   })
 
 export const getOrdersList = createServerFn({ method: 'GET' })
-  .handler(async ({ data }: { data?: { limit?: number; offset?: number } }) => {
+  .inputValidator((data?: { limit?: number; offset?: number }) => data)
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     const limit = data?.limit ?? 20
     const offset = data?.offset ?? 0
-    return apiRequest<ApiResponse<OrderListItem[]>>(`/orders?limit=${limit}&offset=${offset}`, {}, token)
+    return apiRequest<ApiResponse<Array<OrderListItem>>>(`/orders?limit=${limit}&offset=${offset}`, {}, token)
   })
 
 export const cancelOrder = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: { orderId: string } }) => {
+  .inputValidator((data: { orderId: string }) => data)
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     return apiRequest<ApiResponse<Order>>(`/orders/${data.orderId}/cancel`, {

@@ -1,4 +1,5 @@
 import { Order, OrderStatus, UpdateOrderStatusPayload, updateOrderStatus } from "@/api/orders"
+import { AsyncCombobox } from "@/components/ui/async-combobox"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -9,13 +10,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
@@ -38,6 +32,11 @@ const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
   { value: "REFUNDED", label: "Refunded" },
   { value: "RETURNED", label: "Returned" },
 ]
+
+const fetchStatuses = async (query: string) => {
+  const q = query.toLowerCase()
+  return ORDER_STATUSES.filter(s => s.label.toLowerCase().includes(q))
+}
 
 export function OrderStatusDialog({ open, onOpenChange, order }: OrderStatusDialogProps) {
   const queryClient = useQueryClient()
@@ -89,18 +88,14 @@ export function OrderStatusDialog({ open, onOpenChange, order }: OrderStatusDial
 
           <div className="space-y-2">
             <Label>New Status</Label>
-            <Select value={status} onValueChange={(val) => setStatus(val as OrderStatus)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                {ORDER_STATUSES.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AsyncCombobox
+              value={status}
+              onValueChange={(val) => setStatus(val as OrderStatus)}
+              fetchOptions={fetchStatuses}
+              placeholder="Select status..."
+              searchPlaceholder="Search status..."
+              initialOption={ORDER_STATUSES.find(s => s.value === status)}
+            />
           </div>
 
           <div className="space-y-2">
