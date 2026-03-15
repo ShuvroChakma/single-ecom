@@ -133,7 +133,7 @@ export function ResetPasswordForm({
   const isOtpComplete = otp.every((d) => d !== '')
 
   return (
-    <div className="p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-center">
+    <div className="p-4 sm:p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-center">
     <form onSubmit={handleSubmit} className="w-full max-w-md">
       {/* Back */}
       <button
@@ -171,7 +171,7 @@ export function ResetPasswordForm({
       {/* OTP inputs */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-3">Verification code</label>
-        <div className="flex gap-3 mb-3">
+        <div className="flex justify-center gap-2 sm:gap-3 mb-3">
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -184,7 +184,7 @@ export function ResetPasswordForm({
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
               disabled={isSubmitting}
-              className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded transition-colors focus:outline-none
+              className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold border-2 rounded transition-colors focus:outline-none
                 ${digit ? 'border-header text-header' : 'border-gray-200 text-gray-900'}
                 focus:border-header disabled:bg-gray-50 disabled:cursor-not-allowed`}
             />
@@ -213,7 +213,7 @@ export function ResetPasswordForm({
       {/* New Password */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-        <div className="relative max-w-md">
+        <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
             value={newPassword}
@@ -235,7 +235,7 @@ export function ResetPasswordForm({
       {/* Confirm Password */}
       <div className="mb-8">
         <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-        <div className="relative max-w-md">
+        <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
             value={confirmPassword}

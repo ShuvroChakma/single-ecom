@@ -125,7 +125,7 @@ export function OTPVerificationForm({
   const isComplete = otp.every((d) => d !== '')
 
   return (
-    <div className="p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-center">
+    <div className="p-4 sm:p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-center">
     <div className="w-full max-w-md">
       {/* Back */}
       <button
@@ -164,7 +164,7 @@ export function OTPVerificationForm({
 
       {/* OTP inputs */}
       <div className="mb-8">
-        <div className="flex gap-3">
+        <div className="flex justify-center gap-2 sm:gap-3">
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -177,7 +177,7 @@ export function OTPVerificationForm({
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
               disabled={isVerifying}
-              className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded transition-colors focus:outline-none
+              className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold border-2 rounded transition-colors focus:outline-none
                 ${digit ? 'border-header text-header' : 'border-gray-200 text-gray-900'}
                 focus:border-header disabled:bg-gray-50 disabled:cursor-not-allowed`}
             />

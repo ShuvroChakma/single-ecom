@@ -55,7 +55,7 @@ export function ForgotPasswordForm({
   const isPending = form.state.isSubmitting
 
   return (
-    <div className="p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-center">
+    <div className="p-4 sm:p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-center">
       <div className="w-full max-w-md">
         {/* Back */}
         <button
