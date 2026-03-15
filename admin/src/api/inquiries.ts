@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
-import { getCookie } from "@tanstack/react-start/server"
-import { apiRequest, ApiResponse } from "./client"
+import { authenticatedRequest } from "./server-utils"
+import type { ApiResponse } from "./client"
 
 export type InquiryType = "CUSTOM_JEWELLERY" | "GENERAL" | "SUPPORT" | "FEEDBACK"
 export type InquiryStatus = "PENDING" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
@@ -26,7 +26,7 @@ export interface Inquiry {
 }
 
 export interface PaginatedInquiriesResponse {
-  items: Inquiry[]
+  items: Array<Inquiry>
   total: number
   page: number
   per_page: number
@@ -34,40 +34,31 @@ export interface PaginatedInquiriesResponse {
 }
 
 export const getInquiries = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data?: { type?: InquiryType; status?: InquiryStatus; page?: number; per_page?: number } }) => {
-    const token = getCookie("access_token")
-    if (!token) throw new Error("Not authenticated")
-
+  .inputValidator((data?: { type?: InquiryType; status?: InquiryStatus; page?: number; per_page?: number }) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams()
     if (data?.type) params.append("inquiry_type", data.type)
     if (data?.status) params.append("status", data.status)
     if (data?.page) params.append("page", data.page.toString())
     if (data?.per_page) params.append("per_page", data.per_page.toString())
 
-    return apiRequest<ApiResponse<PaginatedInquiriesResponse>>(
-      `/inquiries/admin?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<PaginatedInquiriesResponse>>(
+      `/inquiries/admin?${params.toString()}`
     )
   })
 
 export const getInquiry = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token")
-    if (!token) throw new Error("Not authenticated")
-
-    return apiRequest<ApiResponse<Inquiry>>(`/inquiries/admin/${data.id}`, {}, token)
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Inquiry>>(`/inquiries/admin/${data.id}`)
   })
 
 export const updateInquiry = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string; status?: InquiryStatus; admin_notes?: string } }) => {
-    const token = getCookie("access_token")
-    if (!token) throw new Error("Not authenticated")
-
+  .inputValidator((data: { id: string; status?: InquiryStatus; admin_notes?: string }) => data)
+  .handler(async ({ data }) => {
     const { id, ...payload } = data
-    return apiRequest<ApiResponse<Inquiry>>(
+    return authenticatedRequest<ApiResponse<Inquiry>>(
       `/inquiries/admin/${id}`,
-      { method: "PUT", body: JSON.stringify(payload) },
-      token
+      { method: "PUT", body: JSON.stringify(payload) }
     )
   })

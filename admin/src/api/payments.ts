@@ -2,8 +2,9 @@
  * Payments API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface PaymentGateway {
   id: string;
@@ -44,81 +45,60 @@ export interface PaymentMethod {
 
 export interface GatewayConfigTemplate {
   gateway_code: string;
-  required_fields: string[];
-  optional_fields: string[];
+  required_fields: Array<string>;
+  optional_fields: Array<string>;
   example: Record<string, string>;
 }
 
 // Public: Get payment methods for checkout
 export const getPaymentMethods = createServerFn({ method: "GET" })
   .handler(async () => {
-    return apiRequest<ApiResponse<{ methods: PaymentMethod[] }>>("/payments/methods");
+    return apiRequest<ApiResponse<{ methods: Array<PaymentMethod> }>>("/payments/methods");
   });
 
 // Admin: Get all payment gateways
 export const getPaymentGateways = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<PaymentGateway[]>>(
-      "/payments/admin/gateways",
-      {},
-      token
-    );
+    return authenticatedRequest<ApiResponse<Array<PaymentGateway>>>("/payments/admin/gateways");
   });
 
 // Admin: Get gateway config template
 export const getGatewayConfigTemplate = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { code: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<GatewayConfigTemplate>>(
-      `/payments/admin/gateways/${data.code}/config-template`,
-      {},
-      token
+  .inputValidator((data: { code: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<GatewayConfigTemplate>>(
+      `/payments/admin/gateways/${data.code}/config-template`
     );
   });
 
 // Admin: Update payment gateway
 export const updatePaymentGateway = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string; gateway: PaymentGatewayPayload } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<PaymentGateway>>(
+  .inputValidator((data: { id: string; gateway: PaymentGatewayPayload }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<PaymentGateway>>(
       `/payments/admin/gateways/${data.id}`,
       {
         method: "PUT",
         body: JSON.stringify(data.gateway),
-      },
-      token
+      }
     );
   });
 
 // Admin: Toggle payment gateway enabled/disabled
 export const togglePaymentGateway = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string; enabled: boolean } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<PaymentGateway>>(
+  .inputValidator((data: { id: string; enabled: boolean }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<PaymentGateway>>(
       `/payments/admin/gateways/${data.id}/toggle?enabled=${data.enabled}`,
-      { method: "PATCH" },
-      token
+      { method: "PATCH" }
     );
   });
 
 // Admin: Initialize default gateways
 export const initializeGateways = createServerFn({ method: "POST" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ created_count: number }>>(
+    return authenticatedRequest<ApiResponse<{ created_count: number }>>(
       "/payments/admin/gateways/initialize",
-      { method: "POST" },
-      token
+      { method: "POST" }
     );
   });

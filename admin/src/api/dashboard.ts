@@ -2,8 +2,8 @@
  * Dashboard API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 // Types
 export interface DashboardStats {
@@ -47,80 +47,54 @@ export interface OrderStatusCount {
 
 export interface DashboardData {
   stats: DashboardStats;
-  recent_orders: RecentOrderItem[];
-  low_stock_products: LowStockProduct[];
-  sales_chart: SalesDataPoint[];
-  order_status_counts: OrderStatusCount[];
+  recent_orders: Array<RecentOrderItem>;
+  low_stock_products: Array<LowStockProduct>;
+  sales_chart: Array<SalesDataPoint>;
+  order_status_counts: Array<OrderStatusCount>;
 }
 
 // Get full dashboard data in a single optimized request
 export const getDashboardData = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<DashboardData>>(
-      "/admin/dashboard",
-      {},
-      token
-    );
+    return authenticatedRequest<ApiResponse<DashboardData>>("/admin/dashboard");
   });
 
 // Individual endpoints for partial updates (if needed)
 export const getDashboardStats = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<DashboardStats>>(
-      "/admin/dashboard/stats",
-      {},
-      token
-    );
+    return authenticatedRequest<ApiResponse<DashboardStats>>("/admin/dashboard/stats");
   });
 
-export const getRecentOrders = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { limit?: number } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+export const getRecentOrders = createServerFn({ method: "GET" })
+  .inputValidator((data: { limit?: number }) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     if (data.limit) params.append("limit", data.limit.toString());
 
-    return apiRequest<ApiResponse<RecentOrderItem[]>>(
-      `/admin/dashboard/recent-orders?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<Array<RecentOrderItem>>>(
+      `/admin/dashboard/recent-orders?${params.toString()}`
     );
   });
 
-export const getLowStockProducts = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { threshold?: number; limit?: number } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+export const getLowStockProducts = createServerFn({ method: "GET" })
+  .inputValidator((data: { threshold?: number; limit?: number }) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     if (data.threshold) params.append("threshold", data.threshold.toString());
     if (data.limit) params.append("limit", data.limit.toString());
 
-    return apiRequest<ApiResponse<LowStockProduct[]>>(
-      `/admin/dashboard/low-stock?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<Array<LowStockProduct>>>(
+      `/admin/dashboard/low-stock?${params.toString()}`
     );
   });
 
-export const getSalesChartData = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { days?: number } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+export const getSalesChartData = createServerFn({ method: "GET" })
+  .inputValidator((data: { days?: number }) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     if (data.days) params.append("days", data.days.toString());
 
-    return apiRequest<ApiResponse<SalesDataPoint[]>>(
-      `/admin/dashboard/sales-chart?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<Array<SalesDataPoint>>>(
+      `/admin/dashboard/sales-chart?${params.toString()}`
     );
   });

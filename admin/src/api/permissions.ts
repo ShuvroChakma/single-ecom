@@ -2,8 +2,8 @@
  * Permissions API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface Permission {
   id: string;
@@ -15,14 +15,7 @@ export interface Permission {
 }
 
 // Admin: List all permissions
-export const getPermissions = createServerFn({ method: "POST" })
+export const getPermissions = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Permission[]>>(
-      "/admin/permissions",
-      {},
-      token
-    );
+    return authenticatedRequest<ApiResponse<Array<Permission>>>("/admin/permissions");
   });

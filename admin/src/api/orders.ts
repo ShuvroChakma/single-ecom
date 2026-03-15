@@ -2,10 +2,10 @@
  * Orders API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
-export type OrderStatus = 
+export type OrderStatus =
   | "PENDING"
   | "CONFIRMED"
   | "PROCESSING"
@@ -58,7 +58,7 @@ export interface Order {
   paid_at: string | null;
   status: OrderStatus;
   customer_notes: string | null;
-  items: OrderItem[];
+  items: Array<OrderItem>;
   created_at: string;
   confirmed_at: string | null;
   shipped_at: string | null;
@@ -87,64 +87,48 @@ export interface UpdateOrderStatusPayload {
 }
 
 // Admin: List all orders
-export const getOrders = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: OrderListParams }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+export const getOrders = createServerFn({ method: "GET" })
+  .inputValidator((data: OrderListParams) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     if (data.status) params.append("status", data.status);
     if (data.limit !== undefined) params.append("limit", data.limit.toString());
     if (data.offset !== undefined) params.append("offset", data.offset.toString());
 
-    return apiRequest<ApiResponse<OrderListItem[]>>(
-      `/orders/admin/all?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<Array<OrderListItem>>>(
+      `/orders/admin/all?${params.toString()}`
     );
   });
 
 // Admin: Get single order
-export const getOrder = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Order>>(
-      `/orders/admin/${data.id}`,
-      {},
-      token
-    );
+export const getOrder = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Order>>(`/orders/admin/${data.id}`);
   });
 
 // Admin: Update order status
 export const updateOrderStatus = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string; payload: UpdateOrderStatusPayload } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Order>>(
+  .inputValidator((data: { id: string; payload: UpdateOrderStatusPayload }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Order>>(
       `/orders/admin/${data.id}/status`,
       {
         method: "PUT",
         body: JSON.stringify(data.payload),
-      },
-      token
+      }
     );
   });
 
 // Admin: Create POS order
 export const createPosOrder = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { order: any } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Order>>(
+  .inputValidator((data: { order: any }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Order>>(
       "/admin/pos/orders",
       {
         method: "POST",
         body: JSON.stringify(data.order),
-      },
-      token
+      }
     );
   });
