@@ -18,6 +18,7 @@ export interface UserProfile {
   username?: string;
   user_type: string;
   role_name?: string;
+  permissions?: string[];
 }
 
 export const loginAdmin = createServerFn({ method: "POST" })

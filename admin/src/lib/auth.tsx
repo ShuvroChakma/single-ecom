@@ -22,6 +22,8 @@ interface User {
   full_name: string;
   username?: string;
   user_type: string;
+  role_name?: string;
+  permissions?: string[];
 }
 
 interface AuthContextType {
@@ -33,6 +35,8 @@ interface AuthContextType {
   logout: () => void;
     setAccessToken: (token: string) => void;
   updateUser: (updates: Partial<User>) => void;
+  hasPermission: (permission: string) => boolean;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -137,6 +141,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const hasPermission = (permission: string): boolean => {
+    if (!user?.permissions) return false;
+    if (user.permissions.includes("*")) return true;
+    return user.permissions.includes(permission);
+  };
+
+  const isSuperAdmin = user?.permissions?.includes("*") ?? false;
+
   return (
     <AuthContext.Provider
       value={{
@@ -148,6 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
               setAccessToken,
         updateUser,
+        hasPermission,
+        isSuperAdmin,
       }}
     >
       {children}
