@@ -1,37 +1,38 @@
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Loader2 } from "lucide-react"
+import { Link, createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Heart,
-  ShoppingCart,
-  Share2,
-  Truck,
-  Shield,
-  RotateCcw,
+  Loader2,
   Minus,
   Plus,
-  Check,
-  Loader2,
+  RotateCcw,
+  Share2,
+  Shield,
+  ShoppingCart,
+  Truck,
 } from "lucide-react"
+import {
+  FacebookIcon, FacebookShareButton,
+  TelegramIcon, TelegramShareButton,
+  TwitterShareButton, WhatsappIcon,
+  WhatsappShareButton, XIcon,
+} from "react-share"
+import type {Product, ProductVariant} from "@/api/categories";
+import type {PriceBreakdown} from "@/api/products";
 import Header from "@/components/shared/Header/Header"
 import Footer from "@/components/shared/Footer/Footer"
-import { getProductById, getProductBySlug, getProducts, type Product, type ProductVariant } from "@/api/categories"
-import { getProductPricing, getProductAttributes, getAttributeGroups, type PriceBreakdown } from "@/api/products"
+import {   getProductById, getProductBySlug, getProducts } from "@/api/categories"
+import {  getAttributeGroups, getProductAttributes, getProductPricing } from "@/api/products"
 import { getImageUrl } from "@/api/client"
 import { addToCart } from "@/api/cart"
-import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
+import { addToWishlist, checkWishlist, removeFromWishlist } from "@/api/wishlist"
 import { useAuth } from "@/hooks/useAuth"
 import { useLoginModal } from "@/contexts/LoginModalContext"
-import {
-  WhatsappShareButton, WhatsappIcon,
-  FacebookShareButton, FacebookIcon,
-  TelegramShareButton, TelegramIcon,
-  TwitterShareButton, XIcon,
-} from "react-share"
 
 // UUID regex pattern — must be defined before Route (used in loader)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -234,7 +235,7 @@ function ProductPage() {
     const groupMap: Record<string, string> = {}
     for (const g of groups) groupMap[g.id] = g.name
 
-    const result: { groupName: string; sortOrder: number; items: { name: string; value: string }[] }[] = []
+    const result: Array<{ groupName: string; sortOrder: number; items: Array<{ name: string; value: string }> }> = []
     const seen: Record<string, number> = {}
 
     for (const item of values) {
