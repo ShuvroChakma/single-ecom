@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,18 +47,50 @@ function parseProductUrl(urlSlug: string): { id: string | null; slugPart: string
   return { id: null, slugPart: urlSlug }
 }
 
+function ProductPending() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="animate-spin h-8 w-8 text-gray-400" />
+    </div>
+  )
+}
+
+function ProductError() {
+  const router = useRouter()
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <p className="text-4xl font-bold text-red-400 mb-3">Oops</p>
+      <p className="text-gray-500 mb-6">We couldn't load this product. Please try again.</p>
+      <button
+        onClick={() => router.history.back()}
+        className="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+      >
+        Go Back
+      </button>
+    </div>
+  )
+}
+
 export const Route = createFileRoute("/products/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context: { queryClient } }) => {
     const { id: productId } = parseProductUrl(params.slug)
+    const queryKey = ["product", productId || params.slug]
     try {
-      const response = productId
-        ? await getProductById({ data: { id: productId } })
-        : await getProductBySlug({ data: { slug: params.slug } })
-      return { product: response?.success ? response.data : null }
+      await queryClient.ensureQueryData({
+        queryKey,
+        queryFn: () =>
+          productId
+            ? getProductById({ data: { id: productId } })
+            : getProductBySlug({ data: { slug: params.slug } }),
+        staleTime: 5 * 60 * 1000,
+      })
     } catch {
-      return { product: null }
+      // Non-fatal: component will show error state
     }
+    return { productId, slug: params.slug }
   },
+  pendingComponent: ProductPending,
+  errorComponent: ProductError,
   head: ({ loaderData }) => {
     const product = loaderData?.product
     if (!product) return { meta: [{ title: 'Product | Nazu Meah Jewellers' }] }
@@ -108,15 +141,14 @@ function ProductPage() {
   const shareButtonRef = useRef<HTMLButtonElement>(null)
   const [shareMenuPos, setShareMenuPos] = useState({ top: 0, right: 0 })
 
-  // Parse URL to extract ID
-  const { id: productId } = parseProductUrl(urlSlug)
+  // Parse URL to extract ID — loaderData provides these to avoid re-parsing
+  const productId = loaderData?.productId ?? parseProductUrl(urlSlug).id
 
-  // Fetch product data - use loader data as initialData so there's no loading flash
+  // Loader already populated the cache via ensureQueryData — this read from cache only
   const { data: productResponse, isLoading, error } = useQuery({
     queryKey: ["product", productId || urlSlug],
     queryFn: () => productId ? getProductById({ data: { id: productId } }) : getProductBySlug({ data: { slug: urlSlug } }),
     staleTime: 5 * 60 * 1000,
-    initialData: loaderData?.product ? { success: true, message: '', data: loaderData.product } : undefined,
   })
 
   const product = productResponse?.success ? productResponse.data : null

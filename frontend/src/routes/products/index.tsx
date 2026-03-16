@@ -7,7 +7,7 @@ import Footer from '@/components/shared/Footer/Footer'
 import { getProducts, getCategoryTree, findCategoryBySlug } from '@/api/categories'
 import { getMetals, getFilterableAttributes } from '@/api/products'
 import { getImageUrl } from '@/api/client'
-import { addToWishlist } from '@/api/wishlist'
+import { addToWishlist, removeFromWishlist, getWishlist } from '@/api/wishlist'
 import { useAuth } from '@/hooks/useAuth'
 import { useLoginModal } from '@/contexts/LoginModalContext'
 import { Input } from '@/components/ui/input'
@@ -169,17 +169,83 @@ function ProductsPage() {
 
   const activeAttrCount = Object.values(selectedAttributes).reduce((sum, vals) => sum + vals.length, 0)
 
-  // Add to wishlist mutation
+  // Fetch wishlist to know which products are already saved
+  const { data: wishlistData } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: () => getWishlist(),
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
+  })
+  const wishlistItemMap = useMemo(() => {
+    const map = new Map<string, string>() // productId → wishlistItemId
+    if (wishlistData?.success && wishlistData.data?.items) {
+      for (const item of wishlistData.data.items) {
+        map.set(item.product.id, item.id)
+      }
+    }
+    return map
+  }, [wishlistData])
+
+  // Add to wishlist — optimistic update
   const addWishlistMutation = useMutation({
     mutationFn: (productId: string) => addToWishlist({ data: { product_id: productId } }),
-    onMutate: (productId) => {
+    onMutate: async (productId) => {
       setAddingToWishlist(productId)
+      await queryClient.cancelQueries({ queryKey: ['wishlist'] })
+      const previousData = queryClient.getQueryData<any>(['wishlist'])
+      queryClient.setQueryData(['wishlist'], (old: any) => {
+        if (!old?.success || !old?.data) return old
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            items: [...old.data.items, {
+              id: `optimistic-${productId}`,
+              product: { id: productId, name: '', slug: '', image: null },
+              variant: null,
+              added_at: new Date().toISOString(),
+            }],
+            total: old.data.total + 1,
+          },
+        }
+      })
+      return { previousData }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] })
+    onError: (_err, _productId, context) => {
+      if (context?.previousData) queryClient.setQueryData(['wishlist'], context.previousData)
     },
     onSettled: () => {
       setAddingToWishlist(null)
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] })
+    },
+  })
+
+  // Remove from wishlist — optimistic update
+  const removeWishlistMutation = useMutation({
+    mutationFn: ({ itemId }: { itemId: string; productId: string }) => removeFromWishlist({ data: { itemId } }),
+    onMutate: async ({ itemId, productId }) => {
+      setAddingToWishlist(productId)
+      await queryClient.cancelQueries({ queryKey: ['wishlist'] })
+      const previousData = queryClient.getQueryData<any>(['wishlist'])
+      queryClient.setQueryData(['wishlist'], (old: any) => {
+        if (!old?.success || !old?.data) return old
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            items: old.data.items.filter((item: any) => item.id !== itemId),
+            total: Math.max(0, old.data.total - 1),
+          },
+        }
+      })
+      return { previousData }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousData) queryClient.setQueryData(['wishlist'], context.previousData)
+    },
+    onSettled: () => {
+      setAddingToWishlist(null)
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] })
     },
   })
 
@@ -671,13 +737,20 @@ function ProductsPage() {
                             })
                             return
                           }
-                          addWishlistMutation.mutate(product.id)
+                          const existingItemId = wishlistItemMap.get(product.id)
+                          if (existingItemId) {
+                            removeWishlistMutation.mutate({ itemId: existingItemId, productId: product.id })
+                          } else {
+                            addWishlistMutation.mutate(product.id)
+                          }
                         }}
                         disabled={addingToWishlist === product.id}
                         className="p-2 bg-white rounded-full shadow hover:bg-gray-50 disabled:opacity-50"
                       >
                         {addingToWishlist === product.id ? (
                           <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
+                        ) : wishlistItemMap.has(product.id) ? (
+                          <Heart className="w-4 h-4 fill-red-500 text-red-500" />
                         ) : (
                           <Heart className="w-4 h-4 text-gray-600 hover:text-red-500 hover:fill-red-500" />
                         )}

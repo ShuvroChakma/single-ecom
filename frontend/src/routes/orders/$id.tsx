@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Loader2, Package, MapPin, CreditCard, ArrowLeft, X, Check,
@@ -13,9 +13,49 @@ import Footer from '@/components/shared/Footer/Footer'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/hooks/useAuth'
+
+function OrderPending() {
+  return (
+    <div>
+      <Header />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-gray-400" />
+      </div>
+      <Footer />
+    </div>
+  )
+}
+
+function OrderError() {
+  const router = useRouter()
+  return (
+    <div>
+      <Header />
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+        <p className="text-4xl font-bold text-red-400 mb-3">Oops</p>
+        <p className="text-gray-500 mb-6">We couldn't load this order. Please try again.</p>
+        <button
+          onClick={() => router.history.back()}
+          className="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+        >
+          Go Back
+        </button>
+      </div>
+      <Footer />
+    </div>
+  )
+}
 
 export const Route = createFileRoute('/orders/$id')({
+  loader: async ({ params, context: { queryClient } }) => {
+    await queryClient.ensureQueryData({
+      queryKey: ['order', params.id],
+      queryFn: () => getOrder({ data: { orderId: params.id } }),
+      staleTime: 30 * 1000,
+    })
+  },
+  pendingComponent: OrderPending,
+  errorComponent: OrderError,
   component: OrderDetailPage,
 })
 
@@ -52,12 +92,11 @@ function OrderDetailContent() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-  const { isAuthenticated } = useAuth()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['order', id],
     queryFn: () => getOrder({ data: { orderId: id } }),
-    enabled: isAuthenticated,
+    staleTime: 30 * 1000,
   })
 
   const cancelMutation = useMutation({

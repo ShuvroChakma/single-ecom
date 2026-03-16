@@ -4,7 +4,27 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getCookie } from '@tanstack/react-start/server'
 import { apiRequest } from './client'
-import type { ApiResponse } from './client';
+import type { ApiResponse } from './client'
+import { z } from 'zod'
+
+const createOrderSchema = z.object({
+  address_id: z.string().min(1, "Address is required"),
+  payment_method: z.string().min(1, "Payment method is required"),
+  is_gift: z.boolean().optional(),
+  gift_message: z.string().optional(),
+  hide_prices: z.boolean().optional(),
+  promo_code: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+const orderIdSchema = z.object({
+  orderId: z.string().min(1, "Order ID is required"),
+})
+
+const ordersListSchema = z.object({
+  limit: z.number().int().positive().optional(),
+  offset: z.number().int().min(0).optional(),
+}).optional()
 
 export interface OrderItem {
   id: string
@@ -86,7 +106,7 @@ export interface OrderCreatedResponse {
 }
 
 export const createOrder = createServerFn({ method: 'POST' })
-  .inputValidator((data: CreateOrderRequest) => data)
+  .inputValidator((data: unknown) => createOrderSchema.parse(data))
   .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
@@ -97,7 +117,7 @@ export const createOrder = createServerFn({ method: 'POST' })
   })
 
 export const getOrder = createServerFn({ method: 'GET' })
-  .inputValidator((data: { orderId: string }) => data)
+  .inputValidator((data: unknown) => orderIdSchema.parse(data))
   .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
@@ -105,7 +125,7 @@ export const getOrder = createServerFn({ method: 'GET' })
   })
 
 export const getOrdersList = createServerFn({ method: 'GET' })
-  .inputValidator((data?: { limit?: number; offset?: number }) => data)
+  .inputValidator((data: unknown) => ordersListSchema.parse(data))
   .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
@@ -115,7 +135,7 @@ export const getOrdersList = createServerFn({ method: 'GET' })
   })
 
 export const cancelOrder = createServerFn({ method: 'POST' })
-  .inputValidator((data: { orderId: string }) => data)
+  .inputValidator((data: unknown) => orderIdSchema.parse(data))
   .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
