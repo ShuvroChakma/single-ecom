@@ -8,7 +8,7 @@ from app.constants.error_codes import ErrorCode
 from app.core.cache import get_cache, set_cache, delete_cache
 from app.modules.audit.service import AuditService
 from app.modules.catalog.models import Category
-from app.modules.catalog.schemas import CategoryCreate, CategoryUpdate, CategoryTreeResponse
+from app.modules.catalog.schemas import CategoryCreate, CategoryUpdate, CategoryTreeResponse, CategoryResponse
 from app.modules.catalog.repository import CategoryRepository
 from sqlmodel import select, func
 
@@ -38,7 +38,6 @@ class CategoryService:
 
     async def get_featured(self) -> List[CategoryResponse]:
         """Get all active featured categories."""
-        from app.modules.catalog.schemas import CategoryResponse
         categories = await self.repository.get_featured()
         return [CategoryResponse.model_validate(cat) for cat in categories]
 
