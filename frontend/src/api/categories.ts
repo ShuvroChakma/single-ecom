@@ -97,6 +97,11 @@ export const getCategoryTree = createServerFn({ method: 'GET' })
     return apiRequest<ApiResponse<Category[]>>('/catalog/categories/tree')
   })
 
+export const getFeaturedCategories = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    return apiRequest<ApiResponse<Category[]>>('/catalog/categories/featured')
+  })
+
 export const getProducts = createServerFn({ method: 'GET' })
   .handler(async ({ data }: { data?: ProductFilters }) => {
     const filters = data || {}

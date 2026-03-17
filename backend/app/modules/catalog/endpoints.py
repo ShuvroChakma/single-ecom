@@ -38,6 +38,18 @@ async def get_category_tree(
     tree = await service.get_tree()
     return create_success_response(message="Categories retrieved successfully", data=tree)
 
+@router.get(
+    "/categories/featured",
+    response_model=SuccessResponse[List[CategoryResponse]],
+    summary="Get featured categories"
+)
+async def get_featured_categories(
+    service: CategoryService = Depends(get_category_service)
+):
+    """Get all active featured categories for homepage display."""
+    categories = await service.get_featured()
+    return create_success_response(message="Featured categories retrieved successfully", data=categories)
+
 @router.post(
     "/admin/categories",
     response_model=SuccessResponse[CategoryResponse],
@@ -150,8 +162,22 @@ async def toggle_category_status(
     service: CategoryService = Depends(get_category_service),
     current_user: User = Depends(require_permissions([PermissionEnum.CATEGORIES_WRITE]))
 ):
-    """
-    Toggle category active status.
-    """
+    """Toggle category active status."""
     category = await service.toggle_active(category_id, is_active, str(current_user.id), request)
     return create_success_response(message="Category status updated successfully", data=category)
+
+@router.patch(
+    "/admin/categories/{category_id}/toggle-featured",
+    response_model=SuccessResponse[CategoryResponse],
+    summary="Toggle category featured status"
+)
+async def toggle_category_featured(
+    category_id: UUID,
+    is_featured: bool,
+    request: Request,
+    service: CategoryService = Depends(get_category_service),
+    current_user: User = Depends(require_permissions([PermissionEnum.CATEGORIES_WRITE]))
+):
+    """Toggle category featured status."""
+    category = await service.update_category(category_id, CategoryUpdate(is_featured=is_featured), str(current_user.id), request)
+    return create_success_response(message="Category featured status updated successfully", data=category)

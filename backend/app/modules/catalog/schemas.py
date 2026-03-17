@@ -8,6 +8,7 @@ class CategoryBase(BaseModel):
     name: str
     slug: str
     is_active: bool = True
+    is_featured: bool = False
     icon: Optional[str] = None
     banner: Optional[str] = None
     meta_title: Optional[str] = None
@@ -22,6 +23,7 @@ class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     is_active: Optional[bool] = None
+    is_featured: Optional[bool] = None
     icon: Optional[str] = None
     banner: Optional[str] = None
     parent_id: Optional[UUID] = None

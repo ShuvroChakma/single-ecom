@@ -7,6 +7,7 @@ class CategoryBase(SQLModel):
     name: str = Field(index=True)
     slug: str = Field(unique=True, index=True)
     is_active: bool = Field(default=True)
+    is_featured: bool = Field(default=False)
     icon: Optional[str] = Field(default=None)
     banner: Optional[str] = Field(default=None)
     meta_title: Optional[str] = Field(default=None, max_length=200)

@@ -36,6 +36,12 @@ class CategoryService:
         
         return tree
 
+    async def get_featured(self) -> List[CategoryResponse]:
+        """Get all active featured categories."""
+        from app.modules.catalog.schemas import CategoryResponse
+        categories = await self.repository.get_featured()
+        return [CategoryResponse.model_validate(cat) for cat in categories]
+
     def _build_tree(self, categories: List[Category], parent_id: Optional[UUID] = None) -> List[CategoryTreeResponse]:
         """Recursive tree builder."""
         from app.modules.catalog.schemas import CategoryResponse

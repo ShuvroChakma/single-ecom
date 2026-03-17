@@ -13,6 +13,7 @@ export interface Category {
   parent_id: string | null;
   image: string | null;
   is_active: boolean;
+  is_featured?: boolean;
   meta_title?: string | null;
   meta_description?: string | null;
   created_at: string;
@@ -110,6 +111,15 @@ export const toggleCategoryActive = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     return authenticatedRequest<ApiResponse<Category>>(
       `/catalog/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
+      { method: "PATCH" }
+    );
+  });
+
+export const toggleCategoryFeatured = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; is_featured: boolean }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Category>>(
+      `/catalog/admin/categories/${data.id}/toggle-featured?is_featured=${data.is_featured}`,
       { method: "PATCH" }
     );
   });

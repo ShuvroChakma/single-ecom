@@ -1,4 +1,4 @@
-import { Category, CategoryTreeResponse, createCategory, getCategoryTree, updateCategory } from "@/api/categories"
+import { Category, CategoryTreeResponse, createCategory, getCategoryTree, updateCategory, toggleCategoryFeatured } from "@/api/categories"
 import { ImageUpload } from "@/components/shared/image-upload"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,6 +31,7 @@ const categorySchema = z.object({
     name: z.string().min(1, "Name is required"),
     slug: z.string().min(1, "Slug is required"),
     is_active: z.boolean().default(true),
+    is_featured: z.boolean().default(false),
     icon: z.string().optional(),
     banner: z.string().optional(),
     parent_id: z.string().optional(),
@@ -106,6 +107,7 @@ export function CategoryDialog({ category, open: controlledOpen, onOpenChange }:
             name: category?.name || "",
             slug: category?.slug || "",
             is_active: category?.is_active ?? true,
+            is_featured: category?.is_featured ?? false,
             icon: category?.icon || "",
             banner: category?.banner || "",
             parent_id: category?.parent_id || undefined,
@@ -149,6 +151,7 @@ export function CategoryDialog({ category, open: controlledOpen, onOpenChange }:
                 form.setFieldValue("name", category.name)
                 form.setFieldValue("slug", category.slug)
                 form.setFieldValue("is_active", category.is_active)
+                form.setFieldValue("is_featured", category.is_featured ?? false)
                 form.setFieldValue("icon", category.icon || "")
                 form.setFieldValue("banner", category.banner || "")
                 form.setFieldValue("parent_id", category.parent_id || undefined)
@@ -332,6 +335,24 @@ export function CategoryDialog({ category, open: controlledOpen, onOpenChange }:
                                     <Label className="text-base">Active Status</Label>
                                     <p className="text-sm text-muted-foreground">
                                         Category will be visible to users
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={field.state.value}
+                                    onCheckedChange={field.handleChange}
+                                />
+                            </div>
+                        )}
+                    />
+
+                    <form.Field
+                        name="is_featured"
+                        children={(field) => (
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base">Featured</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Show in the featured categories section
                                     </p>
                                 </div>
                                 <Switch

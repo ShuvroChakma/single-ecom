@@ -309,6 +309,7 @@ function ProductsPage() {
     },
     initialPageParam: 1,
     staleTime: 5 * 60 * 1000,
+    enabled: !category || !!selectedCategory,
   })
 
   const products = data?.pages.flatMap((page) => (page.success ? page.data.items : [])) || []
