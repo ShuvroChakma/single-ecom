@@ -18,6 +18,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { zodValidator } from "@tanstack/zod-form-adapter"
@@ -33,6 +34,8 @@ const categorySchema = z.object({
     icon: z.string().optional(),
     banner: z.string().optional(),
     parent_id: z.string().optional(),
+    meta_title: z.string().max(200).optional(),
+    meta_description: z.string().max(500).optional(),
 })
 
 type CategoryFormValues = z.infer<typeof categorySchema>
@@ -106,6 +109,8 @@ export function CategoryDialog({ category, open: controlledOpen, onOpenChange }:
             icon: category?.icon || "",
             banner: category?.banner || "",
             parent_id: category?.parent_id || undefined,
+            meta_title: category?.meta_title || "",
+            meta_description: category?.meta_description || "",
         } as CategoryFormValues,
         validatorAdapter: zodValidator(),
         validators: {
@@ -147,6 +152,8 @@ export function CategoryDialog({ category, open: controlledOpen, onOpenChange }:
                 form.setFieldValue("icon", category.icon || "")
                 form.setFieldValue("banner", category.banner || "")
                 form.setFieldValue("parent_id", category.parent_id || undefined)
+                form.setFieldValue("meta_title", category.meta_title || "")
+                form.setFieldValue("meta_description", category.meta_description || "")
             } else {
                 form.reset()
             }
@@ -334,6 +341,45 @@ export function CategoryDialog({ category, open: controlledOpen, onOpenChange }:
                             </div>
                         )}
                     />
+
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <p className="text-sm font-medium">SEO</p>
+                        <form.Field
+                            name="meta_title"
+                            children={(field) => (
+                                <div className="space-y-2">
+                                    <Label htmlFor="cat_meta_title">Meta Title</Label>
+                                    <Input
+                                        id="cat_meta_title"
+                                        placeholder="SEO title (max 200 chars)"
+                                        maxLength={200}
+                                        value={field.state.value || ""}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => field.handleChange(e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground">{(field.state.value || "").length}/200</p>
+                                </div>
+                            )}
+                        />
+                        <form.Field
+                            name="meta_description"
+                            children={(field) => (
+                                <div className="space-y-2">
+                                    <Label htmlFor="cat_meta_description">Meta Description</Label>
+                                    <Textarea
+                                        id="cat_meta_description"
+                                        placeholder="SEO description (max 500 chars)"
+                                        maxLength={500}
+                                        rows={3}
+                                        value={field.state.value || ""}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => field.handleChange(e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground">{(field.state.value || "").length}/500</p>
+                                </div>
+                            )}
+                        />
+                    </div>
 
                     <div className="flex justify-end gap-2">
                         <Button

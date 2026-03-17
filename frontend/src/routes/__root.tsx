@@ -7,12 +7,14 @@ import {
   Link,
   useRouter,
 } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
 import appCss from '../styles.css?url'
 import { getPublicSettings } from '@/api/settings'
 import { SettingsProvider } from '@/contexts/SettingsContext'
 
 import type { QueryClient } from '@tanstack/react-query'
+
 
 
 interface MyRouterContext {
@@ -66,6 +68,21 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     const storeName = general.store_name || 'Nazu Meah Jewellers'
     const defaultTitle = seo.meta_title || storeName
     const defaultDesc = seo.meta_description || ''
+    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    const gaId = seo.google_analytics_id || ''
+    const logo = general.logo ? `${import.meta.env.VITE_API_URL || ''}/static/uploads/${general.logo}` : ''
+
+    const orgSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'JewelryStore',
+      name: storeName,
+      url: siteUrl,
+      ...(logo ? { logo } : {}),
+      ...(general.phone ? { telephone: general.phone } : {}),
+      ...(general.email ? { email: general.email } : {}),
+      ...(general.address ? { address: { '@type': 'PostalAddress', streetAddress: general.address } } : {}),
+    }
+
     return {
       meta: [
         { charSet: 'utf-8' },
@@ -74,13 +91,24 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         ...(defaultDesc ? [{ name: 'description', content: defaultDesc }] : []),
         { property: 'og:site_name', content: storeName },
         { property: 'og:title', content: defaultTitle },
+        { property: 'og:url', content: siteUrl },
         ...(defaultDesc ? [{ property: 'og:description', content: defaultDesc }] : []),
         { property: 'og:type', content: 'website' },
         { name: 'twitter:card', content: 'summary' },
         { name: 'twitter:title', content: defaultTitle },
         ...(defaultDesc ? [{ name: 'twitter:description', content: defaultDesc }] : []),
       ],
-      links: [{ rel: 'stylesheet', href: appCss }],
+      links: [
+        { rel: 'stylesheet', href: appCss },
+        { rel: 'canonical', href: siteUrl },
+      ],
+      scripts: [
+        { type: 'application/ld+json', children: JSON.stringify(orgSchema) },
+        ...(gaId ? [
+          { src: `https://www.googletagmanager.com/gtag/js?id=${gaId}`, async: true },
+          { children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');` },
+        ] : []),
+      ],
     }
   },
   component: RootComponent,
@@ -90,6 +118,21 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   const { settings } = Route.useLoaderData()
+  const router = useRouter()
+  const gaId = settings?.seo?.google_analytics_id
+
+  useEffect(() => {
+    if (!gaId) return
+    return router.subscribe('onResolved', () => {
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        ;(window as any).gtag('event', 'page_view', {
+          page_location: window.location.href,
+          page_path: window.location.pathname,
+        })
+      }
+    })
+  }, [router, gaId])
+
   return (
     <SettingsProvider initialSettings={settings}>
       <Outlet />

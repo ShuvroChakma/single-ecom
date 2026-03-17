@@ -9,6 +9,8 @@ class CategoryBase(SQLModel):
     is_active: bool = Field(default=True)
     icon: Optional[str] = Field(default=None)
     banner: Optional[str] = Field(default=None)
+    meta_title: Optional[str] = Field(default=None, max_length=200)
+    meta_description: Optional[str] = Field(default=None, max_length=500)
     level: int = Field(default=0, description="Hierarchy level: 0=Root, 1=Sub, 2=Leaf")
     path: str = Field(index=True, description="Materialized path for efficiency, e.g. root_id/sub_id")
 

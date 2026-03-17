@@ -68,6 +68,8 @@ class ProductCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     slug: str = Field(..., min_length=1, max_length=200, pattern=r"^[a-z0-9-]+$")
     description: Optional[str] = None
+    meta_title: Optional[str] = Field(None, max_length=200)
+    meta_description: Optional[str] = Field(None, max_length=500)
     category_id: UUID
     brand_id: Optional[UUID] = None
     collection_id: Optional[UUID] = None
@@ -78,7 +80,7 @@ class ProductCreate(BaseModel):
     is_active: bool = True
     is_featured: bool = False
     images: List[str] = []
-    
+
     # Optional: Create with initial variants
     variants: List[ProductVariantCreate] = []
 
@@ -89,6 +91,8 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     slug: Optional[str] = Field(None, min_length=1, max_length=200, pattern=r"^[a-z0-9-]+$")
     description: Optional[str] = None
+    meta_title: Optional[str] = Field(None, max_length=200)
+    meta_description: Optional[str] = Field(None, max_length=500)
     category_id: Optional[UUID] = None
     brand_id: Optional[UUID] = None
     collection_id: Optional[UUID] = None
@@ -108,6 +112,8 @@ class ProductResponse(BaseModel):
     name: str
     slug: str
     description: Optional[str]
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     category_id: UUID
     brand_id: Optional[UUID]
     collection_id: Optional[UUID]

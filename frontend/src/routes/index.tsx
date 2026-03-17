@@ -20,8 +20,17 @@ import AboutPage from '@/components/shared/HeroBanner/AboutPage'
 
 
 
-// Homepage — title, description, og:* and twitter:* all come from DB settings via root loader
 export const Route = createFileRoute('/')({
+  head: () => {
+    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    return {
+      meta: [
+        { property: 'og:url', content: siteUrl },
+        { property: 'og:type', content: 'website' },
+      ],
+      links: [{ rel: 'canonical', href: siteUrl }],
+    }
+  },
   component: App,
 })
 

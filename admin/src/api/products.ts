@@ -80,6 +80,8 @@ export interface ProductPayload {
   tax_code?: string | null;
   is_active?: boolean;
   is_featured?: boolean;
+  meta_title?: string | null;
+  meta_description?: string | null;
   images?: Array<string>;
   variants?: Array<ProductVariantPayload>;
 }

@@ -13,6 +13,8 @@ export interface Category {
   parent_id: string | null;
   image: string | null;
   is_active: boolean;
+  meta_title?: string | null;
+  meta_description?: string | null;
   created_at: string;
   updated_at: string;
   subcategories?: Array<Category>;

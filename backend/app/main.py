@@ -116,3 +116,79 @@ async def health_check():
 from app.api.v1.router import api_router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+
+# ============ SEO ENDPOINTS ============
+from fastapi import Depends
+from fastapi.responses import PlainTextResponse, Response as FastAPIResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.deps import get_db
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
+async def robots_txt():
+    site_url = settings.FRONTEND_URL.rstrip("/")
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /checkout\n"
+        "Disallow: /orders\n"
+        "Disallow: /profile\n"
+        "Disallow: /cart\n"
+        f"Sitemap: {site_url}/sitemap.xml\n"
+    )
+
+
+@app.get("/sitemap.xml", response_class=FastAPIResponse, include_in_schema=False)
+async def sitemap_xml(session: AsyncSession = Depends(get_db)):
+    from sqlmodel import select
+    from app.modules.products.models import Product
+    from app.modules.catalog.models import Category
+
+    site_url = settings.FRONTEND_URL.rstrip("/")
+
+    products_result = await session.execute(
+        select(Product.slug, Product.id, Product.updated_at).where(Product.is_active == True)
+    )
+    products = products_result.all()
+
+    categories_result = await session.execute(
+        select(Category.slug, Category.updated_at).where(Category.is_active == True)
+    )
+    categories = categories_result.all()
+
+    urls = []
+
+    # Static pages
+    for path, changefreq, priority in [
+        ("", "weekly", "1.0"),
+        ("products", "daily", "0.9"),
+    ]:
+        loc = f"{site_url}/{path}".rstrip("/")
+        urls.append(
+            f"  <url>\n    <loc>{loc}</loc>\n"
+            f"    <changefreq>{changefreq}</changefreq>\n"
+            f"    <priority>{priority}</priority>\n  </url>"
+        )
+
+    for cat in categories:
+        urls.append(
+            f"  <url>\n    <loc>{site_url}/categories/{cat.slug}</loc>\n"
+            f"    <lastmod>{cat.updated_at.strftime('%Y-%m-%d')}</lastmod>\n"
+            f"    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>"
+        )
+
+    for prod in products:
+        urls.append(
+            f"  <url>\n    <loc>{site_url}/products/{prod.slug}-{prod.id}</loc>\n"
+            f"    <lastmod>{prod.updated_at.strftime('%Y-%m-%d')}</lastmod>\n"
+            f"    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>"
+        )
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(urls)
+        + "\n</urlset>"
+    )
+    return FastAPIResponse(content=xml, media_type="application/xml")
+

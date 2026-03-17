@@ -57,14 +57,22 @@ type ProductsSearch = {
 }
 
 export const Route = createFileRoute('/products/')({
-  head: () => ({
-    meta: [
-      { title: 'All Products | Nazu Meah Jewellers' },
-      { name: 'description', content: 'Browse our full collection of fine jewellery — gold, silver, diamond rings, necklaces, bangles and more at Nazu Meah Jewellers.' },
-      { property: 'og:title', content: 'All Products | Nazu Meah Jewellers' },
-      { property: 'og:description', content: 'Browse our full collection of fine jewellery at Nazu Meah Jewellers.' },
-    ],
-  }),
+  head: () => {
+    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    const canonicalUrl = `${siteUrl}/products`
+    return {
+      meta: [
+        { title: 'All Products | Nazu Meah Jewellers' },
+        { name: 'description', content: 'Browse our full collection of fine jewellery — gold, silver, diamond rings, necklaces, bangles and more at Nazu Meah Jewellers.' },
+        { property: 'og:title', content: 'All Products | Nazu Meah Jewellers' },
+        { property: 'og:description', content: 'Browse our full collection of fine jewellery at Nazu Meah Jewellers.' },
+        { property: 'og:url', content: canonicalUrl },
+        { property: 'og:type', content: 'website' },
+        { name: 'twitter:card', content: 'summary' },
+      ],
+      links: [{ rel: 'canonical', href: canonicalUrl }],
+    }
+  },
   component: ProductsPage,
   validateSearch: (search: Record<string, unknown>): ProductsSearch => {
     return {

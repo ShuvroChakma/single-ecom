@@ -48,6 +48,10 @@ class ProductBase(SQLModel):
     # Tax
     tax_code: Optional[str] = Field(default=None, description="HSN/SAC code")
     
+    # SEO
+    meta_title: Optional[str] = Field(default=None, max_length=200)
+    meta_description: Optional[str] = Field(default=None, max_length=500)
+
     # Status
     is_active: bool = Field(default=True)
     is_featured: bool = Field(default=False)

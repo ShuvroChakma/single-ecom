@@ -88,28 +88,66 @@ export const Route = createFileRoute("/products/$slug")({
     } catch {
       // Non-fatal: component will show error state
     }
-    return { productId, slug: params.slug }
+    const cached = queryClient.getQueryData<any>(queryKey)
+    const product = cached?.success ? cached.data : null
+    return { productId, slug: params.slug, product }
   },
   pendingComponent: ProductPending,
   errorComponent: ProductError,
   head: ({ loaderData }) => {
     const product = loaderData?.product
+    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
     if (!product) return { meta: [{ title: 'Product | Nazu Meah Jewellers' }] }
-    const title = `${product.name} | Nazu Meah Jewellers`
-    const description = product.description?.slice(0, 160) || `Buy ${product.name} at Nazu Meah Jewellers`
+    const title = product.meta_title || `${product.name} | Nazu Meah Jewellers`
+    const description = product.meta_description || product.description?.slice(0, 160) || `Buy ${product.name} at Nazu Meah Jewellers`
     const image = product.images?.[0] ? getImageUrl(product.images[0]) : ''
+    const canonicalUrl = `${siteUrl}/products/${product.slug}-${product.id}`
+
+    const productSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description,
+      sku: product.sku_base,
+      url: canonicalUrl,
+      ...(image ? { image } : {}),
+      brand: { '@type': 'Brand', name: 'Nazu Meah Jewellers' },
+      offers: {
+        '@type': 'Offer',
+        availability: product.is_active ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        priceCurrency: 'BDT',
+        seller: { '@type': 'Organization', name: 'Nazu Meah Jewellers' },
+      },
+    }
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: 'Products', item: `${siteUrl}/products` },
+        { '@type': 'ListItem', position: 3, name: product.name, item: canonicalUrl },
+      ],
+    }
+
     return {
       meta: [
         { title },
         { name: 'description', content: description },
         { property: 'og:title', content: title },
         { property: 'og:description', content: description },
-        { property: 'og:image', content: image },
+        { property: 'og:url', content: canonicalUrl },
         { property: 'og:type', content: 'product' },
-        { name: 'twitter:card', content: 'summary_large_image' },
+        ...(image ? [{ property: 'og:image', content: image }] : []),
+        { name: 'twitter:card', content: image ? 'summary_large_image' : 'summary' },
         { name: 'twitter:title', content: title },
         { name: 'twitter:description', content: description },
-        { name: 'twitter:image', content: image },
+        ...(image ? [{ name: 'twitter:image', content: image }] : []),
+      ],
+      links: [{ rel: 'canonical', href: canonicalUrl }],
+      scripts: [
+        { type: 'application/ld+json', children: JSON.stringify(productSchema) },
+        { type: 'application/ld+json', children: JSON.stringify(breadcrumbSchema) },
       ],
     }
   },

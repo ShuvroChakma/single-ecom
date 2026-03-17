@@ -26,22 +26,39 @@ export const Route = createFileRoute("/categories/$slug")({
   },
   head: ({ loaderData }) => {
     const category = loaderData?.category
+    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
     if (!category) return { meta: [{ title: 'Collection | Nazu Meah Jewellers' }] }
-    const title = `${category.name} | Nazu Meah Jewellers`
-    const description = `Shop our ${category.name} collection at Nazu Meah Jewellers. Browse the finest jewellery crafted for every occasion.`
+    const title = (category as any).meta_title || `${category.name} | Nazu Meah Jewellers`
+    const description = (category as any).meta_description || `Shop our ${category.name} collection at Nazu Meah Jewellers. Browse the finest jewellery crafted for every occasion.`
     const image = category.banner ? getImageUrl(category.banner) : ''
+    const canonicalUrl = `${siteUrl}/categories/${category.slug}`
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: category.name, item: canonicalUrl },
+      ],
+    }
+
     return {
       meta: [
         { title },
         { name: 'description', content: description },
         { property: 'og:title', content: title },
         { property: 'og:description', content: description },
+        { property: 'og:url', content: canonicalUrl },
         { property: 'og:type', content: 'website' },
         ...(image ? [{ property: 'og:image', content: image }] : []),
         { name: 'twitter:card', content: image ? 'summary_large_image' : 'summary' },
         { name: 'twitter:title', content: title },
         { name: 'twitter:description', content: description },
         ...(image ? [{ name: 'twitter:image', content: image }] : []),
+      ],
+      links: [{ rel: 'canonical', href: canonicalUrl }],
+      scripts: [
+        { type: 'application/ld+json', children: JSON.stringify(breadcrumbSchema) },
       ],
     }
   },

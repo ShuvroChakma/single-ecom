@@ -296,6 +296,8 @@ function EditProductPage() {
       tax_code: "",
       is_active: true,
       is_featured: false,
+      meta_title: "",
+      meta_description: "",
     },
     onSubmit: async ({ value }) => {
       if (!product) return
@@ -313,6 +315,8 @@ function EditProductPage() {
         tax_code: value.tax_code || null,
         is_active: value.is_active,
         is_featured: value.is_featured,
+        meta_title: value.meta_title || null,
+        meta_description: value.meta_description || null,
         images: images,
       }
 
@@ -341,6 +345,8 @@ function EditProductPage() {
       form.setFieldValue("tax_code", product.tax_code || "")
       form.setFieldValue("is_active", product.is_active ?? true)
       form.setFieldValue("is_featured", product.is_featured ?? false)
+      form.setFieldValue("meta_title", product.meta_title || "")
+      form.setFieldValue("meta_description", product.meta_description || "")
 
       setImages(product.images || [])
 
@@ -978,6 +984,50 @@ function EditProductPage() {
                       checked={field.state.value}
                       onCheckedChange={field.handleChange}
                     />
+                  </div>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* SEO */}
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form.Field
+                name="meta_title"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="meta_title">Meta Title</Label>
+                    <Input
+                      id="meta_title"
+                      placeholder="SEO title (max 200 chars)"
+                      maxLength={200}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">{field.state.value.length}/200</p>
+                  </div>
+                )}
+              />
+              <form.Field
+                name="meta_description"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="meta_description">Meta Description</Label>
+                    <Textarea
+                      id="meta_description"
+                      placeholder="SEO description (max 500 chars)"
+                      maxLength={500}
+                      rows={3}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">{field.state.value.length}/500</p>
                   </div>
                 )}
               />
