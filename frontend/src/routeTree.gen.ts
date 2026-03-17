@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as _errorRouteImport } from './routes/__error'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as WishlistRouteRouteImport } from './routes/wishlist/route'
@@ -33,6 +35,16 @@ import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custo
 import { Route as FooterAboutRouteImport } from './routes/footer/about'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const _errorRoute = _errorRouteImport.update({
   id: '/__error',
   getParentRoute: () => rootRouteImport,
@@ -157,6 +169,8 @@ export interface FileRoutesByFullPath {
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/$': typeof SplatRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -179,6 +193,8 @@ export interface FileRoutesByTo {
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
   '/$': typeof SplatRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -205,6 +221,8 @@ export interface FileRoutesById {
   '/wishlist': typeof WishlistRouteRoute
   '/$': typeof SplatRoute
   '/__error': typeof _errorRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
@@ -231,6 +249,8 @@ export interface FileRouteTypes {
     | '/stores'
     | '/wishlist'
     | '/$'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -253,6 +273,8 @@ export interface FileRouteTypes {
     | '/stores'
     | '/wishlist'
     | '/$'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -278,6 +300,8 @@ export interface FileRouteTypes {
     | '/wishlist'
     | '/$'
     | '/__error'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
@@ -304,6 +328,8 @@ export interface RootRouteChildren {
   WishlistRouteRoute: typeof WishlistRouteRoute
   SplatRoute: typeof SplatRoute
   _errorRoute: typeof _errorRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   FooterAboutRoute: typeof FooterAboutRoute
   FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
@@ -318,6 +344,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/__error': {
       id: '/__error'
       path: ''
@@ -520,6 +560,8 @@ const rootRouteChildren: RootRouteChildren = {
   WishlistRouteRoute: WishlistRouteRoute,
   SplatRoute: SplatRoute,
   _errorRoute: _errorRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   FooterAboutRoute: FooterAboutRoute,
   FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,
