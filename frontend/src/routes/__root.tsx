@@ -65,6 +65,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: ({ loaderData }) => {
     const general = loaderData?.settings?.general ?? {}
     const seo = loaderData?.settings?.seo ?? {}
+    const appearance = loaderData?.settings?.appearance ?? {}
     const storeName = general.store_name || 'Nazu Meah Jewellers'
     const defaultTitle = seo.meta_title || storeName
     const defaultDesc = seo.meta_description || ''
@@ -105,6 +106,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       ],
       scripts: [
         { type: 'application/ld+json', children: JSON.stringify(orgSchema) },
+        ...(Object.keys(appearance).length ? [{
+          children: `:root{${[
+            appearance.primary_color   ? `--header:${appearance.primary_color}`      : '',
+            appearance.top_bar_color   ? `--top_bar:${appearance.top_bar_color}`     : '',
+            appearance.footer_color    ? `--footer:${appearance.footer_color}`        : '',
+            appearance.footer_dark_color ? `--footer_dark:${appearance.footer_dark_color}` : '',
+          ].filter(Boolean).join(';')}}`,
+        }] : []),
         ...(gaId ? [
           { src: `https://www.googletagmanager.com/gtag/js?id=${gaId}`, async: true },
           { children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');` },

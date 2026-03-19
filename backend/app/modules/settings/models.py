@@ -91,7 +91,10 @@ DEFAULT_SETTINGS = [
     {"key": "facebook_pixel_id", "value": "", "category": "SEO", "is_sensitive": True},
     
     # Appearance
-    {"key": "primary_color", "value": "#D4AF37", "category": "APPEARANCE"},
+    {"key": "primary_color", "value": "#9A0056", "category": "APPEARANCE"},
     {"key": "secondary_color", "value": "#1a1a1a", "category": "APPEARANCE"},
     {"key": "accent_color", "value": "#C9A959", "category": "APPEARANCE"},
+    {"key": "top_bar_color", "value": "#830047", "category": "APPEARANCE"},
+    {"key": "footer_color", "value": "#F4F1E6", "category": "APPEARANCE"},
+    {"key": "footer_dark_color", "value": "#A38842", "category": "APPEARANCE"},
 ]
