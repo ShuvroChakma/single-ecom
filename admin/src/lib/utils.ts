@@ -14,10 +14,7 @@ export function getImageUrl(url: string): string {
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url
   }
-  // In development, prepend backend URL. In production, nginx handles it.
-  if (import.meta.env.DEV) {
-    const backendUrl = import.meta.env.VITE_API_URL?.replace("/api/v1", "") || ""
-    return `${backendUrl}${url}`
-  }
-  return url
+  // Prepend VITE_MEDIA_URL if set (dev or prod), otherwise relative (nginx handles it)
+  const mediaUrl = import.meta.env.VITE_MEDIA_URL || ""
+  return `${mediaUrl}${url}`
 }

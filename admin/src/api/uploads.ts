@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { apiRequest } from "./client";
 import { authenticatedRequest } from "./server-utils";
 import type { ApiResponse } from "./client";
@@ -64,29 +65,17 @@ export const getMediaImages = createServerFn({ method: "GET" })
         }
     })
 
-export async function uploadMediaImage(file: File, token?: string): Promise<ImageUploadResponse> {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    if (!token) {
-        throw new Error('Not authenticated')
-    }
-
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
-
-    const response = await fetch(`${apiUrl}/admin/uploads/media`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+export const uploadMediaImage = createServerFn({ method: 'POST' })
+    .inputValidator((data) => {
+        if (!(data instanceof FormData)) throw new Error('Expected FormData')
+        return data
     })
-
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: "Upload failed" }))
-        throw new Error(error.message || "Failed to upload image")
-    }
-
-    const result = await response.json()
-    return result.data
-}
+    .handler(async ({ data }) => {
+        const token = getCookie('access_token')
+        if (!token) throw new Error('Not authenticated')
+        const result = await apiRequest<ApiResponse<ImageUploadResponse>>('/admin/uploads/media', {
+            method: 'POST',
+            body: data,
+        }, token)
+        return result.data
+    })

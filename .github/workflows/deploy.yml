@@ -49,6 +49,7 @@ jobs:
       working-directory: admin
       env:
         API_URL: ${{ secrets.API_URL }}
+        VITE_MEDIA_URL: ${{ secrets.VITE_ADMIN_MEDIA_URL }}
       run: npm run build
 
     # -------------------- SSH SETUP --------------------
@@ -107,8 +108,9 @@ jobs:
 
         echo "🔐 Writing admin .env"
         install -m 600 /dev/null $BASE/admin/.env
-        printf 'API_URL=%s\n' \
+        printf 'API_URL=%s\nVITE_MEDIA_URL=%s\n' \
           '${{ secrets.API_URL }}' \
+          '${{ secrets.VITE_MEDIA_URL }}' \
           > $BASE/admin/.env
 
         echo "📦 Sync backend dependencies"

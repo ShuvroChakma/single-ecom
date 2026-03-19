@@ -11,7 +11,7 @@ Disallow: /orders
 Disallow: /profile
 Disallow: /cart
 
-Sitemap: https://nazumeahjewellers.com/sitemap.xml`
+Sitemap: ${process.env.VITE_SITE_URL}/sitemap.xml`
 
         return new Response(robots, {
           headers: {

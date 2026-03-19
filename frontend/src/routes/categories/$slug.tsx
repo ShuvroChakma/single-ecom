@@ -1,14 +1,14 @@
-import { useState, useMemo, useEffect } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useMemo, useState } from "react"
+import { Link, createFileRoute } from "@tanstack/react-router"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
-  Heart, SlidersHorizontal, X, ChevronDown, ChevronUp, Grid, List, Check, Loader2,
+  Check, ChevronDown, ChevronUp, Grid, Heart, List, Loader2, SlidersHorizontal, X,
 } from "lucide-react"
 import Header from "@/components/shared/Header/Header"
 import Footer from "@/components/shared/Footer/Footer"
-import { getCategoryTree, getProducts, findCategoryBySlug } from "@/api/categories"
-import { getMetals, getFilterableAttributes } from "@/api/products"
-import { addToWishlist, removeFromWishlist, getWishlist } from "@/api/wishlist"
+import { findCategoryBySlug, getCategoryTree, getProducts } from "@/api/categories"
+import { getFilterableAttributes, getMetals } from "@/api/products"
+import { addToWishlist, getWishlist, removeFromWishlist } from "@/api/wishlist"
 import { getImageUrl } from "@/api/client"
 import { useAuth } from "@/hooks/useAuth"
 import { useLoginModal } from "@/contexts/LoginModalContext"
@@ -18,15 +18,15 @@ export const Route = createFileRoute("/categories/$slug")({
   loader: async ({ params }) => {
     try {
       const response = await getCategoryTree()
-      const category = response?.success ? findCategoryBySlug(response.data, params.slug) : null
-      return { category, categoryTree: response?.success ? response : null }
+      const category = response.success ? findCategoryBySlug(response.data, params.slug) : null
+      return { category, categoryTree: response.success ? response : null }
     } catch {
       return { category: null, categoryTree: null }
     }
   },
   head: ({ loaderData }) => {
     const category = loaderData?.category
-    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    const siteUrl = import.meta.env.VITE_SITE_URL || ''
     if (!category) return { meta: [{ title: 'Collection | Nazu Meah Jewellers' }] }
     const title = (category as any).meta_title || `${category.name} | Nazu Meah Jewellers`
     const description = (category as any).meta_description || `Shop our ${category.name} collection at Nazu Meah Jewellers. Browse the finest jewellery crafted for every occasion.`
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/categories/$slug")({
 
 const GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
 
-function resolveGenders(selected: string[]): string[] {
+function resolveGenders(selected: Array<string>): Array<string> {
   const result = new Set(selected)
   if (selected.includes('Men') || selected.includes('Women')) result.add('Unisex')
   return Array.from(result)
@@ -112,13 +112,13 @@ function CategoryPage() {
   const [sortBy, setSortBy] = useState("newest")
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
-  const [selectedGenders, setSelectedGenders] = useState<string[]>([])
-  const [selectedMetals, setSelectedMetals] = useState<string[]>([])
-  const [selectedPurities, setSelectedPurities] = useState<string[]>([])
+  const [selectedGenders, setSelectedGenders] = useState<Array<string>>([])
+  const [selectedMetals, setSelectedMetals] = useState<Array<string>>([])
+  const [selectedPurities, setSelectedPurities] = useState<Array<string>>([])
   const [minWeight, setMinWeight] = useState('')
   const [maxWeight, setMaxWeight] = useState('')
   const [inStockOnly, setInStockOnly] = useState(false)
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({})
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, Array<string>>>({})
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null)
 
   // Fetch category tree — use loader data as initialData (no loading flash)
@@ -126,11 +126,11 @@ function CategoryPage() {
     queryKey: ["category-tree"],
     queryFn: () => getCategoryTree(),
     staleTime: 5 * 60 * 1000,
-    initialData: loaderData?.categoryTree ?? undefined,
+    initialData: loaderData.categoryTree ?? undefined,
   })
 
   const currentCategory = useMemo(() => {
-    if (!categoriesResponse?.success || !categoriesResponse.data) return null
+    if (!categoriesResponse?.success) return null
     return findCategoryBySlug(categoriesResponse.data, slug)
   }, [categoriesResponse, slug])
 
@@ -141,7 +141,7 @@ function CategoryPage() {
     staleTime: 10 * 60 * 1000,
   })
 
-  const metalObjects: { name: string; code: string; purities: { name: string; code: string }[] }[] =
+  const metalObjects: Array<{ name: string; code: string; purities: Array<{ name: string; code: string }> }> =
     metalsData?.success ? metalsData.data.map((m: any) => ({
       name: m.name,
       code: m.code,
@@ -166,7 +166,7 @@ function CategoryPage() {
 
   const toggleAttributeValue = (code: string, value: string) => {
     setSelectedAttributes(prev => {
-      const current = prev[code] || []
+      const current = prev[code]
       const updated = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
       if (!updated.length) {
         const { [code]: _, ...rest } = prev

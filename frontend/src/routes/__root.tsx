@@ -1,19 +1,19 @@
 
 import {
   HeadContent,
+  Link,
   Outlet,
   Scripts,
   createRootRouteWithContext,
-  Link,
   useRouter,
 } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 import appCss from '../styles.css?url'
+import type { QueryClient } from '@tanstack/react-query'
 import { getPublicSettings } from '@/api/settings'
 import { SettingsProvider } from '@/contexts/SettingsContext'
 
-import type { QueryClient } from '@tanstack/react-query'
 
 
 
@@ -57,7 +57,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         queryFn: () => getPublicSettings(),
         staleTime: 30 * 60 * 1000,
       })
-      return { settings: data?.success ? data.data : null }
+      return { settings: data.success ? data.data : null }
     } catch {
       return { settings: null }
     }
@@ -69,7 +69,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     const storeName = general.store_name || 'Nazu Meah Jewellers'
     const defaultTitle = seo.meta_title || storeName
     const defaultDesc = seo.meta_description || ''
-    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    const siteUrl = import.meta.env.VITE_SITE_URL || ''
     const gaId = seo.google_analytics_id || ''
     const pixelId = seo.facebook_pixel_id || ''
     const logo = general.logo ? `${import.meta.env.VITE_MEDIA_URL || ''}/static/uploads/${general.logo}` : ''
@@ -132,8 +132,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootComponent() {
   const { settings } = Route.useLoaderData()
   const router = useRouter()
-  const gaId = settings?.seo?.google_analytics_id
-  const pixelId = settings?.seo?.facebook_pixel_id
+  const gaId = settings?.seo.google_analytics_id
+  const pixelId = settings?.seo.facebook_pixel_id
 
   useEffect(() => {
     if (!gaId && !pixelId) return

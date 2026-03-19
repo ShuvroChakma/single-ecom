@@ -1,6 +1,10 @@
-"use client"
-
-import { createSlide, Slide, SlidePayload, SlideType, updateSlide, uploadSlideImage } from "@/api/slides"
+import { useForm } from "@tanstack/react-form"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { FolderOpen, ImagePlus, Loader2, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
+import type { Slide, SlidePayload, SlideType} from "@/api/slides";
+import { createSlide, updateSlide, uploadSlideImage } from "@/api/slides"
 import { getImageUrl } from "@/lib/utils"
 import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
@@ -22,12 +26,6 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { useAuth } from "@/lib/auth"
-import { useForm } from "@tanstack/react-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { FolderOpen, ImagePlus, Loader2, X } from "lucide-react"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
 
 interface SlideDialogProps {
     slide?: Slide
@@ -35,7 +33,7 @@ interface SlideDialogProps {
     onOpenChange: (open: boolean) => void
 }
 
-const SLIDE_TYPES: { value: SlideType; label: string }[] = [
+const SLIDE_TYPES: Array<{ value: SlideType; label: string }> = [
     { value: "BANNER", label: "Banner" },
     { value: "PROMO", label: "Promo" },
     { value: "OFFER", label: "Offer" },
@@ -61,7 +59,6 @@ function FieldInfo({ field }: { field: any }) {
 }
 
 export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
-    const { token } = useAuth()
     const queryClient = useQueryClient()
     const isEdit = !!slide
     const [isUploading, setIsUploading] = useState(false)
@@ -101,7 +98,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                 position: value.position || undefined,
             }
 
-            if (isEdit && slide) {
+            if (isEdit) {
                 await updateMutation.mutateAsync({ slide: payload, id: slide.id })
             } else {
                 await createMutation.mutateAsync(payload)
@@ -165,7 +162,9 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
 
         try {
             setIsUploading(true)
-            const result = await uploadSlideImage(file, token || undefined)
+            const formData = new FormData()
+            formData.append('file', file)
+            const result = await uploadSlideImage({ data: formData })
             setImageUrl(result.url)
             form.setFieldValue("image_url", result.url)
             toast.success("Image uploaded successfully")

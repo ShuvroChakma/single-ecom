@@ -58,7 +58,7 @@ type ProductsSearch = {
 
 export const Route = createFileRoute('/products/')({
   head: () => {
-    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    const siteUrl = import.meta.env.VITE_SITE_URL || ''
     const canonicalUrl = `${siteUrl}/products`
     return {
       meta: [

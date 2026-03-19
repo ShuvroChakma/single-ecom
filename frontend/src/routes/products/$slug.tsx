@@ -96,7 +96,7 @@ export const Route = createFileRoute("/products/$slug")({
   errorComponent: ProductError,
   head: ({ loaderData }) => {
     const product = loaderData?.product
-    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    const siteUrl = import.meta.env.VITE_SITE_URL || ''
     if (!product) return { meta: [{ title: 'Product | Nazu Meah Jewellers' }] }
     const title = product.meta_title || `${product.name} | Nazu Meah Jewellers`
     const description = product.meta_description || product.description?.slice(0, 160) || `Buy ${product.name} at Nazu Meah Jewellers`

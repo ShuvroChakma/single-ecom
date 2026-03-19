@@ -22,7 +22,7 @@ import AboutPage from '@/components/shared/HeroBanner/AboutPage'
 
 export const Route = createFileRoute('/')({
   head: () => {
-    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
+    const siteUrl = import.meta.env.VITE_SITE_URL || ''
     return {
       meta: [
         { property: 'og:url', content: siteUrl },
