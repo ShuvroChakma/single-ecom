@@ -134,6 +134,17 @@ function RootComponent() {
   const router = useRouter()
   const gaId = settings?.seo.google_analytics_id
   const pixelId = settings?.seo.facebook_pixel_id
+  const appearance = settings?.appearance
+
+  // Re-apply CSS variables after React hydration clears inline styles set by the head script
+  useEffect(() => {
+    if (!appearance) return
+    const root = document.documentElement
+    if (appearance.primary_color)     root.style.setProperty('--header',      appearance.primary_color)
+    if (appearance.top_bar_color)     root.style.setProperty('--top_bar',     appearance.top_bar_color)
+    if (appearance.footer_color)      root.style.setProperty('--footer',      appearance.footer_color)
+    if (appearance.footer_dark_color) root.style.setProperty('--footer_dark', appearance.footer_dark_color)
+  }, [appearance])
 
   useEffect(() => {
     if (!gaId && !pixelId) return
