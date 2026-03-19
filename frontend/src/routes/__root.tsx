@@ -107,12 +107,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       scripts: [
         { type: 'application/ld+json', children: JSON.stringify(orgSchema) },
         ...(Object.keys(appearance).length ? [{
-          children: `:root{${[
-            appearance.primary_color   ? `--header:${appearance.primary_color}`      : '',
-            appearance.top_bar_color   ? `--top_bar:${appearance.top_bar_color}`     : '',
-            appearance.footer_color    ? `--footer:${appearance.footer_color}`        : '',
-            appearance.footer_dark_color ? `--footer_dark:${appearance.footer_dark_color}` : '',
-          ].filter(Boolean).join(';')}}`,
+          children: [
+            appearance.primary_color     ? `document.documentElement.style.setProperty('--header','${appearance.primary_color}');` : '',
+            appearance.top_bar_color     ? `document.documentElement.style.setProperty('--top_bar','${appearance.top_bar_color}');` : '',
+            appearance.footer_color      ? `document.documentElement.style.setProperty('--footer','${appearance.footer_color}');` : '',
+            appearance.footer_dark_color ? `document.documentElement.style.setProperty('--footer_dark','${appearance.footer_dark_color}');` : '',
+          ].filter(Boolean).join(''),
         }] : []),
         ...(gaId ? [
           { src: `https://www.googletagmanager.com/gtag/js?id=${gaId}`, async: true },
