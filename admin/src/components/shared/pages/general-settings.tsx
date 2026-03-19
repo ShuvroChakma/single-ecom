@@ -431,62 +431,33 @@ export default function GeneralSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="primary_color">Primary Color</Label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="color"
-                      id="primary_color"
-                      value={v("primary_color") || "#D4AF37"}
-                      onChange={(e) => set("primary_color", e.target.value)}
-                      className="h-9 w-12 rounded border cursor-pointer p-0.5"
-                    />
-                    <Input
-                      value={v("primary_color")}
-                      onChange={(e) => set("primary_color", e.target.value)}
-                      placeholder="#D4AF37"
-                      className="font-mono text-sm"
-                    />
+                {([
+                  { key: "primary_color",    label: "Header / Brand Color", default: "#9A0056" },
+                  { key: "top_bar_color",    label: "Top Bar Color",         default: "#830047" },
+                  { key: "accent_color",     label: "Accent Color",          default: "#C9A959" },
+                  { key: "secondary_color",  label: "Secondary Color",       default: "#1a1a1a" },
+                  { key: "footer_color",     label: "Footer Background",     default: "#F4F1E6" },
+                  { key: "footer_dark_color",label: "Footer Dark Accent",    default: "#A38842" },
+                ] as const).map(({ key, label, default: def }) => (
+                  <div key={key} className="space-y-1.5">
+                    <Label htmlFor={key}>{label}</Label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="color"
+                        id={key}
+                        value={v(key) || def}
+                        onChange={(e) => set(key, e.target.value)}
+                        className="h-9 w-12 rounded border cursor-pointer p-0.5"
+                      />
+                      <Input
+                        value={v(key)}
+                        onChange={(e) => set(key, e.target.value)}
+                        placeholder={def}
+                        className="font-mono text-sm"
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="secondary_color">Secondary Color</Label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="color"
-                      id="secondary_color"
-                      value={v("secondary_color") || "#1a1a1a"}
-                      onChange={(e) => set("secondary_color", e.target.value)}
-                      className="h-9 w-12 rounded border cursor-pointer p-0.5"
-                    />
-                    <Input
-                      value={v("secondary_color")}
-                      onChange={(e) => set("secondary_color", e.target.value)}
-                      placeholder="#1a1a1a"
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="accent_color">Accent Color</Label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="color"
-                      id="accent_color"
-                      value={v("accent_color") || "#C9A959"}
-                      onChange={(e) => set("accent_color", e.target.value)}
-                      className="h-9 w-12 rounded border cursor-pointer p-0.5"
-                    />
-                    <Input
-                      value={v("accent_color")}
-                      onChange={(e) => set("accent_color", e.target.value)}
-                      placeholder="#C9A959"
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
