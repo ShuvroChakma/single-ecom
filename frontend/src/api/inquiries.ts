@@ -3,7 +3,9 @@
  */
 import { createServerFn } from '@tanstack/react-start'
 import { getCookie } from '@tanstack/react-start/server'
-import { apiRequest, ApiResponse } from './client'
+import { z } from 'zod'
+import { API_BASE, apiRequest  } from './client'
+import type { ApiResponse  } from './client';
 
 export interface InquiryCreateData {
   type?: 'CUSTOM_JEWELLERY' | 'GENERAL' | 'SUPPORT' | 'FEEDBACK'
@@ -48,8 +50,20 @@ export interface InquiryResponse {
   updated_at: string
 }
 
+const inquirySchema = z.object({
+  type: z.enum(['CUSTOM_JEWELLERY', 'GENERAL', 'SUPPORT', 'FEEDBACK']).optional(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().optional(),
+  subject: z.string(),
+  message: z.string(),
+  metal_type: z.string().optional(),
+  budget_range: z.string().optional(),
+})
+
 export const submitInquiry = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: InquiryCreateData }) => {
+  .inputValidator(inquirySchema)
+  .handler(async ({ data }) => {
     return apiRequest<ApiResponse<InquiryCreatedResponse>>('/inquiries', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -74,7 +88,7 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
     formData.append('design_image', data.design_image)
   }
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/inquiries/custom-jewellery`, {
+  const response = await fetch(`${API_BASE}/inquiries/custom-jewellery`, {
     method: 'POST',
     body: formData,
     credentials: 'include',
@@ -101,5 +115,5 @@ export const getMyInquiries = createServerFn({ method: 'GET' })
   .handler(async () => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
-    return apiRequest<ApiResponse<InquiryResponse[]>>('/inquiries/my', {}, token)
+    return apiRequest<ApiResponse<Array<InquiryResponse>>>('/inquiries/my', {}, token)
   })

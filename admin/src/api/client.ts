@@ -3,7 +3,7 @@
  */
 
 // Base API configuration
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+export const API_URL = process.env.API_URL || "http://localhost:8000/api/v1";
 
 // API Response types
 export interface ApiResponse<T> {

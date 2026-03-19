@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 const getBackendUrl = () => {
-  const apiUrl = process.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+  const apiUrl = process.env.API_URL || 'http://localhost:8000/api/v1'
   return apiUrl.replace(/\/api\/v1\/?$/, '')
 }
 

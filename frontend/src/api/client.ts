@@ -3,19 +3,11 @@
  * Uses server-side fetch for security (tokens in HttpOnly cookies)
  */
 
-// Base API configuration - works in both server (process.env) and browser (import.meta.env)
-// Note: VITE_API_URL should already include the /api/v1 path (e.g., https://example.com/api/v1)
-export const API_BASE = (typeof process !== 'undefined' && process.env?.VITE_API_URL)
-    || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
-    || "http://localhost:8000/api/v1";
+// API_BASE is server-only — uses process.env (no VITE_ prefix, never in browser bundle)
+export const API_BASE = process.env.API_URL || "http://localhost:8000/api/v1";
 
-// Base server URL for images (without /api/v1 path)
-const getServerUrl = () => {
-    const apiBase = API_BASE;
-    // Remove /api/v1 suffix to get server base URL
-    return apiBase.replace(/\/api\/v1\/?$/, '') || 'http://localhost:8000';
-};
-export const SERVER_URL = getServerUrl();
+// SERVER_URL is empty — image paths are relative, nginx proxies /static/ to the backend
+export const SERVER_URL = process.env.VITE_MEDIA_URL || "";
 
 // API Response types
 export interface ApiResponse<T> {
@@ -41,7 +33,7 @@ export interface ApiErrorResponse {
 }
 
 export interface PaginatedResponse<T> {
-  items: T[];
+  items: Array<T>;
   total: number;
   page: number;
   limit: number;
@@ -82,7 +74,7 @@ async function refreshToken(): Promise<string | null> {
     isRefreshing = true;
     refreshPromise = (async () => {
         try {
-            const result = await tokenRefreshCallback!();
+            const result = await tokenRefreshCallback();
             if (result) {
                 return result.access_token;
             }
@@ -114,7 +106,7 @@ function extractErrorMessage(errorData: ApiErrorResponse): string {
     }
 
     // Use main error message
-    if (errorData.error?.message) {
+    if (errorData.error.message) {
         return errorData.error.message;
     }
 
@@ -291,7 +283,7 @@ export async function apiRequest<T>(
       console.error(
         `\n[API ERROR] ${response.status} ${method} ${fullUrl}`,
         '\n  message:', message,
-        '\n  code:', errorData.error?.code,
+        '\n  code:', errorData.error.code,
         '\n  raw response:', rawText,
         errorData.errors?.length ? '\n  errors:' : '',
         errorData.errors?.length ? errorData.errors : ''
@@ -299,9 +291,9 @@ export async function apiRequest<T>(
 
       throw new ApiError(
           message,
-          errorData.error?.code || "UNKNOWN_ERROR",
+          errorData.error.code || "UNKNOWN_ERROR",
           response.status,
-          errorData.error?.field || null,
+          errorData.error.field || null,
           errorData.details,
           errorData.errors
       );

@@ -72,7 +72,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     const siteUrl = import.meta.env.VITE_SITE_URL || 'https://nazumeahjewellers.com'
     const gaId = seo.google_analytics_id || ''
     const pixelId = seo.facebook_pixel_id || ''
-    const logo = general.logo ? `${import.meta.env.VITE_API_URL || ''}/static/uploads/${general.logo}` : ''
+    const logo = general.logo ? `${import.meta.env.VITE_MEDIA_URL || ''}/static/uploads/${general.logo}` : ''
 
     const orgSchema = {
       '@context': 'https://schema.org',
