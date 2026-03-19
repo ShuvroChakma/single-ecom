@@ -4,29 +4,6 @@ import { getSlides } from "@/api/slides"
 import { SLIDE_POSITIONS } from "@/api/slidePositions"
 import { getImageUrl } from "@/api/client"
 
-interface PlatinumBanner {
-  id: number
-  image: string
-  alt: string
-  link?: string
-}
-
-const FALLBACK_PLATINUM: Array<PlatinumBanner> = [
-  {
-    id: 1,
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/12-dec/home/MSD-collection.jpg",
-    alt: "MS Dhoni Platinum Collection",
-    link: "#",
-  },
-  {
-    id: 2,
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/12-dec/home/Men-in-Platinum.jpg",
-    alt: "Men in Platinum Rings Collection",
-    link: "#",
-  },
-]
 
 const PlatinumCollection: React.FC = () => {
   const { data } = useQuery({
@@ -41,9 +18,11 @@ const PlatinumCollection: React.FC = () => {
           id: s.id,
           image: getImageUrl(s.image_url, ""),
           alt: s.title,
-          link: s.link_url,
+          link: s.link_url ?? undefined,
         }))
-      : FALLBACK_PLATINUM
+      : []
+
+  if (!banners.length) return null
 
   return (
     <section className="max-w-7xl mx-auto px-2 sm:px-2 lg:px-2 py-8">

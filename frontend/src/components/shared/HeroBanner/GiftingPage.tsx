@@ -5,50 +5,11 @@ import { SLIDE_POSITIONS } from '@/api/slidePositions';
 import { getImageUrl } from '@/api/client';
 
 interface JewelryItem {
-  id: number;
+  id: string;
   imageUrl: string;
   label: string;
   href: string | null;
 }
-
-const FALLBACK_GIFTING: Array<JewelryItem> = [
-  {
-    id: 1,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2023/06_June/homepage/gifting-block/Birthday.jpg',
-    label: 'Birthday',
-    href: null,
-  },
-  {
-    id: 2,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2023/06_June/homepage/gifting-block/anniversary.jpg',
-    label: 'Anniversary',
-    href: null,
-  },
-  {
-    id: 3,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2023/06_June/homepage/gifting-block/baby-birth.jpg',
-    label: 'Baby Birth',
-    href: null,
-  },
-  {
-    id: 4,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2023/06_June/homepage/gifting-block/festive.jpg',
-    label: 'Festive collection',
-    href: null,
-  },
-  {
-    id: 5,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2023/06_June/homepage/gifting-block/Personalized.jpg',
-    label: 'Personalised Jewellery',
-    href: null,
-  },
-  {
-    id: 6,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2023/06_June/homepage/gifting-block/Customized.jpg',
-    label: 'Customized Jewellery',
-    href: null,
-  },
-];
 
 const GiftingPage: React.FC = () => {
   const { data } = useQuery({
@@ -65,7 +26,9 @@ const GiftingPage: React.FC = () => {
           label: s.title,
           href: s.link_url,
         }))
-      : FALLBACK_GIFTING;
+      : [];
+
+  if (!jewelryItems.length) return null;
 
   return (
     <div className="w-full bg-white py-8 px-2 sm:px-4 md:px-2 lg:px-2">

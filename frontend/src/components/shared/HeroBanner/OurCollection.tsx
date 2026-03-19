@@ -5,32 +5,11 @@ import { SLIDE_POSITIONS } from '@/api/slidePositions';
 import { getImageUrl } from '@/api/client';
 
 interface CollectionItem {
-  id: number;
+  id: string;
   imageUrl: string;
   alt: string;
   href: string | null;
 }
-
-const FALLBACK_COLLECTIONS: Array<CollectionItem> = [
-  {
-    id: 1,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/06_june/homepage-our-collection/Legendz-collection-1.jpg',
-    alt: 'Legendz Collection',
-    href: null,
-  },
-  {
-    id: 2,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/06_june/homepage-our-collection/kids-collection-1.jpg',
-    alt: 'Starlet Kids Collection',
-    href: null,
-  },
-  {
-    id: 3,
-    imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/06_june/homepage-our-collection/Sankha-Pola-1.jpg',
-    alt: 'Sankha Pola Collection',
-    href: null,
-  },
-];
 
 const OurCollection: React.FC = () => {
   const { data } = useQuery({
@@ -47,7 +26,9 @@ const OurCollection: React.FC = () => {
           alt: s.title,
           href: s.link_url,
         }))
-      : FALLBACK_COLLECTIONS;
+      : [];
+
+  if (!collections.length) return null;
 
   return (
     <div className="w-full px-2 py-8 md:py-12 bg-white">

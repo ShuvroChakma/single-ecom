@@ -1,26 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { getHomeCarouselSlides, type Slide as ApiSlide } from '@/api/slides'
-
-// Fallback slides for when API fails or no slides configured
-const FALLBACK_SLIDES = [
-  {
-    id: '1',
-    image_url: 'https://static.malabargoldanddiamonds.com/media/bsimages/boi-offer-web-final.jpg',
-    title: 'Special Offer',
-  },
-  {
-    id: '2',
-    image_url: 'https://static.malabargoldanddiamonds.com/media/bsimages/Men-In-Platinum-web.jpg',
-    title: 'Men In Platinum',
-  },
-  {
-    id: '3',
-    image_url: 'https://static.malabargoldanddiamonds.com/media/bsimages/vyana-web.jpg',
-    title: 'Vyana Collection',
-  },
-]
+import {  getHomeCarouselSlides } from '@/api/slides'
 
 export default function Carousel() {
   const { data: slidesResponse, isLoading } = useQuery({
@@ -29,7 +10,7 @@ export default function Carousel() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  const slides = slidesResponse?.data?.length ? slidesResponse.data : FALLBACK_SLIDES
+  const slides = slidesResponse?.data || []
   const [index, setIndex] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
@@ -58,6 +39,8 @@ export default function Carousel() {
 
     return () => clearInterval(timer)
   }, [isDragging, slideCount])
+
+  if (!isLoading && !slides.length) return null
 
   /* ---------- DRAG HANDLERS ---------- */
   const handleStart = (x: number) => {

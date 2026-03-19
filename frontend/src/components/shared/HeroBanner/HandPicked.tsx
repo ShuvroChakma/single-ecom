@@ -21,22 +21,9 @@ export interface HandPickedProps {
   description?: string
 }
 
-// Default images (from backend CDN for now)
-const FALLBACK_IMAGE: HandpickedImage = {
-  src: "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Necklace-new.jpg",
-  alt: "Gold necklace jewellery",
-  title: "",
-}
-
-const DEFAULT_TOP_RIGHT: HandpickedImage = {
-  src: "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/light-jewellery.jpg",
-  alt: "Lightweight diamond jewellery",
-  title: "",
-}
-
-const DEFAULT_BOTTOM_RIGHT: HandpickedImage = {
-  src: "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Earring.jpg",
-  alt: "Stylish earrings",
+const EMPTY_IMAGE: HandpickedImage = {
+  src: "",
+  alt: "",
   title: "",
 }
 
@@ -76,17 +63,19 @@ export const HandPicked: React.FC<HandPickedProps> = ({
 
   const slides = data?.success ? data.data : []
 
+  if (!slides.length) return null
+
   const left: HandpickedImage = slides[0]
-    ? { src: getImageUrl(slides[0].image_url, FALLBACK_IMAGE.src), alt: slides[0].title, title: slides[0].title }
-    : FALLBACK_IMAGE
+    ? { src: getImageUrl(slides[0].image_url, ''), alt: slides[0].title, title: slides[0].title }
+    : EMPTY_IMAGE
 
   const topRight: HandpickedImage = slides[1]
-    ? { src: getImageUrl(slides[1].image_url, DEFAULT_TOP_RIGHT.src), alt: slides[1].title, title: slides[1].title }
-    : DEFAULT_TOP_RIGHT
+    ? { src: getImageUrl(slides[1].image_url, ''), alt: slides[1].title, title: slides[1].title }
+    : EMPTY_IMAGE
 
   const bottomRight: HandpickedImage = slides[2]
-    ? { src: getImageUrl(slides[2].image_url, DEFAULT_BOTTOM_RIGHT.src), alt: slides[2].title, title: slides[2].title }
-    : DEFAULT_BOTTOM_RIGHT
+    ? { src: getImageUrl(slides[2].image_url, ''), alt: slides[2].title, title: slides[2].title }
+    : EMPTY_IMAGE
 
   return (
     <section className="mx-auto max-w-7xl px-2 md:px-2 lg:px-2 py-6 md:py-8">

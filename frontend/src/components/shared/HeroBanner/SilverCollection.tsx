@@ -26,52 +26,6 @@ export interface EarringCategory {
 }
 
 /* =====================
-   DEFAULT DATA
-===================== */
-
-const DEFAULT_SILVER_CARDS: Array<SilverCard> = [
-  {
-    id: "coins-bars",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/09-sep/homepage/shagun-coins/Silver-coin-bar.jpg",
-    href: "#",
-  },
-  {
-    id: "articles",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/09-sep/homepage/shagun-coins/Silver-Silver.jpg",
-    href: "#",
-  },
-]
-
-const DEFAULT_EARRINGS: Array<EarringCategory> = [
-  {
-    id: "studs",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/04_april/ind-homepage/akshaya-tritiya/earring-collection/Studs.jpg",
-    href: "#",
-  },
-  {
-    id: "jhumkas",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/04_april/ind-homepage/akshaya-tritiya/earring-collection/Jhumkas.jpg",
-    href: "#",
-  },
-  {
-    id: "drops",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/04_april/ind-homepage/akshaya-tritiya/earring-collection/Drops.jpg",
-    href: "#",
-  },
-  {
-    id: "hoops",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/04_april/ind-homepage/akshaya-tritiya/earring-collection/Hoops.jpg",
-    href: "#",
-  },
-]
-
-/* =====================
    COMPONENT
 ===================== */
 
@@ -90,11 +44,13 @@ export const SilverCollection: React.FC = () => {
 
   const silverCards = silverData?.success && silverData.data.length > 0
     ? silverData.data.map(s => ({ id: s.id, image: getImageUrl(s.image_url, ''), href: s.link_url || '#' }))
-    : DEFAULT_SILVER_CARDS
+    : []
 
   const earringCategories = earringData?.success && earringData.data.length > 0
     ? earringData.data.map(s => ({ id: s.id, image: getImageUrl(s.image_url, ''), href: s.link_url || '#' }))
-    : DEFAULT_EARRINGS
+    : []
+
+  if (!silverCards.length && !earringCategories.length) return null
 
   return (
     <section className="mx-auto max-w-7xl px-2 md:px-2 py-10 md:py-8">

@@ -2,7 +2,9 @@
  * Slides/Banners API - Server Functions (public, no auth needed)
  */
 import { createServerFn } from '@tanstack/react-start'
-import { apiRequest, ApiResponse } from './client'
+import { z } from 'zod'
+import { apiRequest } from './client'
+import type { ApiResponse } from './client';
 
 export interface Slide {
   id: string
@@ -23,21 +25,22 @@ export interface Slide {
 
 export const getHomeCarouselSlides = createServerFn({ method: 'GET' })
   .handler(async () => {
-    return apiRequest<ApiResponse<Slide[]>>('/slides?position=home_carousel')
+    return apiRequest<ApiResponse<Array<Slide>>>('/slides?position=home_carousel')
   })
 
 export const getHomeBannerSlides = createServerFn({ method: 'GET' })
   .handler(async () => {
-    return apiRequest<ApiResponse<Slide[]>>('/slides?position=home_banner')
+    return apiRequest<ApiResponse<Array<Slide>>>('/slides?position=home_banner')
   })
 
 export const getPromoSlides = createServerFn({ method: 'GET' })
   .handler(async () => {
-    return apiRequest<ApiResponse<Slide[]>>('/slides?position=promo')
+    return apiRequest<ApiResponse<Array<Slide>>>('/slides?position=promo')
   })
 
 export const getSlides = createServerFn({ method: 'GET' })
-  .handler(async ({ data }: { data?: { position?: string } }) => {
+  .inputValidator(z.object({ position: z.string().optional() }).optional())
+  .handler(async ({ data }) => {
     const url = data?.position ? `/slides?position=${data.position}` : '/slides'
-    return apiRequest<ApiResponse<Slide[]>>(url)
+    return apiRequest<ApiResponse<Array<Slide>>>(url)
   })

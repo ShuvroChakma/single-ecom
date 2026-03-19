@@ -4,32 +4,6 @@ import { getSlides } from '@/api/slides';
 import { SLIDE_POSITIONS } from '@/api/slidePositions';
 import { getImageUrl } from '@/api/client';
 
-const FALLBACK_GEMSTONES = [
-  {
-    id: 1,
-    title: 'Necklaces',
-    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/gemstone-necklace.jpg',
-    href: null,
-  },
-  {
-    id: 2,
-    title: 'Rings',
-    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/Rings.jpg',
-    href: null,
-  },
-  {
-    id: 3,
-    title: 'Earrings',
-    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/Earrings.jpg',
-    href: null,
-  },
-  {
-    id: 4,
-    title: 'Bangles',
-    image: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/01_Jan/home/gemstone-bangles.jpg',
-    href: null,
-  },
-];
 
 const Gemstone = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -51,7 +25,9 @@ const Gemstone = () => {
           image: getImageUrl(s.image_url, ''),
           href: s.link_url,
         }))
-      : FALLBACK_GEMSTONES;
+      : [];
+
+  if (!categories.length) return null;
 
   // Minimum swipe distance (in px) to trigger slide change
   const minSwipeDistance = 50;

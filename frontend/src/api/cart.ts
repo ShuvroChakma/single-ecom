@@ -3,6 +3,7 @@
  */
 import { createServerFn } from '@tanstack/react-start'
 import { getCookie } from '@tanstack/react-start/server'
+import { z } from 'zod'
 import { apiRequest, ApiResponse } from './client'
 
 export interface CartItemProduct {
@@ -73,7 +74,8 @@ export const getCart = createServerFn({ method: 'GET' })
   })
 
 export const addToCart = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: AddToCartRequest }) => {
+  .inputValidator(z.object({ variant_id: z.string(), quantity: z.number().optional() }))
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     return apiRequest<ApiResponse<CartItemAddedResponse>>('/cart/items', {
@@ -83,7 +85,8 @@ export const addToCart = createServerFn({ method: 'POST' })
   })
 
 export const updateCartItem = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: { itemId: string; quantity: number } }) => {
+  .inputValidator(z.object({ itemId: z.string(), quantity: z.number() }))
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     return apiRequest<ApiResponse<CartItem>>(`/cart/items/${data.itemId}`, {
@@ -93,7 +96,8 @@ export const updateCartItem = createServerFn({ method: 'POST' })
   })
 
 export const removeFromCart = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: { itemId: string } }) => {
+  .inputValidator(z.object({ itemId: z.string() }))
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     return apiRequest<ApiResponse<{ removed: boolean }>>(`/cart/items/${data.itemId}`, {
@@ -111,7 +115,8 @@ export const clearCart = createServerFn({ method: 'POST' })
   })
 
 export const validatePromoCode = createServerFn({ method: 'POST' })
-  .handler(async ({ data }: { data: { code: string; order_amount: number } }) => {
+  .inputValidator(z.object({ code: z.string(), order_amount: z.number() }))
+  .handler(async ({ data }) => {
     const token = getCookie('access_token')
     if (!token) return { success: false, message: 'Not authenticated', data: null } as any
     return apiRequest<ApiResponse<PromoValidationResult>>('/promo/validate', {

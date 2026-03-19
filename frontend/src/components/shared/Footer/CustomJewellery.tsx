@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import type { ChangeEvent } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import type { ChangeEvent } from 'react'
 import { submitCustomJewelleryRequest } from '@/api/inquiries'
 import { getSlides } from '@/api/slides'
 import { SLIDE_POSITIONS } from '@/api/slidePositions'
 import { getImageUrl } from '@/api/client'
 
-const FALLBACK_BANNER = 'https://static.malabargoldanddiamonds.com/media/wysiwyg/Custom-jewellery-banner-web.jpg'
+const FALLBACK_BANNER = ''
 
 interface FormData {
   name: string
@@ -119,7 +119,7 @@ export default function CustomJewelleryForm() {
   ) => {
     const target = e.target as HTMLInputElement
     const { name, value, type } = target
-    const checked = type === 'checkbox' ? (target as HTMLInputElement).checked : false
+    const checked = type === 'checkbox' ? (target).checked : false
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,

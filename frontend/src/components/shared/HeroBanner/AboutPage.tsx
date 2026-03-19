@@ -17,7 +17,7 @@ interface AboutStoreData {
   goldRateLink: string;
 }
 
-const FALLBACK_IMAGE = 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/ind-homepage/410-Showroom.jpeg'
+const FALLBACK_IMAGE = ''
 
 const AboutPage: React.FC = () => {
   const { contact_phone } = useSettings()

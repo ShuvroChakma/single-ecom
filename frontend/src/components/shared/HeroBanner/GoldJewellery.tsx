@@ -4,50 +4,6 @@ import { getSlides } from "@/api/slides"
 import { SLIDE_POSITIONS } from "@/api/slidePositions"
 import { getImageUrl } from "@/api/client"
 
-interface GoldCategory {
-  id: number
-  title: string
-  image: string
-}
-
-const GOLD_CATEGORIES: Array<GoldCategory> = [
-  {
-    id: 1,
-    title: "Elegant Chains",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/03_March/ind-homepage-gold-jewellery/gold-chain-w.jpg",
-  },
-  {
-    id: 2,
-    title: "Stunning Ring",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/03_March/ind-homepage-gold-jewellery/gold-rings-w.jpg",
-  },
-  {
-    id: 3,
-    title: "Modern Mangalsutras",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/03_March/ind-homepage-gold-jewellery/gold-mangalsutra-w.jpg",
-  },
-  {
-    id: 4,
-    title: "Trendy Pendants",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/03_March/ind-homepage-gold-jewellery/gold-pendant-w.jpg",
-  },
-  {
-    id: 5,
-    title: "Gorgeous Bangles",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/03_March/ind-homepage-gold-jewellery/gold-bangles-w.jpg",
-  },
-  {
-    id: 6,
-    title: "Stylish Earrings",
-    image:
-      "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/03_March/ind-homepage-gold-jewellery/gold-earring-w.jpg",
-  },
-]
 
 const GoldJewellery: React.FC = () => {
   const { data } = useQuery({
@@ -64,7 +20,9 @@ const GoldJewellery: React.FC = () => {
           image: getImageUrl(s.image_url, ""),
           href: s.link_url,
         }))
-      : GOLD_CATEGORIES.map((c) => ({ ...c, href: null }))
+      : []
+
+  if (!items.length) return null
 
   return (
     <section className="w-full py-12 px-2 sm:px-2 lg:px-2">
