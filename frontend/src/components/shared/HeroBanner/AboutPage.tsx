@@ -22,7 +22,7 @@ const AboutPage: React.FC = () => {
     goldSchemeDescription: 'Payment for india stores',
     goldSchemeLink: '#',
     goldRateTitle: 'GOLD RATE',
-    goldRateDescription: 'One best rate across India!',
+    goldRateDescription: 'Best rate, updated daily!',
     goldRateLink: '#'
   };
 
@@ -61,9 +61,9 @@ const AboutPage: React.FC = () => {
             </div>
 
             {/* Gold Scheme and Gold Rate Cards */}
-            <div className="grid grid-cols-2 gap-4 md:gap-5 flex-1">
+            <div className="grid grid-cols-1 gap-4 md:gap-5 flex-1">
               {/* Gold Scheme Card */}
-              <div className="bg-footer rounded-lg p-2 md:p-4 text-center flex flex-col justify-center">
+              {/* <div className="bg-footer rounded-lg p-2 md:p-4 text-center flex flex-col justify-center">
                 <div className="mb-3 md:mb-4">
                   <h3 className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-2">
                     {storeData.goldSchemeTitle}
@@ -78,7 +78,7 @@ const AboutPage: React.FC = () => {
                 >
                   Pay Online
                 </a>
-              </div>
+              </div> */}
 
               {/* Gold Rate Card */}
               <div className="bg-footer rounded-lg p-4 md:p-6 text-center flex flex-col justify-center">

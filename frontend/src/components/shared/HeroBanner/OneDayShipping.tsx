@@ -123,7 +123,7 @@ const OneDayShipping: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 md:mb-10">
-          <h2 className="text-3xl md:text-4xl font-serif mb-3">Featured Products</h2>
+          <h2 className="text-3xl md:text-4xl font-serif mb-3">Best Selling Products</h2>
           <p className="text-sm md:text-base text-gray-700 max-w-3xl mx-auto">
             Discover our handpicked selection of featured jewellery pieces.
           </p>

@@ -92,7 +92,25 @@ export default function Footer() {
 
   return (
     <footer className="bg-footer">
-      {/* TOP FOOTER */}
+
+      {/* ── LOGO SECTION ── */}
+      <div className="border-b border-gray-300 py-8">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-2">
+          {/* Replace src with your actual logo path */}
+          <a href="/">
+            <img
+              src="/NazuMeah.svg"
+              alt="Nazu Meah Jewellers"
+              className="h-16 w-auto object-contain"
+            />
+          </a>
+          <p className="text-sm text-gray-500 tracking-widest uppercase">
+            Trust, Elegance &amp; Pure Gold Jewellery
+          </p>
+        </div>
+      </div>
+
+      {/* ── TOP FOOTER (accordion links) ── */}
       <div className="max-w-7xl mx-auto px-2 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-1">
           {FOOTER_SECTIONS.map((section, idx) => {
@@ -186,7 +204,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* SOCIALS & PAYMENT METHODS */}
+      {/* ── SOCIALS & PAYMENT METHODS ── */}
       <div className="bg-white py-4 border-t border-gray-300">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -221,54 +239,23 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700 mr-2">We Accept:</span>
               <div className="flex items-center gap-2 flex-wrap">
-                {/* bKash */}
-                <img 
-                  src="/BkashLogo.svg" 
-                  alt="bKash" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* Nagad */}
-                <img 
-                  src="/NagadLogo.svg" 
-                  alt="Nagad" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* Visa */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" 
-                  alt="Visa" 
-                  className="h-6 w-auto object-contain"
-                />
-                
-                {/* Mastercard */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                  alt="Mastercard" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* American Express */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" 
-                  alt="American Express" 
-                  className="h-6 w-auto object-contain"
-                />
-                
-               
+                <img src="/BkashLogo.svg" alt="bKash" className="h-8 w-auto object-contain" />
+                <img src="/NagadLogo.svg" alt="Nagad" className="h-8 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" className="h-6 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" alt="American Express" className="h-6 w-auto object-contain" />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* COPYRIGHT */}
+      {/* ── COPYRIGHT ── */}
       <div className="py-8 text-center text-xs text-gray-900 border-t border-gray-300">
         © 2025 <span className='text-header'>Nazu Meah Jewellers.</span> All Rights Reserved.
       </div>
 
-      {/* FLOATING WHATSAPP */}
+      {/* ── FLOATING WHATSAPP ── */}
       <a
         href="https://wa.me/"
         target="_blank"
