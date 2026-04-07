@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fa6'
 import { Link } from '@tanstack/react-router'
 import { useSettings } from '@/contexts/SettingsContext'
+import { getImageUrl } from '@/api/client'
 
 interface FooterLink {
   label: string
@@ -67,6 +68,8 @@ export default function Footer() {
   const [openSection, setOpenSection] = useState<number | null>(null)
   const {
     store_name,
+    store_tagline,
+    store_logo,
     contact_phone,
     whatsapp_number,
     contact_email,
@@ -90,6 +93,32 @@ export default function Footer() {
 
   return (
     <footer className="bg-footer">
+
+      {/* LOGO SECTION */}
+      <div className="border-b border-gray-300">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col items-center gap-1">
+          <Link to="/" className="shrink-0">
+            <img
+              src={getImageUrl(store_logo, '/NazuMeah.svg')}
+              alt={store_name || 'Logo'}
+              className="h-18 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.src = '/NazuMeah.svg'
+                e.currentTarget.onerror = null
+              }}
+            />
+          </Link>
+          {store_name && (
+            <p className="text-sm font-bold tracking-widest uppercase text-header">
+              {store_name}
+            </p>
+          )}
+          {store_tagline && (
+            <p className="text-xs italic text-gray-500">{store_tagline}</p>
+          )}
+        </div>
+      </div>
+
       {/* TOP FOOTER */}
       <div className="max-w-7xl mx-auto px-2 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-1">
@@ -200,7 +229,7 @@ export default function Footer() {
               {socialLinks.map((social, i) => {
                 const Icon = social.icon
                 return (
-                  <a
+                  <a 
                     key={i}
                     href={social.href}
                     aria-label={social.label}
@@ -225,42 +254,11 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700 mr-2">We Accept:</span>
               <div className="flex items-center gap-2 flex-wrap">
-                {/* bKash */}
-                <img 
-                  src="/BkashLogo.svg" 
-                  alt="bKash" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* Nagad */}
-                <img 
-                  src="/NagadLogo.svg" 
-                  alt="Nagad" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* Visa */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" 
-                  alt="Visa" 
-                  className="h-6 w-auto object-contain"
-                />
-                
-                {/* Mastercard */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                  alt="Mastercard" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* American Express */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" 
-                  alt="American Express" 
-                  className="h-6 w-auto object-contain"
-                />
-                
-               
+                <img src="/BkashLogo.svg" alt="bKash" className="h-8 w-auto object-contain" />
+                <img src="/NagadLogo.svg" alt="Nagad" className="h-8 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" className="h-6 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" alt="American Express" className="h-6 w-auto object-contain" />
               </div>
             </div>
           </div>
