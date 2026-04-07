@@ -4,6 +4,8 @@ OTP service for email verification and password reset.
 from datetime import datetime, timedelta
 from typing import Optional
 
+from fastapi import BackgroundTasks
+
 from app.core.config import settings
 from app.core.security import generate_otp, hash_otp, verify_otp
 from app.core.cache import (
@@ -24,7 +26,7 @@ class OTPService:
     """Service for OTP generation and verification."""
     
     @staticmethod
-    async def generate_otp(email: str, otp_type: OTPType) -> str:
+    async def generate_otp(email: str, otp_type: OTPType, background_tasks: Optional[BackgroundTasks] = None) -> str:
         """
         Generate and store OTP for email verification or password reset.
         
@@ -83,14 +85,26 @@ class OTPService:
             expire=settings.OTP_RESEND_COOLDOWN_SECONDS
         )
         
+        # Store raw OTP for debugging (only in DEBUG mode)
+        if settings.DEBUG:
+            debug_key = f"otp_debug:{email}:{otp_type.value}"
+            await set_cache(
+                debug_key,
+                otp_code,
+                expire=settings.OTP_EXPIRE_MINUTES * 60
+            )
+
         # Send OTP via email
         purpose_map = {
             OTPType.EMAIL_VERIFICATION: "email verification",
             OTPType.PASSWORD_RESET: "password reset"
         }
         purpose = purpose_map.get(otp_type, "verification")
-        
-        await EmailService.send_otp_email(email, otp_code, purpose)
+
+        if background_tasks:
+            background_tasks.add_task(EmailService.send_otp_email, email, otp_code, purpose)
+        else:
+            await EmailService.send_otp_email(email, otp_code, purpose)
         
         # Increment generation attempts (1 hour expiry)
         await increment_cache(lockout_key, 1)
@@ -162,10 +176,28 @@ class OTPService:
     async def clear_otp(email: str, otp_type: OTPType) -> None:
         """
         Clear OTP from cache.
-        
+
         Args:
             email: User email
             otp_type: Type of OTP
         """
         cache_key = otp_key(email, otp_type.value)
         await delete_cache(cache_key)
+
+    @staticmethod
+    async def get_debug_otp(email: str, otp_type: OTPType) -> Optional[str]:
+        """
+        Get raw OTP for debugging (only works in DEBUG mode).
+
+        Args:
+            email: User email
+            otp_type: Type of OTP
+
+        Returns:
+            Raw OTP code if found and DEBUG mode is enabled, None otherwise
+        """
+        if not settings.DEBUG:
+            return None
+
+        debug_key = f"otp_debug:{email}:{otp_type.value}"
+        return await get_cache(debug_key)

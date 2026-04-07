@@ -1,131 +1,50 @@
-import { useState } from "react"
-
-// Define types for better type safety
-type CategorySlug = "diamond" | "gold" | "gemstone"
-
-interface CategoryItem {
-  name: string
-  icon: string
-}
-
-interface CategoryColumn {
-  title: string
-  items: Array<CategoryItem>
-}
-
-interface CategoryDropdownData {
-  columns: Array<CategoryColumn>
-  leftMenu: Array<string>
-}
-
-// Mock data structure - replace with your backend data later
-const categoryData: Record<CategorySlug, CategoryDropdownData> = {
-  diamond: {
-    columns: [
-      {
-        title: "Shop By Style",
-        items: [
-          { name: "Bands", icon: "💍" },
-          { name: "Stackable", icon: "💎" },
-          { name: "Cocktail", icon: "🍸" },
-          { name: "Eternity", icon: "♾️" },
-        ],
-      },
-      {
-        title: "Wearing Type",
-        items: [
-          { name: "Daily Wear", icon: "👔" },
-          { name: "Office Wear", icon: "💼" },
-          { name: "Casual Wear", icon: "👕" },
-          { name: "Party Wear", icon: "🎉" },
-        ],
-      },
-      {
-        title: "Shop By Metal",
-        items: [
-          { name: "Yellow Gold", icon: "🟡" },
-          { name: "White Gold", icon: "⚪" },
-          { name: "Rose Gold", icon: "🟠" },
-          { name: "Two Tone", icon: "🔶" },
-        ],
-      },
-    ],
-    leftMenu: [
-      "Rings",
-      "Earrings",
-      "Pendants",
-      "Nosepins",
-      "Necklaces",
-      "Bangles",
-      "Bracelets",
-      "Mangalsutras",
-      "Mens",
-      "Collection",
-    ],
-  },
-  gold: {
-    columns: [
-      {
-        title: "Shop By Style",
-        items: [
-          { name: "Traditional", icon: "🕉️" },
-          { name: "Contemporary", icon: "✨" },
-          { name: "Antique", icon: "🏺" },
-          { name: "Designer", icon: "💫" },
-        ],
-      },
-      {
-        title: "Purity",
-        items: [
-          { name: "22K Gold", icon: "🟡" },
-          { name: "18K Gold", icon: "🟠" },
-          { name: "24K Gold", icon: "🌟" },
-        ],
-      },
-    ],
-    leftMenu: [
-      "Rings",
-      "Earrings",
-      "Necklaces",
-      "Chains",
-      "Bangles",
-      "Bracelets",
-      "Pendants",
-    ],
-  },
-  gemstone: {
-    columns: [
-      {
-        title: "By Gemstone",
-        items: [
-          { name: "Ruby", icon: "🔴" },
-          { name: "Emerald", icon: "🟢" },
-          { name: "Sapphire", icon: "🔵" },
-          { name: "Pearl", icon: "⚪" },
-        ],
-      },
-    ],
-    leftMenu: ["Rings", "Earrings", "Pendants", "Necklaces"],
-  },
-}
+import { getCategoryTree, type Category } from "@/api/categories"
+import { getImageUrl } from "@/api/client"
+import { useQuery } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
+import { useMemo, useState } from "react"
 
 const CategoryNav = () => {
-  const [hoveredCategory, setHoveredCategory] = useState<CategorySlug | null>(null)
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
 
-  const categories = [
-    { name: "DIAMOND", slug: "diamond" as CategorySlug, hasDropdown: true },
-    { name: "GOLD", slug: "gold" as CategorySlug, hasDropdown: true },
-    { name: "GEMSTONE", slug: "gemstone" as CategorySlug, hasDropdown: true },
-    { name: "UNCUT DIAMOND", slug: "uncut-diamond", hasDropdown: false },
-    { name: "PLATINUM", slug: "platinum", hasDropdown: false },
-    { name: "GOLD COINS", slug: "gold-coins", hasDropdown: false },
-    { name: "SILVER", slug: "silver", hasDropdown: false },
-    { name: "WATCHES", slug: "watches", hasDropdown: false },
-    { name: "GIFTS", slug: "gifts", hasDropdown: false },
-    { name: "JEWELLERY", slug: "jewellery", hasDropdown: false },
-    { name: "GIFT CARDS", slug: "gift-cards", hasDropdown: false },
-    { name: "GOLD RATE", slug: "gold-rate", hasDropdown: false },
-  ]
+  // Fetch categories from API with caching
+  const { data: categoriesResponse, isLoading } = useQuery({
+    queryKey: ["category-tree"],
+    queryFn: () => getCategoryTree(),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+  })
+
+  // Get top-level categories
+  const topLevelCategories = useMemo(() => {
+    if (!categoriesResponse?.success || !categoriesResponse.data) return []
+    return categoriesResponse.data.filter((cat) => cat.is_active)
+  }, [categoriesResponse])
+
+  // Get hovered category data
+  const hoveredCategoryData = useMemo(() => {
+    if (!hoveredCategory || !topLevelCategories.length) return null
+    return topLevelCategories.find((cat) => cat.slug === hoveredCategory) || null
+  }, [hoveredCategory, topLevelCategories])
+
+  // Check if category has children (subcategories)
+  const hasSubcategories = (category: Category) => {
+    return category.children && category.children.length > 0
+  }
+
+  if (isLoading) {
+    return (
+      <nav className="hidden lg:block sticky top-0 bg-white border-b border-gray-200 shadow-sm z-50">
+        <div className="flex items-center justify-center py-4">
+          <div className="flex gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-4 w-20 bg-gray-200 animate-pulse rounded" />
+            ))}
+          </div>
+        </div>
+      </nav>
+    )
+  }
 
   return (
     <div className="relative">
@@ -134,20 +53,21 @@ const CategoryNav = () => {
         <div className="w-full">
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex items-center justify-start lg:justify-center min-w-max lg:min-w-0 px-4 lg:px-0">
-              {categories.map((category) => (
+              {topLevelCategories.map((category) => (
                 <div
-                  key={category.slug}
+                  key={category.id}
                   className="relative shrink-0"
                   onMouseEnter={() =>
-                    category.hasDropdown &&
-                    category.slug in categoryData &&
-                    setHoveredCategory(category.slug as CategorySlug)
+                    hasSubcategories(category) && setHoveredCategory(category.slug)
                   }
                   onMouseLeave={() => setHoveredCategory(null)}
                 >
-                  <span className="px-2 xl:px-3 py-4 text-xs xl:text-sm font-medium text-gray-700 hover:text-header transition-colors border-b-2 border-transparent hover:border-header inline-block cursor-pointer whitespace-nowrap">
+                  <Link
+                    to={`/categories/${category.slug}`}
+                    className="px-2 xl:px-3 py-4 text-xs xl:text-sm font-medium text-gray-700 hover:text-header transition-colors border-b-2 border-transparent hover:border-header inline-block cursor-pointer whitespace-nowrap uppercase"
+                  >
                     {category.name}
-                  </span>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -156,58 +76,78 @@ const CategoryNav = () => {
       </nav>
 
       {/* MEGA MENU */}
-      {hoveredCategory && hoveredCategory in categoryData && (
+      {hoveredCategoryData && hasSubcategories(hoveredCategoryData) && (
         <div
           className="absolute left-0 right-0 top-full bg-white shadow-2xl border-t border-gray-200 z-50"
-          onMouseEnter={() => setHoveredCategory(hoveredCategory)}
+          onMouseEnter={() => setHoveredCategory(hoveredCategoryData.slug)}
           onMouseLeave={() => setHoveredCategory(null)}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row py-6 lg:py-8 gap-6 lg:gap-0">
-              {/* LEFT MENU */}
+              {/* LEFT MENU - Subcategories */}
               <div className="w-full lg:w-48 lg:pr-8 lg:border-r-2 border-gray-200">
                 <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1">
-                  {categoryData[hoveredCategory].leftMenu.map((item, index) => (
-                    <a
-                      key={item}
-                      href={`/${hoveredCategory}/${item
-                        .toLowerCase()
-                        .replace(/\s+/g, "-")}`}
-                      className={`block px-3 py-2.5 text-sm text-gray-700 hover:text-header hover:bg-header/5 hover:border-l-4 hover:border-header transition-all font-medium ${
-                        index !==
-                        categoryData[hoveredCategory].leftMenu.length - 1
-                          ? "border-b border-gray-100"
-                          : ""
-                      }`}
-                    >
-                      {item}
-                    </a>
-                  ))}
+                  {hoveredCategoryData.children
+                    .filter((child) => child.is_active)
+                    .map((subcategory, index, arr) => (
+                      <Link
+                        key={subcategory.id}
+                        to={`/categories/${subcategory.slug}`}
+                        className={`block px-3 py-2.5 text-sm text-gray-700 hover:text-header hover:bg-header/5 hover:border-l-4 hover:border-header transition-all font-medium ${
+                          index !== arr.length - 1 ? "border-b border-gray-100" : ""
+                        }`}
+                      >
+                        {subcategory.name}
+                      </Link>
+                    ))}
                 </nav>
               </div>
 
-              {/* RIGHT CONTENT */}
+              {/* RIGHT CONTENT - Sub-subcategories or Category Banner */}
               <div className="flex-1 lg:pl-8">
+                {/* Show sub-subcategories grouped by parent */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 xl:gap-12">
-                  {categoryData[hoveredCategory].columns.map((column) => (
-                    <div key={column.title}>
-                      <h3 className="text-sm font-semibold mb-3">
-                        {column.title}
-                      </h3>
-                      <div className="space-y-2">
-                        {column.items.map((item) => (
-                          <div
-                            key={item.name}
-                            className="flex items-center gap-2 text-sm text-gray-600 hover:text-header cursor-pointer"
-                          >
-                            <span className="text-lg">{item.icon}</span>
-                            <span>{item.name}</span>
-                          </div>
-                        ))}
+                  {hoveredCategoryData.children
+                    .filter((child) => child.is_active && hasSubcategories(child))
+                    .slice(0, 3) // Show max 3 columns
+                    .map((subcategory) => (
+                      <div key={subcategory.id}>
+                        <h3 className="text-sm font-semibold mb-3">{subcategory.name}</h3>
+                        <div className="space-y-2">
+                          {subcategory.children
+                            .filter((item) => item.is_active)
+                            .slice(0, 6) // Show max 6 items per column
+                            .map((item) => (
+                              <Link
+                                key={item.id}
+                                to={`/categories/${item.slug}`}
+                                className="flex items-center gap-2 text-sm text-gray-600 hover:text-header cursor-pointer"
+                              >
+                                {item.icon && (
+                                  <img
+                                    src={getImageUrl(item.icon)}
+                                    alt=""
+                                    className="w-5 h-5 object-contain"
+                                  />
+                                )}
+                                <span>{item.name}</span>
+                              </Link>
+                            ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
+
+                {/* Category Banner (if available) */}
+                {hoveredCategoryData.banner && (
+                  <div className="mt-6 rounded-lg overflow-hidden">
+                    <img
+                      src={getImageUrl(hoveredCategoryData.banner)}
+                      alt={`${hoveredCategoryData.name} Banner`}
+                      className="w-full h-32 object-cover"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

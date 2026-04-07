@@ -1,5 +1,6 @@
 import { Brand, deleteBrand, getBrands } from "@/api/brands"
 import { BrandDialog } from "@/components/shared/brand-dialog"
+import { getImageUrl } from "@/lib/utils"
 import { DataTable } from "@/components/shared/data-table"
 import {
   AlertDialog,
@@ -24,7 +25,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDateLong } from "@/lib/date"
 import { Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -84,7 +85,7 @@ function BrandsPage() {
         <div className="flex items-center gap-3">
           {row.original.logo && (
             <img
-              src={row.original.logo}
+              src={getImageUrl(row.original.logo)}
               alt={row.original.name}
               className="h-8 w-8 rounded object-cover"
             />
@@ -112,7 +113,7 @@ function BrandsPage() {
     {
       accessorKey: "created_at",
       header: "Created At",
-      cell: ({ row }) => format(new Date(row.getValue("created_at")), "PPP"),
+      cell: ({ row }) => fmtDateLong(row.getValue("created_at")),
     },
     {
       id: "actions",
@@ -157,7 +158,7 @@ function BrandsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Brands</h1>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />

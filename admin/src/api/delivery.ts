@@ -2,21 +2,39 @@
  * Delivery Zones API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
-export type ChargeType = "FIXED" | "WEIGHT_BASED" | "FREE_ABOVE";
+export type ChargeType = "FIXED" | "WEIGHT_BASED";
 
 export interface DeliveryZone {
   id: string;
   name: string;
-  districts: string[];
+  districts: Array<string>;
   charge_type: ChargeType;
   base_charge: number;
   per_kg_charge: number | null;
-  free_above_amount: number | null;
-  min_delivery_days: number;
-  max_delivery_days: number;
+  free_above: number | null;
+  min_days: number;
+  max_days: number;
   is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeliveryZonePayload {
+  name: string;
+  districts: Array<string>;
+  charge_type: ChargeType;
+  base_charge: number;
+  per_kg_charge?: number | null;
+  free_above?: number | null;
+  min_days: number;
+  max_days: number;
+  is_active?: boolean;
+  display_order?: number;
 }
 
 export interface DeliveryChargeResult {
@@ -25,12 +43,15 @@ export interface DeliveryChargeResult {
   base_charge: number;
   weight_charge: number;
   total_charge: number;
-  free_shipping_applied: boolean;
+  is_free: boolean;
+  free_above: number | null;
   estimated_days: string;
 }
 
+// Public: Calculate delivery charge
 export const calculateDeliveryCharge = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { district: string; order_amount: number; weight_kg?: number } }) => {
+  .inputValidator((data: { district: string; order_amount: number; weight_kg?: number }) => data)
+  .handler(async ({ data }) => {
     const query = new URLSearchParams();
     query.set("district", data.district);
     query.set("order_amount", data.order_amount.toString());
@@ -41,44 +62,44 @@ export const calculateDeliveryCharge = createServerFn({ method: "GET" })
     );
   });
 
+// Admin: Get all delivery zones
 export const getDeliveryZones = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    return apiRequest<ApiResponse<DeliveryZone[]>>(
-      "/delivery/admin/zones",
-      {},
-      data.token
-    );
+  .handler(async () => {
+    return authenticatedRequest<ApiResponse<Array<DeliveryZone>>>("/delivery/admin/zones");
   });
 
+// Admin: Create delivery zone
 export const createDeliveryZone = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { zone: Partial<DeliveryZone>; token: string } }) => {
-    return apiRequest<ApiResponse<DeliveryZone>>(
+  .inputValidator((data: DeliveryZonePayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<DeliveryZone>>(
       "/delivery/admin/zones",
       {
         method: "POST",
-        body: JSON.stringify(data.zone),
-      },
-      data.token
+        body: JSON.stringify(data),
+      }
     );
   });
 
-export const updateDeliveryZone = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { id: string; zone: Partial<DeliveryZone>; token: string } }) => {
-    return apiRequest<ApiResponse<DeliveryZone>>(
+// Admin: Update delivery zone
+export const updateDeliveryZone = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; zone: Partial<DeliveryZonePayload> }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<DeliveryZone>>(
       `/delivery/admin/zones/${data.id}`,
       {
         method: "PUT",
         body: JSON.stringify(data.zone),
-      },
-      data.token
+      }
     );
   });
 
-export const deleteDeliveryZone = createServerFn({ method: "DELETE" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+// Admin: Delete delivery zone
+export const deleteDeliveryZone = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/delivery/admin/zones/${data.id}`,
-      { method: "DELETE" },
-      data.token
+      { method: "DELETE" }
     );
   });

@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface ImageUploadResponse {
     url: string
@@ -22,21 +24,14 @@ export async function uploadCategoryImage(file: File, type: 'icon' | 'banner' = 
 }
 
 export interface ImageListResponse {
-    items: ImageUploadResponse[]
+    items: Array<ImageUploadResponse>
     count: number
 }
 
 export const getCategoryImages = createServerFn({ method: "GET" })
     .handler(async () => {
-        const token = getCookie("access_token")
-        if (!token) throw new Error("Not authenticated")
-
-        console.log("Fetching category images from backend...")
-
         try {
-            const result = await apiRequest<ApiResponse<ImageListResponse>>('/admin/uploads/categories', {}, token)
-            console.log("Category images fetched successfully:", result.success)
-            // Unwrap and return only the plain data needed to avoid serialization issues
+            const result = await authenticatedRequest<ApiResponse<ImageListResponse>>('/admin/uploads/categories')
             return result.data.items
         } catch (error) {
             console.error("Error fetching category images:", error)
@@ -46,7 +41,7 @@ export const getCategoryImages = createServerFn({ method: "GET" })
 
 // Media Library API functions
 export interface PaginatedMediaResponse {
-    items: ImageUploadResponse[]
+    items: Array<ImageUploadResponse>
     total: number
     page: number
     limit: number
@@ -54,19 +49,14 @@ export interface PaginatedMediaResponse {
     has_next: boolean
 }
 
-export const getMediaImages = createServerFn({ method: "POST" })
+export const getMediaImages = createServerFn({ method: "GET" })
     .handler(async ({ data }: { data?: { page?: number; limit?: number } }) => {
-        const token = getCookie("access_token")
-        if (!token) throw new Error("Not authenticated")
-
         const page = data?.page || 1
         const limit = data?.limit || 20
 
         try {
-            const result = await apiRequest<ApiResponse<PaginatedMediaResponse>>(
-                `/admin/uploads/media?page=${page}&limit=${limit}`,
-                {},
-                token
+            const result = await authenticatedRequest<ApiResponse<PaginatedMediaResponse>>(
+                `/admin/uploads/media?page=${page}&limit=${limit}`
             )
             return result.data
         } catch (error) {
@@ -75,31 +65,17 @@ export const getMediaImages = createServerFn({ method: "POST" })
         }
     })
 
-export async function uploadMediaImage(file: File, token?: string): Promise<ImageUploadResponse> {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    if (!token) {
-        throw new Error('Not authenticated')
-    }
-
-    const API_URL = (typeof process !== 'undefined' && process.env?.API_URL)
-        || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
-        || "http://localhost:8000/api/v1";
-
-    const response = await fetch(`${API_URL}/admin/uploads/media`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+export const uploadMediaImage = createServerFn({ method: 'POST' })
+    .inputValidator((data) => {
+        if (!(data instanceof FormData)) throw new Error('Expected FormData')
+        return data
     })
-
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: "Upload failed" }))
-        throw new Error(error.message || "Failed to upload image")
-    }
-
-    const result = await response.json()
-    return result.data
-}
+    .handler(async ({ data }) => {
+        const token = getCookie('access_token')
+        if (!token) throw new Error('Not authenticated')
+        const result = await apiRequest<ApiResponse<ImageUploadResponse>>('/admin/uploads/media', {
+            method: 'POST',
+            body: data,
+        }, token)
+        return result.data
+    })

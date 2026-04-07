@@ -102,19 +102,19 @@ class OrderResponse(BaseModel):
     order_number: str
     
     # Customer
-    customer_id: Optional[UUID]
-    is_pos_order: bool
-    pos_customer_name: Optional[str]
-    pos_customer_phone: Optional[str]
-    
+    customer_id: Optional[UUID] = None
+    is_pos_order: bool = False
+    pos_customer_name: Optional[str] = None
+    pos_customer_phone: Optional[str] = None
+
     # Shipping
     shipping_address: Dict[str, Any]
-    
+
     # Gift
-    is_gift: bool
-    gift_message: Optional[str]
-    hide_prices: bool
-    
+    is_gift: bool = False
+    gift_message: Optional[str] = None
+    hide_prices: bool = False
+
     # Pricing
     subtotal: Decimal
     discount_amount: Decimal
@@ -122,29 +122,31 @@ class OrderResponse(BaseModel):
     tax_amount: Decimal
     total: Decimal
     currency: str
-    
+
     # Promo
-    promo_code: Optional[str]
-    
+    promo_code: Optional[str] = None
+
     # Payment
     payment_method: str
     payment_status: PaymentStatus
-    paid_at: Optional[datetime]
-    
+    payment_transaction_id: Optional[str] = None
+    paid_at: Optional[datetime] = None
+
     # Status
     status: OrderStatus
-    
+    status_history: List[Dict[str, Any]] = []
+
     # Notes
-    customer_notes: Optional[str]
-    
+    customer_notes: Optional[str] = None
+
     # Items
     items: List[OrderItemResponse]
-    
+
     # Timestamps
     created_at: datetime
-    confirmed_at: Optional[datetime]
-    shipped_at: Optional[datetime]
-    delivered_at: Optional[datetime]
+    confirmed_at: Optional[datetime] = None
+    shipped_at: Optional[datetime] = None
+    delivered_at: Optional[datetime] = None
     
     model_config = {"from_attributes": True}
 

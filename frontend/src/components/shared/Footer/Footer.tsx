@@ -7,6 +7,9 @@ import {
   FaWhatsapp,
   FaXTwitter,
 } from 'react-icons/fa6'
+import { Link } from '@tanstack/react-router'
+import { useSettings } from '@/contexts/SettingsContext'
+import { getImageUrl } from '@/api/client'
 
 interface FooterLink {
   label: string
@@ -51,6 +54,7 @@ const FOOTER_SECTIONS: Array<FooterSection> = [
     title: 'Useful Links',
     links: [
       { label: 'Build Your Custom Jewellery', href: '/footer/custom-jewellery' },
+      { label: "Today's Metal Prices", href: '/footer/metal-prices' },
       { label: 'Careers', href: '' },
     ],
   },
@@ -60,31 +64,28 @@ const FOOTER_SECTIONS: Array<FooterSection> = [
   },
 ]
 
-const SOCIAL_LINKS: Array<SocialLink> = [
-  {
-    icon: FaFacebookF,
-    href: 'https://facebook.com/nazumeahjewellers',
-    label: 'Facebook'
-  },
-  {
-    icon: FaXTwitter,
-    href: 'https://twitter.com/nazumeahjewellers',
-    label: 'Twitter'
-  },
-  {
-    icon: FaPinterestP,
-    href: 'https://pinterest.com/nazumeahjewellers',
-    label: 'Pinterest'
-  },
-  {
-    icon: FaInstagram,
-    href: 'https://instagram.com/nazumeahjewellers',
-    label: 'Instagram'
-  }
-]
-
 export default function Footer() {
   const [openSection, setOpenSection] = useState<number | null>(null)
+  const {
+    store_name,
+    store_tagline,
+    store_logo,
+    contact_phone,
+    whatsapp_number,
+    contact_email,
+    contact_address,
+    facebook_url,
+    instagram_url,
+    twitter_url,
+    pinterest_url,
+  } = useSettings()
+
+  const socialLinks: Array<SocialLink> = [
+    facebook_url && { icon: FaFacebookF, href: facebook_url, label: 'Facebook' },
+    twitter_url && { icon: FaXTwitter, href: twitter_url, label: 'Twitter' },
+    pinterest_url && { icon: FaPinterestP, href: pinterest_url, label: 'Pinterest' },
+    instagram_url && { icon: FaInstagram, href: instagram_url, label: 'Instagram' },
+  ].filter(Boolean) as Array<SocialLink>
 
   const toggleSection = (index: number) => {
     setOpenSection(openSection === index ? null : index)
@@ -92,6 +93,32 @@ export default function Footer() {
 
   return (
     <footer className="bg-footer">
+
+      {/* LOGO SECTION */}
+      <div className="border-b border-gray-300">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col items-center gap-1">
+          <Link to="/" className="shrink-0">
+            <img
+              src={getImageUrl(store_logo, '/NazuMeah.svg')}
+              alt={store_name || 'Logo'}
+              className="h-18 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.src = '/NazuMeah.svg'
+                e.currentTarget.onerror = null
+              }}
+            />
+          </Link>
+          {store_name && (
+            <p className="text-sm font-bold tracking-widest uppercase text-header">
+              {store_name}
+            </p>
+          )}
+          {store_tagline && (
+            <p className="text-xs italic text-gray-500">{store_tagline}</p>
+          )}
+        </div>
+      </div>
+
       {/* TOP FOOTER */}
       <div className="max-w-7xl mx-auto px-2 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-1">
@@ -132,9 +159,13 @@ export default function Footer() {
                     <ul className="space-y-2 text-sm text-header pt-3">
                       {section.links.map((link, i) => (
                         <li key={i}>
-                          <a href={link.href} className="hover:underline">
-                            {link.label}
-                          </a>
+                          {link.href ? (
+                            <Link to={link.href} className="hover:underline">
+                              {link.label}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-400 cursor-not-allowed">{link.label}</span>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -143,40 +174,42 @@ export default function Footer() {
                   {/* CUSTOMER SERVICE */}
                   {section.isCustomerService && (
                     <div className="space-y-2 text-sm text-header pt-3">
-                      <div className="flex gap-1">
-                        <Phone className="w-3 h-4 mt-0.5" />
-                        <span>
-                          +123456789{' '}
-                          <span className="text-gray-600">
-                            (10.00am–7.00pm)
+                      {contact_phone && (
+                        <div className="flex gap-1">
+                          <Phone className="w-3 h-4 mt-0.5" />
+                          <span>
+                            {contact_phone}{' '}
+                            <span className="text-gray-600">
+                              (10.00am–7.00pm)
+                            </span>
                           </span>
-                        </span>
-                      </div>
+                        </div>
+                      )}
 
-                      <div className="flex gap-2 text-green-600">
-                        <FaWhatsapp className="w-4 h-4 mt-0.5" />
-                        <span>
-                          9167780916{' '}
-                          <span className="text-gray-600">
-                            (9.00am – 6.00pm)
+                      {whatsapp_number && (
+                        <div className="flex gap-2 text-green-600">
+                          <FaWhatsapp className="w-4 h-4 mt-0.5" />
+                          <span>
+                            {whatsapp_number}{' '}
+                            <span className="text-gray-600">
+                              (9.00am – 6.00pm)
+                            </span>
                           </span>
-                        </span>
-                      </div>
+                        </div>
+                      )}
 
-                      <div className="flex gap-1">
-                        <Mail className="w-4 h-4 mt-0.5" />
-                        <span>nazumeahjewellers.com</span>
-                      </div>
+                      {contact_email && (
+                        <div className="flex gap-1">
+                          <Mail className="w-4 h-4 mt-0.5" />
+                          <span>{contact_email}</span>
+                        </div>
+                      )}
 
-                      <p className="text-sm text-gray-600 leading-relaxed pt-2">
-                        Nazu Meah Jewellers
-                        <br />
-                        Plot No 44, 45, Street Number 14,
-                        <br />
-                        Marol MIDC Industry Estate,
-                        <br />
-                        Andheri East, Mumbai – 400093
-                      </p>
+                      {contact_address && (
+                        <p className="text-sm text-gray-600 leading-relaxed pt-2 whitespace-pre-line">
+                          {contact_address}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -193,10 +226,10 @@ export default function Footer() {
             {/* SOCIAL ICONS */}
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700 mr-2">Follow Us:</span>
-              {SOCIAL_LINKS.map((social, i) => {
+              {socialLinks.map((social, i) => {
                 const Icon = social.icon
                 return (
-                  <a
+                  <a 
                     key={i}
                     href={social.href}
                     aria-label={social.label}
@@ -221,42 +254,11 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700 mr-2">We Accept:</span>
               <div className="flex items-center gap-2 flex-wrap">
-                {/* bKash */}
-                <img 
-                  src="/BkashLogo.svg" 
-                  alt="bKash" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* Nagad */}
-                <img 
-                  src="/NagadLogo.svg" 
-                  alt="Nagad" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* Visa */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" 
-                  alt="Visa" 
-                  className="h-6 w-auto object-contain"
-                />
-                
-                {/* Mastercard */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                  alt="Mastercard" 
-                  className="h-8 w-auto object-contain"
-                />
-                
-                {/* American Express */}
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" 
-                  alt="American Express" 
-                  className="h-6 w-auto object-contain"
-                />
-                
-               
+                <img src="/BkashLogo.svg" alt="bKash" className="h-8 w-auto object-contain" />
+                <img src="/NagadLogo.svg" alt="Nagad" className="h-8 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" className="h-6 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8 w-auto object-contain" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" alt="American Express" className="h-6 w-auto object-contain" />
               </div>
             </div>
           </div>
@@ -265,18 +267,20 @@ export default function Footer() {
 
       {/* COPYRIGHT */}
       <div className="py-8 text-center text-xs text-gray-900 border-t border-gray-300">
-        © 2025 <span className='text-header'>Nazu Meah Jewellers.</span> All Rights Reserved.
+        © {new Date().getFullYear()} <span className='text-header'>{store_name}.</span> All Rights Reserved.
       </div>
 
       {/* FLOATING WHATSAPP */}
-      <a
-        href="https://wa.me/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-1 right-0.5 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg z-50"
-      >
-        <FaWhatsapp className="w-6 h-6 text-white" />
-      </a>
+      {whatsapp_number && (
+        <a
+          href={`https://wa.me/${whatsapp_number.replace(/\D/g, '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-1 right-0.5 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg z-50"
+        >
+          <FaWhatsapp className="w-6 h-6 text-white" />
+        </a>
+      )}
     </footer>
   )
 }

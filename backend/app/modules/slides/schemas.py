@@ -26,8 +26,9 @@ class SlideCreate(BaseModel):
     overlay_color: Optional[str] = Field(None, max_length=50)
     
     sort_order: int = Field(default=0, ge=0)
+    position: Optional[str] = Field(None, max_length=100)
     is_active: bool = True
-    
+
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
 
@@ -49,8 +50,9 @@ class SlideUpdate(BaseModel):
     overlay_color: Optional[str] = Field(None, max_length=50)
     
     sort_order: Optional[int] = Field(None, ge=0)
+    position: Optional[str] = Field(None, max_length=100)
     is_active: Optional[bool] = None
-    
+
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
 
@@ -73,8 +75,9 @@ class SlideResponse(BaseModel):
     overlay_color: Optional[str]
     
     sort_order: int
+    position: Optional[str] = None
     is_active: bool
-    
+
     start_date: Optional[datetime]
     end_date: Optional[datetime]
     

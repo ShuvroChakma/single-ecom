@@ -46,6 +46,7 @@ class ErrorCode:
     ROLE_ALREADY_EXISTS = "ROLE_001"
     CANNOT_MODIFY_SYSTEM_ROLE = "ROLE_002"
     CANNOT_DELETE_ROLE_IN_USE = "ROLE_003"
+    SUPER_ADMIN_ROLE_NOT_ASSIGNABLE = "ROLE_004"
     
     # Validation errors (VAL_xxx)
     VALIDATION_ERROR = "VAL_001"
@@ -61,7 +62,14 @@ class ErrorCode:
     CATEGORY_DUPLICATE_SLUG = "CAT_003"
     CATEGORY_HAS_CHILDREN = "CAT_004"
     CATEGORY_INVALID_PARENT = "CAT_005"
-    
+
+    # Product errors (PROD_xxx)
+    PRODUCT_NOT_FOUND = "PROD_001"
+    VARIANT_NOT_FOUND = "PROD_002"
+
+    # Generic item errors (ITEM_xxx)
+    ITEM_NOT_FOUND = "ITEM_001"
+
     # Server errors (SRV_xxx)
     INTERNAL_ERROR = "SRV_001"
     DATABASE_ERROR = "SRV_002"

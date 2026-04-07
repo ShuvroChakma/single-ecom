@@ -63,8 +63,8 @@ code {
   --sidebar-ring: oklch(0.871 0.006 286.286);
   
   /* Custom Brand Colors */
-  --header: #9A0056;
-  --top_bar: #830047;
+  --header: #1F4E52;
+  --top_bar: #1a3d40;
   --footer: #F4F1E6;
   --footer_dark: #A38842;
 }

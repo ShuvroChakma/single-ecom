@@ -13,7 +13,8 @@ from app.core.schemas.response import SuccessResponse, create_success_response
 from app.core.exceptions import PermissionDeniedError
 from app.constants.enums import UserType
 from app.constants.error_codes import ErrorCode
-from app.modules.users.models import User
+from app.modules.users.models import User, Customer
+from app.modules.users.repository import CustomerRepository
 from app.modules.addresses.service import AddressService
 from app.modules.addresses.schemas import (
     AddressCreate,
@@ -32,22 +33,22 @@ def get_address_service(session: AsyncSession = Depends(get_db)) -> AddressServi
 
 
 async def get_current_customer(
-    current_user: User = Depends(get_current_verified_user)
-) -> User:
-    """Verify user is a customer."""
+    current_user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_db),
+) -> Customer:
+    """Verify user is a customer and return Customer record (no lazy load)."""
     if current_user.user_type != UserType.CUSTOMER:
         raise PermissionDeniedError(
             error_code=ErrorCode.PERMISSION_DENIED,
             message="Addresses are only available for customers"
         )
-    
-    if not current_user.customer:
+    customer = await CustomerRepository(db).get_by_user_id(current_user.id)
+    if not customer:
         raise PermissionDeniedError(
             error_code=ErrorCode.PERMISSION_DENIED,
             message="Customer profile not found"
         )
-    
-    return current_user
+    return customer
 
 
 # ============ ENDPOINTS ============
@@ -62,7 +63,7 @@ async def list_addresses(
     
     Returns addresses sorted by default first, then by creation date.
     """
-    addresses = await service.get_addresses(current_user.customer.id)
+    addresses = await service.get_addresses(current_user.id)
     
     return create_success_response(
         message="Addresses retrieved successfully",
@@ -86,7 +87,7 @@ async def create_address(
     Maximum 5 addresses per customer.
     First address is automatically set as default.
     """
-    address = await service.create_address(current_user.customer.id, data)
+    address = await service.create_address(current_user.id, data)
     
     return create_success_response(
         message="Address created successfully",
@@ -101,7 +102,7 @@ async def get_address(
     service: AddressService = Depends(get_address_service)
 ):
     """Get a specific address."""
-    address = await service.get_address(current_user.customer.id, address_id)
+    address = await service.get_address(current_user.id, address_id)
     
     return create_success_response(
         message="Address retrieved successfully",
@@ -117,7 +118,7 @@ async def update_address(
     service: AddressService = Depends(get_address_service)
 ):
     """Update an address."""
-    address = await service.update_address(current_user.customer.id, address_id, data)
+    address = await service.update_address(current_user.id, address_id, data)
     
     return create_success_response(
         message="Address updated successfully",
@@ -136,7 +137,7 @@ async def delete_address(
     
     If the deleted address was default, another address will be set as default.
     """
-    await service.delete_address(current_user.customer.id, address_id)
+    await service.delete_address(current_user.id, address_id)
     
     return create_success_response(
         message="Address deleted successfully",
@@ -151,7 +152,7 @@ async def set_default_address(
     service: AddressService = Depends(get_address_service)
 ):
     """Set an address as the default."""
-    address = await service.set_default(current_user.customer.id, address_id)
+    address = await service.set_default(current_user.id, address_id)
     
     return create_success_response(
         message="Default address updated",

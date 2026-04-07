@@ -24,7 +24,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ColumnDef, SortingState } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDateLong } from "@/lib/date"
 import { Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -146,6 +146,18 @@ function SlidesPage() {
       },
     },
     {
+      accessorKey: "position",
+      header: "Position",
+      cell: ({ row }) => {
+        const pos = row.getValue("position") as string | null
+        return pos ? (
+          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{pos}</code>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        )
+      },
+    },
+    {
       accessorKey: "sort_order",
       header: "Order",
       cell: ({ row }) => <span>{row.getValue("sort_order")}</span>,
@@ -153,7 +165,7 @@ function SlidesPage() {
     {
       accessorKey: "created_at",
       header: "Created At",
-      cell: ({ row }) => format(new Date(row.getValue("created_at")), "PPP"),
+      cell: ({ row }) => fmtDateLong(row.getValue("created_at")),
     },
     {
       id: "actions",
@@ -230,7 +242,7 @@ function SlidesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Slides</h1>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
@@ -253,6 +265,7 @@ function SlidesPage() {
       />
 
       <SlideDialog
+        key={selectedSlide?.id || 'new-slide'}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         slide={selectedSlide}

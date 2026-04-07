@@ -2,16 +2,16 @@
  * Roles API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface Permission {
-    id: string;
-    code: string;
-    description: string | null;
-    resource: string | null;
-    action: string | null;
-    created_at: string;
+  id: string;
+  code: string;
+  description: string | null;
+  resource: string | null;
+  action: string | null;
+  created_at: string;
 }
 
 export interface Role {
@@ -20,116 +20,99 @@ export interface Role {
   description: string | null;
   is_system: boolean;
   created_at: string;
-    updated_at: string;
+  updated_at: string;
 }
 
 export interface RoleWithPermissions extends Role {
-    permissions: Permission[];
+  permissions: Array<Permission>;
 }
 
 export interface RoleListItem {
-    id: string;
-    name: string;
-    description: string | null;
-    is_system: boolean;
-    permissions_count: number;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  name: string;
+  description: string | null;
+  is_system: boolean;
+  permissions_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PaginatedRoles {
-    items: RoleListItem[];
+  items: Array<RoleListItem>;
   total: number;
   page: number;
   per_page: number;
 }
 
 export interface RolePayload {
-    name: string;
-    description?: string;
-    permission_ids?: string[];
+  name: string;
+  description?: string;
+  permission_ids?: Array<string>;
 }
 
 export interface RoleUpdatePayload {
-    name?: string;
-    description?: string;
-    permission_ids?: string[];
+  name?: string;
+  description?: string;
+  permission_ids?: Array<string>;
 }
 
 // Admin: List roles with pagination
-export const getRoles = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data?: { page?: number; per_page?: number; q?: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+export const getRoles = createServerFn({ method: "GET" })
+  .inputValidator((data?: { page?: number; per_page?: number; q?: string }) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     if (data?.page) params.append("page", data.page.toString());
     if (data?.per_page) params.append("per_page", data.per_page.toString());
-      if (data?.q) params.append("q", data.q);
+    if (data?.q) params.append("q", data.q);
 
-    return apiRequest<ApiResponse<PaginatedRoles>>(
-      `/admin/roles?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<PaginatedRoles>>(
+      `/admin/roles?${params.toString()}`
     );
   });
 
 // Admin: Get single role with permissions
-export const getRole = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-      return apiRequest<ApiResponse<RoleWithPermissions>>(
-          `/admin/roles/${data.id}`,
-          {},
-          token
-      );
+export const getRole = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<RoleWithPermissions>>(
+      `/admin/roles/${data.id}`
+    );
   });
 
 // Admin: Create role
 export const createRole = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data: RolePayload }) => {
-        const token = getCookie("access_token");
-        if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Role>>(
-        "/admin/roles",
-        {
-            method: "POST",
-            body: JSON.stringify(data),
-        },
-        token
+  .inputValidator((data: RolePayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Role>>(
+      "/admin/roles",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
     );
   });
 
 // Admin: Update role
 export const updateRole = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data: { role: RoleUpdatePayload; id: string } }) => {
-        const token = getCookie("access_token");
-        if (!token) throw new Error("Not authenticated");
+  .inputValidator((data: { role: RoleUpdatePayload; id: string }) => data)
+  .handler(async ({ data }) => {
+    const { id, role } = data;
 
-        const { id, role } = data;
-
-        return apiRequest<ApiResponse<null>>(
-            `/admin/roles/${id}`,
-            {
-                method: "PUT",
-                body: JSON.stringify(role),
-            },
-            token
-        );
-    });
+    return authenticatedRequest<ApiResponse<null>>(
+      `/admin/roles/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(role),
+      }
+    );
+  });
 
 // Admin: Delete role
 export const deleteRole = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data: { id: string } }) => {
-        const token = getCookie("access_token");
-        if (!token) throw new Error("Not authenticated");
-
-        return apiRequest<ApiResponse<null>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<null>>(
       `/admin/roles/${data.id}`,
-        { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });

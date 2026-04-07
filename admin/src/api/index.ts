@@ -10,7 +10,7 @@ export type { ApiErrorResponse, ApiResponse, PaginatedResponse } from "./client"
 
 // Auth
 export {
-    getMe, loginAdmin, logout, refreshToken,
+    changePassword, getMe, loginAdmin, logout, refreshToken, updateAdminProfile,
     type LoginResponse,
     type UserProfile
 } from "./auth";
@@ -22,9 +22,24 @@ export {
 
 // Products
 export {
-    createProduct, deleteProduct, getProduct,
-    getProductById, getProducts, toggleProductActive, updateProduct, type Product,
-    type ProductVariant
+    createProduct,
+    createVariant,
+    deleteProduct,
+    deleteVariant,
+    getAdminProducts,
+    getProductById,
+    getProductBySlug,
+    getProducts,
+    updateProduct,
+    updateVariant,
+    type Gender,
+    type MakingChargeType,
+    type Product,
+    type ProductListParams,
+    type ProductListResponse,
+    type ProductPayload,
+    type ProductVariant,
+    type ProductVariantPayload
 } from "./products";
 
 // Orders
@@ -55,8 +70,11 @@ export {
 
 // Promo Codes
 export {
-    createPromoCode, deletePromoCode, getPromoCode, getPromoCodes, getPromoStats, updatePromoCode, validatePromoCode, type PromoCode,
-    type PromoDiscountType,
+    createPromoCode, deletePromoCode, getPromoCode, getPromoCodes, getPromoCodeStats, updatePromoCode, validatePromoCode,
+    type DiscountType,
+    type PromoCode,
+    type PromoCodePayload,
+    type PromoCodeStats,
     type PromoValidationResult
 } from "./promo";
 

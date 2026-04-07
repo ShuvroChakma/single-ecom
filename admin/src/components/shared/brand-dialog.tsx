@@ -1,4 +1,5 @@
 import { Brand, BrandPayload, createBrand, updateBrand } from "@/api/brands"
+import { getImageUrl } from "@/lib/utils"
 import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
 import {
@@ -174,19 +175,7 @@ export function BrandDialog({ open, onOpenChange, brand }: BrandDialogProps) {
 
           <form.Field
             name="logo"
-            children={(field) => {
-              // Construct proper image URL
-              const getImageUrl = (url: string) => {
-                if (!url) return ''
-                if (url.startsWith('http://') || url.startsWith('https://')) {
-                  return url
-                }
-                // For relative paths, use the backend URL from window location
-                const backendUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || ''
-                return `${backendUrl}${url}`
-              }
-
-              return (
+            children={(field) => (
                 <div className="space-y-2">
                   <Label>Logo</Label>
                   <div className="flex items-center gap-4">
@@ -223,8 +212,7 @@ export function BrandDialog({ open, onOpenChange, brand }: BrandDialogProps) {
                     </div>
                   </div>
                 </div>
-              )
-            }}
+            )}
           />
 
                   <ImageGalleryDialog

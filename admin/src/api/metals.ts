@@ -2,8 +2,9 @@
  * Metals API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface Purity {
   id: string;
@@ -20,7 +21,7 @@ export interface Metal {
   code: string;
   sort_order: number;
   is_active: boolean;
-  purities: Purity[];
+  purities: Array<Purity>;
   created_at: string;
   updated_at: string;
 }
@@ -35,20 +36,13 @@ export interface MetalPayload {
 // Public: Get all metals with purities
 export const getPublicMetals = createServerFn({ method: "GET" })
   .handler(async () => {
-    return apiRequest<ApiResponse<Metal[]>>("/products/metals");
+    return apiRequest<ApiResponse<Array<Metal>>>("/products/metals");
   });
 
 // Admin: Get all metals
 export const getMetals = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Metal[]>>(
-      "/products/metals",
-      {},
-      token
-    );
+    return authenticatedRequest<ApiResponse<Array<Metal>>>("/products/metals");
   });
 
 // Public: Search metals by name/code
@@ -60,74 +54,62 @@ export interface MetalSearchResult {
     is_active: boolean;
 }
 
-export const searchMetals = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
+export const searchMetals = createServerFn({ method: "GET" })
+    .inputValidator((data: { query: string; limit?: number }) => data)
+    .handler(async ({ data }) => {
         const params = new URLSearchParams();
         if (data.query) params.append("q", data.query);
         if (data.limit) params.append("limit", data.limit.toString());
 
-        return apiRequest<ApiResponse<MetalSearchResult[]>>(
+        return apiRequest<ApiResponse<Array<MetalSearchResult>>>(
             `/products/metals/search?${params.toString()}`
         );
     });
 
 // Admin: Get single metal
-export const getMetal = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Metal>>(
-      `/products/metals/${data.id}`,
-      {},
-      token
+export const getMetal = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Metal>>(
+      `/products/metals/${data.id}`
     );
   });
 
 // Admin: Create metal
 export const createMetal = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: MetalPayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Metal>>(
+  .inputValidator((data: MetalPayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Metal>>(
       "/products/admin/metals",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update metal
 export const updateMetal = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { metal: Partial<MetalPayload>; id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data: { metal: Partial<MetalPayload>; id: string }) => data)
+  .handler(async ({ data }) => {
     const { id, metal } = data;
 
-    return apiRequest<ApiResponse<Metal>>(
+    return authenticatedRequest<ApiResponse<Metal>>(
       `/products/admin/metals/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(metal),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete metal
 export const deleteMetal = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/products/admin/metals/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });
 
@@ -150,48 +132,38 @@ export interface PurityFull extends Purity {
 
 // Admin: Create purity
 export const createPurity = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data: PurityPayload }) => {
-        const token = getCookie("access_token");
-        if (!token) throw new Error("Not authenticated");
-
-        return apiRequest<ApiResponse<PurityFull>>(
+    .inputValidator((data: PurityPayload) => data)
+    .handler(async ({ data }) => {
+        return authenticatedRequest<ApiResponse<PurityFull>>(
             "/products/admin/purities",
             {
                 method: "POST",
                 body: JSON.stringify(data),
-            },
-            token
+            }
         );
     });
 
 // Admin: Update purity
 export const updatePurity = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data: { purity: Partial<PurityPayload>; id: string } }) => {
-        const token = getCookie("access_token");
-        if (!token) throw new Error("Not authenticated");
-
+    .inputValidator((data: { purity: Partial<PurityPayload>; id: string }) => data)
+    .handler(async ({ data }) => {
         const { id, purity } = data;
 
-        return apiRequest<ApiResponse<PurityFull>>(
+        return authenticatedRequest<ApiResponse<PurityFull>>(
             `/products/admin/purities/${id}`,
             {
                 method: "PUT",
                 body: JSON.stringify(purity),
-            },
-            token
+            }
         );
     });
 
 // Admin: Delete purity
 export const deletePurity = createServerFn({ method: "POST" })
-    .handler(async ({ data }: { data: { id: string } }) => {
-        const token = getCookie("access_token");
-        if (!token) throw new Error("Not authenticated");
-
-        return apiRequest<ApiResponse<{ deleted: boolean }>>(
+    .inputValidator((data: { id: string }) => data)
+    .handler(async ({ data }) => {
+        return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
             `/products/admin/purities/${data.id}`,
-            { method: "DELETE" },
-            token
+            { method: "DELETE" }
         );
     });
-

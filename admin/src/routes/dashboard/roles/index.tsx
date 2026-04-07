@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
+import { fmtDate } from "@/lib/date"
 import { Loader2, Lock, MoreHorizontal, Plus, Shield } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -117,7 +117,7 @@ function RolesPage() {
         {
             accessorKey: "created_at",
             header: "Created",
-            cell: ({ row }) => format(new Date(row.getValue("created_at")), "MMM d, yyyy"),
+            cell: ({ row }) => fmtDate(row.getValue("created_at")),
         },
         {
             id: "actions",
@@ -157,7 +157,7 @@ function RolesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Roles</h1>
                     <p className="text-muted-foreground">
@@ -177,6 +177,7 @@ function RolesPage() {
                 pagination={pagination}
                 onPaginationChange={setPagination}
                 pageCount={Math.ceil(totalCount / pagination.pageSize)}
+                manualPagination={true}
             />
 
             <RoleDialog

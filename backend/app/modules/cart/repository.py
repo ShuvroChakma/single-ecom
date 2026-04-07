@@ -43,21 +43,20 @@ class CartRepository:
         cart = await self.get_by_customer_id(customer_id)
         if cart:
             return cart
-        
-        # Create new cart
+
+        # Create new cart then re-fetch with selectinload to avoid lazy-load
         cart = Cart(customer_id=customer_id)
         self.session.add(cart)
         await self.session.commit()
-        await self.session.refresh(cart)
-        return cart
-    
+        return await self.get_by_customer_id(customer_id)
+
     async def update_timestamp(self, cart: Cart) -> Cart:
         """Update cart's updated_at timestamp."""
         cart.updated_at = datetime.utcnow()
         self.session.add(cart)
         await self.session.commit()
-        await self.session.refresh(cart)
-        return cart
+        # Re-fetch with selectinload so Cart.items is available
+        return await self.get_by_customer_id(cart.customer_id)
     
     async def delete(self, cart: Cart) -> None:
         """Delete a cart and all its items."""

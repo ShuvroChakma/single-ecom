@@ -6,8 +6,11 @@ import SearchBar from "./SearchBar";
 import TopBar from "./TopBar";
 import NavIcons from "./NavIcons";
 import CategoryNav from "./CategoryNav";
+import { useSettings } from "@/contexts/SettingsContext";
+import { getImageUrl } from "@/api/client";
 
 const Header = () => {
+  const { store_name, store_logo } = useSettings()
   const headerRef = useRef<HTMLDivElement | null>(null);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -93,11 +96,12 @@ const Header = () => {
               {/* Logo */}
               <Link to="/" aria-label="Go to home" className="shrink-0">
                 <img
-                  src="/NazuMeah.svg"
-                  alt="Malabar Gold & Diamonds"
-                  className="h-9 sm:h-10 md:h-12 lg:h-14 w-auto object-contain transition-transform hover:scale-105"
+                  src={getImageUrl(store_logo, '/NazuMeah.svg')}
+                  alt={store_name}
+                  className="h-9 sm:h-10 md:h-12 lg:h-14 w-auto object-contain transition-transform "
                   onError={(e) => {
-                    e.currentTarget.style.display = "none";
+                    e.currentTarget.src = '/NazuMeah.svg'
+                    e.currentTarget.onerror = null
                   }}
                 />
               </Link>
@@ -151,6 +155,7 @@ const Header = () => {
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
+        headerHeight={headerHeight}
       />
     </>
   );

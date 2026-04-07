@@ -241,11 +241,29 @@ def add_exception_handlers(app):
     async def global_exception_handler(request: Request, exc: Exception):
         """Handle unexpected exceptions."""
         import traceback
-        
-        # Log the full traceback
-        print(f"Unexpected error: {exc}")
-        traceback.print_exc()
-        
+        from app.core.logging_config import logger
+
+        body = None
+        try:
+            body = await request.body()
+            body = body.decode("utf-8") if body else None
+        except Exception:
+            pass
+
+        logger.error(
+            "Unhandled exception\n"
+            "  %s %s\n"
+            "  Headers: %s\n"
+            "  Body: %s\n"
+            "  Error: %s",
+            request.method,
+            request.url,
+            dict(request.headers),
+            body,
+            exc,
+            exc_info=True,
+        )
+
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={

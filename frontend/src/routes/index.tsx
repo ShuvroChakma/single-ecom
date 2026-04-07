@@ -11,7 +11,7 @@ import PlatinumCollection from '@/components/shared/HeroBanner/PlatinumCollectio
 import GoldJewellery from '@/components/shared/HeroBanner/GoldJewellery'
 import OurCollection from '@/components/shared/HeroBanner/OurCollection'
 import OneDayShipping from '@/components/shared/HeroBanner/OneDayShipping'
-import ShopByGender from '@/components/shared/HeroBanner/ShopByGender'
+import ShopByGender from '@/components/shared/HeroBanner/TrendyCollections'
 import NewArrivals from '@/components/shared/HeroBanner/NewArrivals'
 import GiftingPage from '@/components/shared/HeroBanner/GiftingPage'
 import AboutPage from '@/components/shared/HeroBanner/AboutPage'
@@ -21,6 +21,16 @@ import AboutPage from '@/components/shared/HeroBanner/AboutPage'
 
 
 export const Route = createFileRoute('/')({
+  head: () => {
+    const siteUrl = import.meta.env.VITE_SITE_URL || ''
+    return {
+      meta: [
+        { property: 'og:url', content: siteUrl },
+        { property: 'og:type', content: 'website' },
+      ],
+      links: [{ rel: 'canonical', href: siteUrl }],
+    }
+  },
   component: App,
 })
 
@@ -37,12 +47,12 @@ function App() {
       <PlatinumCollection />
       <GoldJewellery />
       <OurCollection />
+      <NewArrivals />
       <OneDayShipping />
       <ShopByGender />
-      <NewArrivals />
+      
       <GiftingPage />
       <AboutPage />
-      
       <Footer />
     </div>
   )

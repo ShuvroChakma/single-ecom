@@ -10,45 +10,35 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
-import { Outlet, createFileRoute, useLocation, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { Outlet, createFileRoute, redirect, useLocation } from '@tanstack/react-router'
 
+import { getMe } from '@/api/auth'
 import { AppSidebar } from '@/components/shared/app-sidebar'
 import { Separator } from '@/components/ui/separator'
-import { useAuth } from '@/lib/auth'
+import type { UserProfile } from '@/api/auth'
 
 export const Route = createFileRoute('/dashboard')({
+  beforeLoad: async () => {
+    try {
+      const response = await getMe()
+      if (!response.success || !response.data) {
+        throw redirect({ to: '/' })
+      }
+      if (response.data.user_type !== 'ADMIN') {
+        throw redirect({ to: '/' })
+      }
+      return { user: response.data as UserProfile }
+    } catch (e: unknown) {
+      // Re-throw redirects, catch auth errors
+      if (e && typeof e === 'object' && 'to' in e) throw e
+      throw redirect({ to: '/' })
+    }
+  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { isAuthenticated, isLoading } = useAuth()
-  const navigate = useNavigate()
   const location = useLocation()
-
-  // Redirect to login if not authenticated after loading
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate({ to: '/' })
-    }
-  }, [isLoading, isAuthenticated, navigate])
-
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Don't render if not authenticated
-  if (!isAuthenticated) {
-    return null
-  }
 
   return (
     <SidebarProvider>

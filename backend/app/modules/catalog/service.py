@@ -8,8 +8,9 @@ from app.constants.error_codes import ErrorCode
 from app.core.cache import get_cache, set_cache, delete_cache
 from app.modules.audit.service import AuditService
 from app.modules.catalog.models import Category
-from app.modules.catalog.schemas import CategoryCreate, CategoryUpdate, CategoryTreeResponse
+from app.modules.catalog.schemas import CategoryCreate, CategoryUpdate, CategoryTreeResponse, CategoryResponse
 from app.modules.catalog.repository import CategoryRepository
+from sqlmodel import select, func
 
 CACHE_KEY_TREE = "catalog:category:tree"
 
@@ -34,6 +35,11 @@ class CategoryService:
         await set_cache(CACHE_KEY_TREE, [item.model_dump(mode='json') for item in tree], expire=300)
         
         return tree
+
+    async def get_featured(self) -> List[CategoryResponse]:
+        """Get all active featured categories."""
+        categories = await self.repository.get_featured()
+        return [CategoryResponse.model_validate(cat) for cat in categories]
 
     def _build_tree(self, categories: List[Category], parent_id: Optional[UUID] = None) -> List[CategoryTreeResponse]:
         """Recursive tree builder."""
@@ -192,9 +198,17 @@ class CategoryService:
                 error_code="CATALOG_HAS_CHILDREN"
             )
             
-        # TODO: Check Products (Placeholder)
-        # if await product_repo.count_by_category(category_id) > 0:
-        #    raise ConflictError(...)
+        # Check Products
+        from app.modules.products.models import Product
+        result = await self.repository.db.execute(
+            select(func.count()).select_from(Product).where(Product.category_id == category_id)
+        )
+        product_count = result.scalar_one()
+        if product_count > 0:
+            raise ConflictError(
+                message=f"Cannot delete category with {product_count} product(s) assigned to it. Reassign or delete the products first, or deactivate this category.",
+                error_code="CATALOG_HAS_PRODUCTS"
+            )
 
         category = await self.repository.get(category_id)
         if not category:

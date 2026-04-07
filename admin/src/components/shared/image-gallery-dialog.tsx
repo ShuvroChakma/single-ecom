@@ -1,4 +1,5 @@
 import { getMediaImages, ImageUploadResponse, PaginatedMediaResponse, uploadMediaImage } from "@/api/uploads"
+import { getImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -79,7 +80,9 @@ export function ImageGalleryDialog({ open, onOpenChange, onSelect }: ImageGaller
 
         try {
             setIsUploading(true)
-            const result = await uploadMediaImage(file, token || undefined)
+            const formData = new FormData()
+            formData.append('file', file)
+            const result = await uploadMediaImage({ data: formData })
             await refetch()
             toast.success("Image uploaded successfully")
             // Auto-select the uploaded image
@@ -151,7 +154,7 @@ export function ImageGalleryDialog({ open, onOpenChange, onSelect }: ImageGaller
                                                 }}
                                             >
                                                 <img
-                                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${image.url}`}
+                                                    src={getImageUrl(image.url)}
                                                     alt={image.filename}
                                                     className="h-full w-full object-cover transition-transform group-hover:scale-105"
                                                     loading="lazy"

@@ -3,7 +3,9 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export type SlideType = "BANNER" | "PROMO" | "OFFER" | "COLLECTION";
 
@@ -21,6 +23,7 @@ export interface Slide {
   overlay_color: string | null;
   sort_order: number;
   is_active: boolean;
+  position: string | null;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
@@ -40,6 +43,7 @@ export interface SlidePayload {
   overlay_color?: string;
   sort_order?: number;
   is_active?: boolean;
+  position?: string;
   start_date?: string;
   end_date?: string;
 }
@@ -47,18 +51,19 @@ export interface SlidePayload {
 // Public: Get active slides
 export const getActiveSlides = createServerFn({ method: "GET" })
   .handler(async () => {
-    return apiRequest<ApiResponse<Slide[]>>("/slides");
+    return apiRequest<ApiResponse<Array<Slide>>>("/slides");
   });
 
 // Public: Get slides by type
 export const getSlidesByType = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { type: SlideType } }) => {
-    return apiRequest<ApiResponse<Slide[]>>(`/slides/type/${data.type}`);
+  .inputValidator((data: { type: SlideType }) => data)
+  .handler(async ({ data }) => {
+    return apiRequest<ApiResponse<Array<Slide>>>(`/slides/type/${data.type}`);
   });
 
 // Admin: Get all slides
 export interface PaginatedSlidesResponse {
-  items: Slide[];
+  items: Array<Slide>;
   total: number;
   page: number;
   limit: number;
@@ -66,109 +71,84 @@ export interface PaginatedSlidesResponse {
 }
 
 export const getSlides = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data?: { page?: number; limit?: number; search?: string; include_inactive?: boolean } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data?: { page?: number; limit?: number; search?: string; include_inactive?: boolean }) => data)
+  .handler(async ({ data }) => {
     const queryParams = new URLSearchParams();
     if (data?.page) queryParams.append("page", data.page.toString());
     if (data?.limit) queryParams.append("limit", data.limit.toString());
     if (data?.search) queryParams.append("search", data.search);
     if (data?.include_inactive) queryParams.append("include_inactive", "true");
 
-    return apiRequest<ApiResponse<PaginatedSlidesResponse>>(
-      `/slides/admin?${queryParams.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<PaginatedSlidesResponse>>(
+      `/slides/admin?${queryParams.toString()}`
     );
   });
 
 // Admin: Get single slide
-export const getSlide = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Slide>>(
-      `/slides/admin/${data.id}`,
-      {},
-      token
-    );
+export const getSlide = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Slide>>(`/slides/admin/${data.id}`);
   });
 
 // Admin: Create slide
 export const createSlide = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: SlidePayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Slide>>(
+  .inputValidator((data: SlidePayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Slide>>(
       "/slides/admin",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update slide
 export const updateSlide = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { slide: Partial<SlidePayload>; id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data: { slide: Partial<SlidePayload>; id: string }) => data)
+  .handler(async ({ data }) => {
     const { id, slide } = data;
 
-    return apiRequest<ApiResponse<Slide>>(
+    return authenticatedRequest<ApiResponse<Slide>>(
       `/slides/admin/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(slide),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete slide
 export const deleteSlide = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/slides/admin/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });
 
 // Admin: Update slide order
 export const updateSlideOrder = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { slide_ids: string[] } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ order: string[] }>>(
+  .inputValidator((data: { slide_ids: Array<string> }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ order: Array<string> }>>(
       "/slides/admin/order",
       {
         method: "PUT",
         body: JSON.stringify({ slide_ids: data.slide_ids }),
-      },
-      token
+      }
     );
   });
 
 // Admin: Toggle slide active
 export const toggleSlideActive = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string; is_active: boolean } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Slide>>(
+  .inputValidator((data: { id: string; is_active: boolean }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Slide>>(
       `/slides/admin/${data.id}/toggle?is_active=${data.is_active}`,
-      { method: "PATCH" },
-      token
+      { method: "PATCH" }
     );
   });
 
@@ -178,31 +158,17 @@ export interface SlideImageResponse {
   filename: string;
 }
 
-export async function uploadSlideImage(file: File, token?: string): Promise<SlideImageResponse> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const API_URL = (typeof process !== 'undefined' && process.env?.API_URL)
-    || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
-    || "http://localhost:8000/api/v1";
-
-  const response = await fetch(`${API_URL}/slides/admin/upload`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "Upload failed" }));
-    throw new Error(error.message || "Failed to upload image");
-  }
-
-  const result = await response.json();
-  return result.data;
-}
+export const uploadSlideImage = createServerFn({ method: 'POST' })
+  .inputValidator((data) => {
+    if (!(data instanceof FormData)) throw new Error('Expected FormData')
+    return data
+  })
+  .handler(async ({ data }) => {
+    const token = getCookie('access_token')
+    if (!token) throw new Error('Not authenticated')
+    const result = await apiRequest<ApiResponse<SlideImageResponse>>('/slides/admin/upload', {
+      method: 'POST',
+      body: data,
+    }, token)
+    return result.data
+  })

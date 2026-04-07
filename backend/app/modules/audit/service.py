@@ -62,17 +62,10 @@ class AuditService:
     ) -> None:
         """
         Record an audit log entry.
-        
-        Args:
-            action: Description of the action (e.g., "delete_user")
-            actor_id: ID of the user performing the action
-            target_id: ID of the entity being affected
-            target_type: Type of the entity (e.g., "user", "role")
-            details: Additional context
-            old_values: State before change
-            new_values: State after change
-            request: FastAPI request object (for IP/User-Agent extraction)
+        MongoDB disabled — re-enable when MongoDB is available.
         """
+        return  # MongoDB disabled
+
         db = mongodb.get_db()
         collection = db["audit_logs"]
         
@@ -156,7 +149,10 @@ class AuditService:
     ) -> tuple[List[Dict[str, Any]], int]:
         """
         List audit logs with filtering, searching, and pagination.
+        MongoDB disabled — returns empty results.
         """
+        return [], 0  # MongoDB disabled
+
         db = mongodb.get_db()
         collection = db["audit_logs"]
         

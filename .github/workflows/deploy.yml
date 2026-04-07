@@ -35,7 +35,9 @@ jobs:
     - name: Build Frontend
       working-directory: frontend
       env:
-        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        API_URL: ${{ secrets.API_URL }}
+        VITE_MEDIA_URL: ${{ secrets.VITE_MEDIA_URL }}
+        VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
       run: npm run build
 
     # -------------------- BUILD ADMIN --------------------
@@ -46,7 +48,8 @@ jobs:
     - name: Build Admin
       working-directory: admin
       env:
-        API_URL: ${{ secrets.VITE_API_URL }}
+        API_URL: ${{ secrets.API_URL }}
+        VITE_MEDIA_URL: ${{ secrets.VITE_ADMIN_MEDIA_URL }}
       run: npm run build
 
     # -------------------- SSH SETUP --------------------
@@ -76,6 +79,8 @@ jobs:
       run: |
         rsync -az --delete \
           --exclude=venv \
+          --exclude=static/uploads \
+          --exclude=logs \
           backend/ \
           ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ env.DEPLOY_PATH }}/backend/
 
@@ -92,6 +97,21 @@ jobs:
         cat << 'ENVEOF' > $BASE/backend/.env
         ${{ secrets.BACKEND_ENV }}
         ENVEOF
+
+        echo "🔐 Writing frontend .env"
+        install -m 600 /dev/null $BASE/frontend/.env
+        printf 'API_URL=%s\nVITE_MEDIA_URL=%s\nVITE_SITE_URL=%s\n' \
+          '${{ secrets.API_URL }}' \
+          '${{ secrets.VITE_MEDIA_URL }}' \
+          '${{ secrets.VITE_SITE_URL }}' \
+          > $BASE/frontend/.env
+
+        echo "🔐 Writing admin .env"
+        install -m 600 /dev/null $BASE/admin/.env
+        printf 'API_URL=%s\nVITE_MEDIA_URL=%s\n' \
+          '${{ secrets.API_URL }}' \
+          '${{ secrets.VITE_MEDIA_URL }}' \
+          > $BASE/admin/.env
 
         echo "📦 Sync backend dependencies"
         cd $BASE/backend

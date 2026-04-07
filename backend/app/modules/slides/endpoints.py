@@ -39,14 +39,11 @@ def get_upload_service() -> UploadService:
 
 @router.get("/", response_model=SuccessResponse[List[SlideResponse]])
 async def list_active_slides(
+    position: Optional[str] = None,
     service: SlideService = Depends(get_slide_service)
 ):
-    """
-    List active slides for homepage (public).
-    
-    Returns only currently active slides within their schedule.
-    """
-    slides = await service.list_active_slides()
+    """List active slides, optionally filtered by position (e.g. 'home_carousel', 'jewelry_offers')."""
+    slides = await service.list_active_slides(position=position)
     return create_success_response(
         message="Slides retrieved successfully",
         data=[SlideResponse.model_validate(s) for s in slides]

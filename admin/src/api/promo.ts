@@ -2,100 +2,133 @@
  * Promo Codes API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
-export type PromoDiscountType = "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_SHIPPING";
+export type DiscountType = "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_SHIPPING";
 
 export interface PromoCode {
   id: string;
   code: string;
   description: string | null;
-  discount_type: PromoDiscountType;
+  discount_type: DiscountType;
   discount_value: number;
-  max_discount_amount: number | null;
+  max_discount: number | null;
   min_order_amount: number | null;
-  usage_limit: number | null;
-  usage_count: number;
-  per_user_limit: number | null;
+  max_total_uses: number | null;
+  max_uses_per_user: number;
+  current_uses: number;
+  starts_at: string;
+  expires_at: string;
   first_order_only: boolean;
   is_active: boolean;
-  valid_from: string | null;
-  valid_until: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+export interface PromoCodePayload {
+  code: string;
+  description?: string;
+  discount_type: DiscountType;
+  discount_value: number;
+  max_discount?: number;
+  min_order_amount?: number;
+  max_total_uses?: number;
+  max_uses_per_user?: number;
+  starts_at: string;
+  expires_at: string;
+  first_order_only?: boolean;
+  is_active?: boolean;
 }
 
 export interface PromoValidationResult {
   valid: boolean;
-  message: string;
+  code: string;
+  discount_type: DiscountType | null;
+  discount_value: number | null;
   discount_amount: number | null;
+  message: string;
+  new_total: number | null;
   free_shipping: boolean;
-  promo_code: string | null;
 }
 
-export const validatePromoCode = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { code: string; order_amount: number; token: string } }) => {
-    return apiRequest<ApiResponse<PromoValidationResult>>(
-      "/promo/validate",
-      {
-        method: "POST",
-        body: JSON.stringify({ code: data.code, order_amount: data.order_amount }),
-      },
-      data.token
-    );
-  });
+export interface PromoCodeStats {
+  total_uses: number;
+  total_discount_given: number;
+  unique_customers: number;
+}
 
+// Admin: Get all promo codes
 export const getPromoCodes = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    return apiRequest<ApiResponse<PromoCode[]>>("/promo/admin", {}, data.token);
-  });
-
-export const getPromoCode = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
-    return apiRequest<ApiResponse<PromoCode>>(
-      `/promo/admin/${data.id}`,
-      {},
-      data.token
+  .handler(async () => {
+    return authenticatedRequest<ApiResponse<Array<PromoCode>>>(
+      "/promo/admin?include_inactive=true"
     );
   });
 
+// Admin: Get single promo code
+export const getPromoCode = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<PromoCode>>(`/promo/admin/${data.id}`);
+  });
+
+// Admin: Create promo code
 export const createPromoCode = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { promo: Partial<PromoCode>; token: string } }) => {
-    return apiRequest<ApiResponse<PromoCode>>(
+  .inputValidator((data: PromoCodePayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<PromoCode>>(
       "/promo/admin",
       {
         method: "POST",
-        body: JSON.stringify(data.promo),
-      },
-      data.token
+        body: JSON.stringify(data),
+      }
     );
   });
 
-export const updatePromoCode = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { id: string; promo: Partial<PromoCode>; token: string } }) => {
-    return apiRequest<ApiResponse<PromoCode>>(
-      `/promo/admin/${data.id}`,
+// Admin: Update promo code
+export const updatePromoCode = createServerFn({ method: "POST" })
+  .inputValidator((data: { promo: Partial<PromoCodePayload>; id: string }) => data)
+  .handler(async ({ data }) => {
+    const { id, promo } = data;
+
+    return authenticatedRequest<ApiResponse<PromoCode>>(
+      `/promo/admin/${id}`,
       {
         method: "PUT",
-        body: JSON.stringify(data.promo),
-      },
-      data.token
+        body: JSON.stringify(promo),
+      }
     );
   });
 
-export const deletePromoCode = createServerFn({ method: "DELETE" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+// Admin: Delete promo code
+export const deletePromoCode = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/promo/admin/${data.id}`,
-      { method: "DELETE" },
-      data.token
+      { method: "DELETE" }
     );
   });
 
-export const getPromoStats = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string; token: string } }) => {
-    return apiRequest<ApiResponse<any>>(
-      `/promo/admin/${data.id}/stats`,
-      {},
-      data.token
+// Admin: Get promo code stats
+export const getPromoCodeStats = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<PromoCodeStats>>(
+      `/promo/admin/${data.id}/stats`
+    );
+  });
+
+// Customer: Validate promo code
+export const validatePromoCode = createServerFn({ method: "POST" })
+  .inputValidator((data: { code: string; order_amount: number }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<PromoValidationResult>>(
+      "/promo/validate",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
     );
   });

@@ -123,6 +123,22 @@ async def get_settings_by_category(
     )
 
 
+@router.put("/admin/bulk", response_model=SuccessResponse[dict])
+async def bulk_update_settings(
+    data: SettingBulkUpdate,
+    request: Request,
+    current_user: User = Depends(require_permissions([PermissionEnum.SETTINGS_WRITE])),
+    service: SettingsService = Depends(get_settings_service)
+):
+    """Bulk update multiple settings (admin)."""
+    count = await service.bulk_update(data.settings, str(current_user.id), request)
+
+    return create_success_response(
+        message=f"{count} settings updated",
+        data={"updated_count": count}
+    )
+
+
 @router.put("/admin/{key}", response_model=SuccessResponse[SettingResponse])
 async def update_setting(
     key: str,
@@ -133,26 +149,10 @@ async def update_setting(
 ):
     """Update a setting by key (admin)."""
     setting = await service.update_setting(key, data, str(current_user.id), request)
-    
+
     return create_success_response(
         message="Setting updated",
         data=SettingResponse.model_validate(setting)
-    )
-
-
-@router.put("/admin/bulk", response_model=SuccessResponse[dict])
-async def bulk_update_settings(
-    data: SettingBulkUpdate,
-    request: Request,
-    current_user: User = Depends(require_permissions([PermissionEnum.SETTINGS_WRITE])),
-    service: SettingsService = Depends(get_settings_service)
-):
-    """Bulk update multiple settings (admin)."""
-    count = await service.bulk_update(data.settings, str(current_user.id), request)
-    
-    return create_success_response(
-        message=f"{count} settings updated",
-        data={"updated_count": count}
     )
 
 

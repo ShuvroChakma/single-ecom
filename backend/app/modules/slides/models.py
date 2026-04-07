@@ -37,6 +37,8 @@ class SlideBase(SQLModel):
     
     # Display options
     sort_order: int = Field(default=0)
+    position: Optional[str] = Field(default=None, max_length=100, index=True,
+        description="Homepage section identifier, e.g. 'home_carousel', 'jewelry_offers', 'hand_picked'")
     is_active: bool = Field(default=True)
     
     # Scheduling

@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Validate email
   const validateEmail = (value: string): string | null => {
@@ -92,14 +94,23 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
           const userResponse = await getMe({ data: { token } });
 
           if (userResponse.success) {
+            // Check if user is an ADMIN - only admins can access admin panel
+            if (userResponse.data.user_type !== 'ADMIN') {
+              setEmailError("Only admin users can access the admin panel.");
+              return;
+            }
+
             // Login with access token only (refresh token is in HttpOnly cookie)
             login(
               response.data.access_token,
               {
                 id: userResponse.data.id,
                 email: userResponse.data.email,
-                full_name: userResponse.data.full_name,
+                full_name: userResponse.data.username || userResponse.data.email,
+                username: userResponse.data.username,
                 user_type: userResponse.data.user_type,
+                role_name: userResponse.data.role_name,
+                permissions: userResponse.data.permissions,
               }
             );
 
@@ -216,27 +227,41 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
                     >
                       Password
                     </label>
-                    <Input
-                      id={field.name}
-                      type="password"
-                      value={field.state.value}
-                      onChange={(e) => {
-                        const newValue = e.target.value;
-                        field.handleChange(newValue);
-                        // Only validate if there's already an error showing
-                        if (passwordError) {
-                          setPasswordError(validatePassword(newValue));
-                        }
-                      }}
-                      onBlur={field.handleBlur}
-                      disabled={isLoading}
-                      aria-invalid={!!passwordError}
-                      className={
-                        passwordError
-                          ? "border-red-500 focus-visible:border-red-500"
-                          : ""
-                      }
-                    />
+                    <div className="relative">
+                      <Input
+                        id={field.name}
+                        type={showPassword ? "text" : "password"}
+                        value={field.state.value}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          field.handleChange(newValue);
+                          // Only validate if there's already an error showing
+                          if (passwordError) {
+                            setPasswordError(validatePassword(newValue));
+                          }
+                        }}
+                        onBlur={field.handleBlur}
+                        disabled={isLoading}
+                        aria-invalid={!!passwordError}
+                        className={`pr-10 ${
+                          passwordError
+                            ? "border-red-500 focus-visible:border-red-500"
+                            : ""
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                     {passwordError && (
                       <p className="text-sm text-red-500">{passwordError}</p>
                     )}

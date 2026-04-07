@@ -1,29 +1,34 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getSlides } from '@/api/slides';
+import { SLIDE_POSITIONS } from '@/api/slidePositions';
+import { getImageUrl } from '@/api/client';
 
 interface CollectionItem {
-  id: number;
+  id: string;
   imageUrl: string;
   alt: string;
+  href: string | null;
 }
 
 const OurCollection: React.FC = () => {
-  const collections: Array<CollectionItem> = [
-    {
-      id: 1,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/06_june/homepage-our-collection/Legendz-collection-1.jpg',
-      alt: 'Legendz Collection'
-    },
-    {
-      id: 2,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/06_june/homepage-our-collection/kids-collection-1.jpg',
-      alt: 'Starlet Kids Collection'
-    },
-    {
-      id: 3,
-      imageUrl: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/06_june/homepage-our-collection/Sankha-Pola-1.jpg',
-      alt: 'Sankha Pola Collection'
-    }
-  ];
+  const { data } = useQuery({
+    queryKey: ['slides', SLIDE_POSITIONS.OUR_COLLECTION],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.OUR_COLLECTION } }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const collections: Array<CollectionItem> =
+    data?.success && data.data.length > 0
+      ? data.data.map((s) => ({
+          id: s.id,
+          imageUrl: getImageUrl(s.image_url, ''),
+          alt: s.title,
+          href: s.link_url,
+        }))
+      : [];
+
+  if (!collections.length) return null;
 
   return (
     <div className="w-full px-2 py-8 md:py-12 bg-white">
@@ -39,8 +44,9 @@ const OurCollection: React.FC = () => {
         {/* Desktop/Tablet Layout (md and up) */}
         <div className="hidden md:grid md:grid-cols-3 gap-2 lg:gap-4">
           {collections.map((item) => (
-            <div
+            <a
               key={item.id}
+              href={item.href || '#'}
               className="relative overflow-hidden rounded-lg shadow-lg transition-transform duration-200 hover:scale-102 cursor-pointer"
             >
               <img
@@ -48,15 +54,16 @@ const OurCollection: React.FC = () => {
                 alt={item.alt}
                 className="w-full h-full object-cover"
               />
-            </div>
+            </a>
           ))}
         </div>
 
         {/* Mobile Layout */}
         <div className="md:hidden flex flex-col gap-4">
           {collections.map((item) => (
-            <div
+            <a
               key={item.id}
+              href={item.href || '#'}
               className="relative overflow-hidden rounded-lg shadow-lg transition-transform duration-300 active:scale-95 cursor-pointer"
             >
               <img
@@ -64,7 +71,7 @@ const OurCollection: React.FC = () => {
                 alt={item.alt}
                 className="w-full h-auto object-cover"
               />
-            </div>
+            </a>
           ))}
         </div>
       </div>

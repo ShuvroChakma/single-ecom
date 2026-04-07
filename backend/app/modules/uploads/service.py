@@ -15,7 +15,7 @@ from app.constants.error_codes import ErrorCode
 
 
 # Allowed image types
-ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif", "svg"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 IMAGE_QUALITY = 85
 MAX_IMAGE_DIMENSION = 2000  # Max width/height

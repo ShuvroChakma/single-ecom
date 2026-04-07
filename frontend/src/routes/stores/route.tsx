@@ -5,6 +5,14 @@ import Footer from '@/components/shared/Footer/Footer'
 
 
 export const Route = createFileRoute('/stores')({
+  head: () => ({
+    meta: [
+      { title: 'Our Stores | Nazu Meah Jewellers' },
+      { name: 'description', content: 'Find a Nazu Meah Jewellers store near you. View locations, contact details and opening hours.' },
+      { property: 'og:title', content: 'Our Stores | Nazu Meah Jewellers' },
+      { property: 'og:description', content: 'Find a Nazu Meah Jewellers store near you. View locations, contact details and opening hours.' },
+    ],
+  }),
   component: RouteComponent,
 })
 

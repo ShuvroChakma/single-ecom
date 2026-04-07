@@ -2,8 +2,8 @@
  * Admins API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface Admin {
   id: string;
@@ -35,7 +35,7 @@ export interface AdminUpdatePayload {
 }
 
 export interface PaginatedAdmins {
-  items: Admin[];
+  items: Array<Admin>;
   total: number;
   page: number;
   per_page: number;
@@ -53,11 +53,9 @@ export interface AdminListParams {
 }
 
 // Admin: List admins with pagination
-export const getAdmins = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: AdminListParams }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+export const getAdmins = createServerFn({ method: "GET" })
+  .inputValidator((data: AdminListParams) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     if (data.skip !== undefined) params.append("skip", data.skip.toString());
     if (data.limit !== undefined) params.append("limit", data.limit.toString());
@@ -68,69 +66,54 @@ export const getAdmins = createServerFn({ method: "POST" })
     if (data.email) params.append("email", data.email);
     if (data.is_active !== undefined) params.append("is_active", data.is_active.toString());
 
-    return apiRequest<ApiResponse<PaginatedAdmins>>(
-      `/admin/admins?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<PaginatedAdmins>>(
+      `/admin/admins?${params.toString()}`
     );
   });
 
 // Admin: Get single admin
-export const getAdmin = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Admin>>(
-      `/admin/admins/${data.id}`,
-      {},
-      token
+export const getAdmin = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Admin>>(
+      `/admin/admins/${data.id}`
     );
   });
 
 // Admin: Create admin
 export const createAdmin = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: AdminPayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Admin>>(
+  .inputValidator((data: AdminPayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Admin>>(
       "/admin/admins",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update admin
 export const updateAdmin = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { admin: AdminUpdatePayload; id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data: { admin: AdminUpdatePayload; id: string }) => data)
+  .handler(async ({ data }) => {
     const { id, admin } = data;
 
-    return apiRequest<ApiResponse<Admin>>(
+    return authenticatedRequest<ApiResponse<Admin>>(
       `/admin/admins/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(admin),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete admin
 export const deleteAdmin = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<null>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<null>>(
       `/admin/admins/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });

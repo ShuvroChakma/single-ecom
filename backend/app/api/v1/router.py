@@ -28,6 +28,10 @@ from app.modules.payments import callback_endpoints as payment_callbacks
 from app.modules.orders import endpoints as orders
 from app.modules.orders import pos_endpoints as pos
 from app.modules.settings import endpoints as settings
+from app.modules.dashboard import endpoints as dashboard
+from app.modules.wishlist import endpoints as wishlist
+from app.modules.stores import endpoints as stores
+from app.modules.inquiries import endpoints as inquiries
 
 
 api_router = APIRouter()
@@ -60,4 +64,8 @@ api_router.include_router(payment_callbacks.router, prefix="/payments/callback",
 api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
 api_router.include_router(pos.router, prefix="/admin/pos", tags=["Admin POS"])
 api_router.include_router(settings.router, prefix="/settings", tags=["Settings"])
+api_router.include_router(dashboard.router, prefix="/admin/dashboard", tags=["Admin Dashboard"])
+api_router.include_router(wishlist.router, prefix="/wishlist", tags=["Wishlist"])
+api_router.include_router(stores.router, prefix="/stores", tags=["Stores"])
+api_router.include_router(inquiries.router, prefix="/inquiries", tags=["Inquiries"])
 api_router.include_router(products.router, tags=["Products"])

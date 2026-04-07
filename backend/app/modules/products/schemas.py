@@ -68,6 +68,8 @@ class ProductCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     slug: str = Field(..., min_length=1, max_length=200, pattern=r"^[a-z0-9-]+$")
     description: Optional[str] = None
+    meta_title: Optional[str] = Field(None, max_length=200)
+    meta_description: Optional[str] = Field(None, max_length=500)
     category_id: UUID
     brand_id: Optional[UUID] = None
     collection_id: Optional[UUID] = None
@@ -78,7 +80,7 @@ class ProductCreate(BaseModel):
     is_active: bool = True
     is_featured: bool = False
     images: List[str] = []
-    
+
     # Optional: Create with initial variants
     variants: List[ProductVariantCreate] = []
 
@@ -89,6 +91,8 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     slug: Optional[str] = Field(None, min_length=1, max_length=200, pattern=r"^[a-z0-9-]+$")
     description: Optional[str] = None
+    meta_title: Optional[str] = Field(None, max_length=200)
+    meta_description: Optional[str] = Field(None, max_length=500)
     category_id: Optional[UUID] = None
     brand_id: Optional[UUID] = None
     collection_id: Optional[UUID] = None
@@ -108,6 +112,8 @@ class ProductResponse(BaseModel):
     name: str
     slug: str
     description: Optional[str]
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     category_id: UUID
     brand_id: Optional[UUID]
     collection_id: Optional[UUID]
@@ -129,15 +135,73 @@ class ProductWithVariantsResponse(ProductResponse):
     variants: List[ProductVariantResponse] = []
 
 
+class SortOrder(str):
+    """Sort order options."""
+    NEWEST = "newest"
+    OLDEST = "oldest"
+    NAME_ASC = "name_asc"
+    NAME_DESC = "name_desc"
+    PRICE_LOW = "price_low"
+    PRICE_HIGH = "price_high"
+    FEATURED = "featured"
+
+
 class ProductListParams(BaseModel):
     """Query parameters for product listing."""
+    # EAV attribute filters: {attribute_code: [value1, value2]}
+    attribute_filters: Optional[dict] = None  # Dict[str, List[str]]
+
+    # Category filtering (supports single or multiple)
     category_id: Optional[UUID] = None
+    category_ids: Optional[List[UUID]] = None  # Multiple categories
+    include_subcategories: bool = False  # Include products from child categories
+
+    # Brand and collection
     brand_id: Optional[UUID] = None
+    brand_ids: Optional[List[UUID]] = None  # Multiple brands
     collection_id: Optional[UUID] = None
+    collection_ids: Optional[List[UUID]] = None  # Multiple collections
+
+    # Product attributes
     gender: Optional[Gender] = None
+    genders: Optional[List[Gender]] = None  # Multiple genders
     metal_type: Optional[MetalType] = None
+    metal_types: Optional[List[MetalType]] = None  # Multiple metal types
+    metal_purity: Optional[str] = None  # e.g., "22K", "18K"
+    metal_purities: Optional[List[str]] = None  # Multiple purities
+
+    # Price range (uses min price from variants)
+    min_price: Optional[Decimal] = None
+    max_price: Optional[Decimal] = None
+
+    # Weight range
+    min_weight: Optional[Decimal] = None
+    max_weight: Optional[Decimal] = None
+
+    # Size filter
+    size: Optional[str] = None
+    sizes: Optional[List[str]] = None
+
+    # Stock status
+    in_stock: Optional[bool] = None  # Only products with stock > 0
+
+    # Tags (if products have tags)
+    tags: Optional[List[str]] = None
+
+    # Status filters
     is_featured: Optional[bool] = None
     is_active: Optional[bool] = True
+
+    # Search
     search: Optional[str] = None
+
+    # Sorting
+    sort_by: Optional[str] = Field(default="newest")  # newest, oldest, name_asc, name_desc, price_low, price_high, featured
+
+    # Pagination
     page: int = Field(default=1, ge=1)
     per_page: int = Field(default=20, ge=1, le=100)
+
+    # IDs filter (for specific products)
+    ids: Optional[List[UUID]] = None
+    exclude_ids: Optional[List[UUID]] = None

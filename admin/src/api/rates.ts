@@ -2,8 +2,9 @@
  * Rates API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface DailyRate {
   id: string;
@@ -29,59 +30,76 @@ export interface RatePayload {
 }
 
 export interface CurrentRatesResponse {
-  rates: DailyRate[];
+  rates: Array<DailyRate>;
   last_updated: string;
 }
 
 // Public: Get current rates
 export const getCurrentRates = createServerFn({ method: "GET" })
   .handler(async () => {
-    return apiRequest<ApiResponse<CurrentRatesResponse>>(
-      "/products/rates/current"
-    );
+    return apiRequest<ApiResponse<CurrentRatesResponse>>("/products/rates/current");
   });
 
-// Public: Get rate history
-export const getRateHistory = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { metal_type: string; purity: string; limit?: number } }) => {
+export interface RateHistoryPage {
+  items: Array<DailyRate>;
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// Public: Get rate history (paginated, optional date filter)
+export const getRateHistory = createServerFn({ method: "GET" })
+  .inputValidator((data: { metal_type: string; purity: string; limit?: number; offset?: number; date?: string }) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     params.append("metal_type", data.metal_type);
     params.append("purity", data.purity);
     if (data.limit) params.append("limit", data.limit.toString());
+    if (data.offset) params.append("offset", data.offset.toString());
+    if (data.date) params.append("date", data.date);
 
-    return apiRequest<ApiResponse<DailyRate[]>>(
+    return apiRequest<ApiResponse<RateHistoryPage>>(
       `/products/rates/history?${params.toString()}`
     );
   });
 
 // Admin: Add new rate
 export const addRate = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: RatePayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<DailyRate>>(
+  .inputValidator((data: RatePayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<DailyRate>>(
       "/products/admin/rates",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Add rates batch
 export const addRatesBatch = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: RatePayload[] }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<DailyRate[]>>(
+  .inputValidator((data: Array<RatePayload>) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Array<DailyRate>>>(
       "/products/admin/rates/batch",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
+    );
+  });
+
+export interface SyncResult {
+  synced: number;
+  skipped: number;
+  source: string;
+  message: string;
+}
+
+export const syncBajusRates = createServerFn({ method: "POST" })
+  .handler(async () => {
+    return authenticatedRequest<ApiResponse<SyncResult>>(
+      "/products/admin/rates/sync-bajus",
+      { method: "POST" }
     );
   });

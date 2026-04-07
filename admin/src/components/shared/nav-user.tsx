@@ -1,7 +1,6 @@
 import { useNavigate } from "@tanstack/react-router"
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
   LogOut
 } from "lucide-react"
@@ -109,13 +108,9 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/dashboard/account" })}>
                 <BadgeCheck />
                 Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

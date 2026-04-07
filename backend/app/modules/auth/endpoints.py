@@ -1,35 +1,34 @@
 """
 Authentication endpoints.
 """
-from fastapi import APIRouter, Depends, Response, Request, status
-from sqlmodel.ext.asyncio.session import AsyncSession
-
+from app.constants.enums import OTPType, UserType
+from app.constants.rate_limits import RateLimit
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.docs import doc_responses
-from app.core.permissions import get_current_verified_user, get_current_user
-from app.core.rate_limit import rate_limit
-from app.modules.auth.schemas import (
-    UserRegisterRequest,
-    LoginRequest,
-    EmailVerificationRequest,
-    ResendOTPRequest,
-    ForgotPasswordRequest,
-    ResetPasswordRequest,
-    ChangePasswordRequest,
-    TokenResponse,
-    UserResponse,
-    RefreshTokenRequest
-)
-from app.core.schemas.response import SuccessResponse
-from app.modules.auth.service import AuthService
-from app.modules.auth.otp_service import OTPService
-from app.constants.enums import OTPType, UserType
-from app.core.config import settings
-from app.constants.rate_limits import RateLimit
-from app.modules.audit.service import audit_service
 from app.core.exceptions import AuthenticationError, ValidationError
-from app.core.schemas.response import ErrorCode
-from app.core.security import verify_password, get_password_hash
+from app.core.permissions import get_current_user, get_current_verified_user
+from app.core.rate_limit import rate_limit
+from app.core.schemas.response import ErrorCode, SuccessResponse
+from app.core.security import get_password_hash, verify_password
+from app.modules.audit.service import audit_service
+from app.modules.auth.otp_service import OTPService
+from app.modules.auth.schemas import (
+    ChangePasswordRequest,
+    EmailVerificationRequest,
+    ForgotPasswordRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    ResendOTPRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+    UpdateProfileRequest,
+    UserRegisterRequest,
+    UserResponse,
+)
+from app.modules.auth.service import AuthService
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 router = APIRouter(tags=["Authentication"])
 
@@ -49,17 +48,18 @@ router = APIRouter(tags=["Authentication"])
 async def register(
     request: UserRegisterRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Register a new customer user.
-    
+
     - Creates inactive account requiring email verification
     - Sends OTP to provided email
     - Returns success message
     """
     auth_service = AuthService(db)
-    
+
     # Register user
     user = await auth_service.register_customer(
         email=request.email,
@@ -69,9 +69,9 @@ async def register(
         phone_number=request.phone_number,
         request=http_request
     )
-    
+
     # Generate OTP for email verification
-    otp_code = await OTPService.generate_otp(user.email, OTPType.EMAIL_VERIFICATION)
+    otp_code = await OTPService.generate_otp(user.email, OTPType.EMAIL_VERIFICATION, background_tasks)
     
     # TODO: Send email with OTP
     # await send_verification_email(user.email, otp_code)
@@ -208,6 +208,7 @@ async def verify_email(
 async def resend_otp(
     request: ResendOTPRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)  # Injected for finding user
 ):
     """
@@ -221,7 +222,7 @@ async def resend_otp(
     from app.modules.users.repository import UserRepository
     
     otp_type = OTPType(request.type)
-    otp_code = await OTPService.generate_otp(request.email, otp_type)
+    otp_code = await OTPService.generate_otp(request.email, otp_type, background_tasks)
     
     # Send email (TODO)
     # await send_otp_email(request.email, otp_code, otp_type)
@@ -380,30 +381,189 @@ async def get_current_user_info(
     - Returns user profile data (including permissions for admins)
     """
     user_data = UserResponse.model_validate(current_user)
-    
-    # If user is admin, fetch role name and permissions
+
     from app.constants.enums import UserType
+
+    # If customer, fetch name and phone from Customer profile
+    if current_user.user_type == UserType.CUSTOMER:
+        from app.modules.users.repository import CustomerRepository
+        customer_repo = CustomerRepository(db)
+        customer = await customer_repo.get_by_user_id(current_user.id)
+        if customer:
+            user_data.first_name = customer.first_name
+            user_data.last_name = customer.last_name
+            user_data.phone_number = customer.phone_number
+
+    # If user is admin, fetch role name and permissions
     if current_user.user_type == UserType.ADMIN:
         # Get permissions
         from app.core.permissions import get_user_permissions
         permissions = await get_user_permissions(current_user, db)
         user_data.permissions = permissions
-        
+
         # Get role name
-        from app.modules.users.repository import AdminRepository
         from app.modules.roles.repository import RoleRepository
+        from app.modules.users.repository import AdminRepository
+
         admin_repo = AdminRepository(db)
         role_repo = RoleRepository(db)
-        
+
         admin = await admin_repo.get_by_user_id(current_user.id)
         if admin:
+            user_data.username = admin.username
             role = await role_repo.get(admin.role_id)
             if role:
                 user_data.role_name = role.name
-    
+
     return SuccessResponse(
         message="User retrieved successfully",
         data=user_data.model_dump(exclude_none=True)
+    )
+
+
+@router.put(
+    "/me",
+    response_model=SuccessResponse[None],
+    summary="Update Profile",
+    responses=doc_responses(
+        success_message="Profile updated successfully",
+        errors=(400, 401, 422)
+    )
+)
+async def update_profile(
+    request: UpdateProfileRequest,
+    http_request: Request,
+    current_user=Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update current user profile.
+
+    - Customers: update first_name, last_name, phone_number
+    - Admins: update username
+    """
+    from app.modules.users.repository import AdminRepository, CustomerRepository
+
+    if current_user.user_type == UserType.CUSTOMER:
+        customer_repo = CustomerRepository(db)
+        customer = await customer_repo.get_by_user_id(current_user.id)
+        if customer:
+            updates = {}
+            if request.first_name is not None:
+                updates["first_name"] = request.first_name
+            if request.last_name is not None:
+                updates["last_name"] = request.last_name
+            if request.phone_number is not None:
+                updates["phone_number"] = request.phone_number
+            if updates:
+                await customer_repo.update(customer, updates)
+
+    elif current_user.user_type == UserType.ADMIN:
+        admin_repo = AdminRepository(db)
+        admin = await admin_repo.get_by_user_id(current_user.id)
+        if admin and request.username:
+            await admin_repo.update(admin, {"username": request.username})
+
+    return SuccessResponse(message="Profile updated successfully", data=None)
+
+
+@router.post(
+    "/reset-password",
+    response_model=SuccessResponse[None],
+    summary="Reset Password",
+    responses=doc_responses(
+        success_message="Password reset successfully. You can now login.",
+        errors=(400, 422)
+    )
+)
+@rate_limit(RateLimit.AUTH_VERIFY_EMAIL)
+async def reset_password(
+    request: ResetPasswordRequest,
+    http_request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Reset password with OTP verification.
+
+    - Validates OTP code sent via forgot password
+    - Updates user password
+    - Allows user to login with new password
+    """
+    from app.modules.users.repository import UserRepository
+
+    # Verify OTP
+    await OTPService.verify_otp(request.email, request.otp, OTPType.PASSWORD_RESET)
+
+    # Get user and update password
+    user_repo = UserRepository(db)
+    user = await user_repo.get_by_email(request.email)
+
+    if user:
+        await user_repo.update(user, {"hashed_password": get_password_hash(request.new_password)})
+
+        # Audit Log
+        await audit_service.log_action(
+            action="reset_password",
+            actor_id=user.id,
+            target_id=str(user.id),
+            target_type="user",
+            details={"email": request.email},
+            request=http_request
+        )
+
+    return SuccessResponse(
+        message="Password reset successfully. You can now login.",
+        data=None
+    )
+
+
+@router.get(
+    "/debug/otp/{email}",
+    response_model=SuccessResponse[dict],
+    summary="Debug: Get OTP",
+    include_in_schema=settings.DEBUG,  # Only show in docs when DEBUG=True
+    responses=doc_responses(
+        success_message="OTP retrieved successfully", errors=(400, 404)
+    ),
+)
+async def debug_get_otp(email: str, otp_type: str = "EMAIL_VERIFICATION"):
+    """
+    Get OTP code for debugging purposes.
+
+    **⚠️ WARNING: This endpoint only works when DEBUG=True**
+
+    - Returns the raw OTP code for the specified email
+    - Useful for automated testing and development
+    - Returns 404 if no OTP exists or DEBUG is disabled
+    """
+    # if not settings.DEBUG:
+    #     raise ValidationError(
+    #         error_code=ErrorCode.VALIDATION_ERROR,
+    #         message="Debug endpoint only available in DEBUG mode"
+    #     )
+
+    try:
+        otp_type_enum = OTPType(otp_type)
+    except ValueError:
+        raise ValidationError(
+            error_code=ErrorCode.VALIDATION_ERROR,
+            message=f"Invalid OTP type. Must be one of: {[t.value for t in OTPType]}",
+            field="otp_type",
+        )
+
+    otp_code = await OTPService.get_debug_otp(email, otp_type_enum)
+
+    if not otp_code:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=404,
+            detail={"message": f"No OTP found for {email} with type {otp_type}"},
+        )
+
+    return SuccessResponse(
+        message="OTP retrieved successfully",
+        data={"email": email, "otp_type": otp_type, "otp_code": otp_code},
     )
 
 
@@ -431,7 +591,7 @@ async def change_password(
     - Super admin can use this to change their password
     """
     from app.modules.users.repository import UserRepository
-    
+
     # Verify current password
     if not verify_password(body.current_password, current_user.hashed_password):
         raise ValidationError(
@@ -439,11 +599,11 @@ async def change_password(
             message="Current password is incorrect",
             field="current_password"
         )
-    
+
     # Update password
     user_repo = UserRepository(db)
     await user_repo.update(current_user, {"hashed_password": get_password_hash(body.new_password)})
-    
+
     # Audit log
     await audit_service.log_action(
         action="change_password",
@@ -452,6 +612,5 @@ async def change_password(
         target_type="user",
         request=request
     )
-    
-    return SuccessResponse(message="Password changed successfully", data=None)
 
+    return SuccessResponse(message="Password changed successfully", data=None)
