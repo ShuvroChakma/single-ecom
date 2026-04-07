@@ -80,7 +80,9 @@ export function ImageGalleryDialog({ open, onOpenChange, onSelect }: ImageGaller
 
         try {
             setIsUploading(true)
-            const result = await uploadMediaImage(file, token || undefined)
+            const formData = new FormData()
+            formData.append('file', file)
+            const result = await uploadMediaImage({ data: formData })
             await refetch()
             toast.success("Image uploaded successfully")
             // Auto-select the uploaded image

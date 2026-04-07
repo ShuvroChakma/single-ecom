@@ -5,11 +5,13 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 
+from fastapi import BackgroundTasks
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.inquiries.models import Inquiry, InquiryType, InquiryStatus
 from app.modules.inquiries.schemas import InquiryCreate, CustomJewelleryRequest, InquiryUpdate
+from app.core.email import EmailService
 
 
 class InquiryService:
@@ -46,7 +48,8 @@ class InquiryService:
         self,
         data: CustomJewelleryRequest,
         customer_id: Optional[UUID] = None,
-        design_image: Optional[str] = None
+        design_image: Optional[str] = None,
+        background_tasks: Optional[BackgroundTasks] = None
     ) -> Inquiry:
         """Create a custom jewellery request."""
         inquiry = Inquiry(
@@ -64,6 +67,29 @@ class InquiryService:
         self.session.add(inquiry)
         await self.session.commit()
         await self.session.refresh(inquiry)
+
+        # Send acknowledgement email in background
+        if background_tasks:
+            background_tasks.add_task(
+                EmailService.send_inquiry_acknowledgement_email,
+                email=data.email,
+                customer_name=data.name,
+                metal_type=data.metal_type,
+                message=data.message,
+                budget_range=data.budget_range,
+            )
+        else:
+            try:
+                await EmailService.send_inquiry_acknowledgement_email(
+                    email=data.email,
+                    customer_name=data.name,
+                    metal_type=data.metal_type,
+                    message=data.message,
+                    budget_range=data.budget_range,
+                )
+            except Exception:
+                pass
+
         return inquiry
 
     async def get_inquiry(self, inquiry_id: UUID) -> Optional[Inquiry]:

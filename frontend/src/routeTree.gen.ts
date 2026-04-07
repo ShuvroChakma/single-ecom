@@ -9,6 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as _errorRouteImport } from './routes/__error'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as WishlistRouteRouteImport } from './routes/wishlist/route'
 import { Route as StoresRouteRouteImport } from './routes/stores/route'
 import { Route as ProfileRouteRouteImport } from './routes/profile/route'
@@ -16,17 +20,40 @@ import { Route as OrdersRouteRouteImport } from './routes/orders/route'
 import { Route as CheckoutRouteRouteImport } from './routes/checkout/route'
 import { Route as CartRouteRouteImport } from './routes/cart/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileIndexRouteImport } from './routes/profile/index'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
+import { Route as OrdersIndexRouteImport } from './routes/orders/index'
+import { Route as ProfileAddressesRouteImport } from './routes/profile/addresses'
 import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
 import { Route as FooterTrackOrderRouteImport } from './routes/footer/track-order'
 import { Route as FooterSizeGuideRouteImport } from './routes/footer/size-guide'
 import { Route as FooterOurPoliciesRouteImport } from './routes/footer/our-policies'
+import { Route as FooterMetalPricesRouteImport } from './routes/footer/metal-prices'
 import { Route as FooterFaqRouteImport } from './routes/footer/faq'
 import { Route as FooterCustomJewelleryRouteImport } from './routes/footer/custom-jewellery'
 import { Route as FooterAboutRouteImport } from './routes/footer/about'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const _errorRoute = _errorRouteImport.update({
+  id: '/__error',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WishlistRouteRoute = WishlistRouteRouteImport.update({
   id: '/wishlist',
   path: '/wishlist',
@@ -62,10 +89,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileRouteRoute,
+} as any)
 const ProductsIndexRoute = ProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OrdersRouteRoute,
+} as any)
+const ProfileAddressesRoute = ProfileAddressesRouteImport.update({
+  id: '/addresses',
+  path: '/addresses',
+  getParentRoute: () => ProfileRouteRoute,
 } as any)
 const ProductsSlugRoute = ProductsSlugRouteImport.update({
   id: '/products/$slug',
@@ -90,6 +132,11 @@ const FooterSizeGuideRoute = FooterSizeGuideRouteImport.update({
 const FooterOurPoliciesRoute = FooterOurPoliciesRouteImport.update({
   id: '/footer/our-policies',
   path: '/footer/our-policies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FooterMetalPricesRoute = FooterMetalPricesRouteImport.update({
+  id: '/footer/metal-prices',
+  path: '/footer/metal-prices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FooterFaqRoute = FooterFaqRouteImport.update({
@@ -118,38 +165,50 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRouteRoute
   '/checkout': typeof CheckoutRouteRoute
   '/orders': typeof OrdersRouteRouteWithChildren
-  '/profile': typeof ProfileRouteRoute
+  '/profile': typeof ProfileRouteRouteWithChildren
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
+  '/$': typeof SplatRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
+  '/footer/metal-prices': typeof FooterMetalPricesRoute
   '/footer/our-policies': typeof FooterOurPoliciesRoute
   '/footer/size-guide': typeof FooterSizeGuideRoute
   '/footer/track-order': typeof FooterTrackOrderRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/profile/addresses': typeof ProfileAddressesRoute
+  '/orders/': typeof OrdersIndexRoute
   '/products': typeof ProductsIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRouteRoute
   '/checkout': typeof CheckoutRouteRoute
-  '/orders': typeof OrdersRouteRouteWithChildren
-  '/profile': typeof ProfileRouteRoute
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
+  '/$': typeof SplatRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
+  '/footer/metal-prices': typeof FooterMetalPricesRoute
   '/footer/our-policies': typeof FooterOurPoliciesRoute
   '/footer/size-guide': typeof FooterSizeGuideRoute
   '/footer/track-order': typeof FooterTrackOrderRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/profile/addresses': typeof ProfileAddressesRoute
+  '/orders': typeof OrdersIndexRoute
   '/products': typeof ProductsIndexRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -157,19 +216,27 @@ export interface FileRoutesById {
   '/cart': typeof CartRouteRoute
   '/checkout': typeof CheckoutRouteRoute
   '/orders': typeof OrdersRouteRouteWithChildren
-  '/profile': typeof ProfileRouteRoute
+  '/profile': typeof ProfileRouteRouteWithChildren
   '/stores': typeof StoresRouteRoute
   '/wishlist': typeof WishlistRouteRoute
+  '/$': typeof SplatRoute
+  '/__error': typeof _errorRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/footer/about': typeof FooterAboutRoute
   '/footer/custom-jewellery': typeof FooterCustomJewelleryRoute
   '/footer/faq': typeof FooterFaqRoute
+  '/footer/metal-prices': typeof FooterMetalPricesRoute
   '/footer/our-policies': typeof FooterOurPoliciesRoute
   '/footer/size-guide': typeof FooterSizeGuideRoute
   '/footer/track-order': typeof FooterTrackOrderRoute
   '/orders/$id': typeof OrdersIdRoute
   '/products/$slug': typeof ProductsSlugRoute
+  '/profile/addresses': typeof ProfileAddressesRoute
+  '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -181,35 +248,47 @@ export interface FileRouteTypes {
     | '/profile'
     | '/stores'
     | '/wishlist'
+    | '/$'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
+    | '/footer/metal-prices'
     | '/footer/our-policies'
     | '/footer/size-guide'
     | '/footer/track-order'
     | '/orders/$id'
     | '/products/$slug'
+    | '/profile/addresses'
+    | '/orders/'
     | '/products'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cart'
     | '/checkout'
-    | '/orders'
-    | '/profile'
     | '/stores'
     | '/wishlist'
+    | '/$'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
+    | '/footer/metal-prices'
     | '/footer/our-policies'
     | '/footer/size-guide'
     | '/footer/track-order'
     | '/orders/$id'
     | '/products/$slug'
+    | '/profile/addresses'
+    | '/orders'
     | '/products'
+    | '/profile'
   id:
     | '__root__'
     | '/'
@@ -219,16 +298,24 @@ export interface FileRouteTypes {
     | '/profile'
     | '/stores'
     | '/wishlist'
+    | '/$'
+    | '/__error'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/categories/$slug'
     | '/footer/about'
     | '/footer/custom-jewellery'
     | '/footer/faq'
+    | '/footer/metal-prices'
     | '/footer/our-policies'
     | '/footer/size-guide'
     | '/footer/track-order'
     | '/orders/$id'
     | '/products/$slug'
+    | '/profile/addresses'
+    | '/orders/'
     | '/products/'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -236,13 +323,18 @@ export interface RootRouteChildren {
   CartRouteRoute: typeof CartRouteRoute
   CheckoutRouteRoute: typeof CheckoutRouteRoute
   OrdersRouteRoute: typeof OrdersRouteRouteWithChildren
-  ProfileRouteRoute: typeof ProfileRouteRoute
+  ProfileRouteRoute: typeof ProfileRouteRouteWithChildren
   StoresRouteRoute: typeof StoresRouteRoute
   WishlistRouteRoute: typeof WishlistRouteRoute
+  SplatRoute: typeof SplatRoute
+  _errorRoute: typeof _errorRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   FooterAboutRoute: typeof FooterAboutRoute
   FooterCustomJewelleryRoute: typeof FooterCustomJewelleryRoute
   FooterFaqRoute: typeof FooterFaqRoute
+  FooterMetalPricesRoute: typeof FooterMetalPricesRoute
   FooterOurPoliciesRoute: typeof FooterOurPoliciesRoute
   FooterSizeGuideRoute: typeof FooterSizeGuideRoute
   FooterTrackOrderRoute: typeof FooterTrackOrderRoute
@@ -252,6 +344,34 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/__error': {
+      id: '/__error'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof _errorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wishlist': {
       id: '/wishlist'
       path: '/wishlist'
@@ -301,12 +421,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof ProfileRouteRoute
+    }
     '/products/': {
       id: '/products/'
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/orders/': {
+      id: '/orders/'
+      path: '/'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof OrdersRouteRoute
+    }
+    '/profile/addresses': {
+      id: '/profile/addresses'
+      path: '/addresses'
+      fullPath: '/profile/addresses'
+      preLoaderRoute: typeof ProfileAddressesRouteImport
+      parentRoute: typeof ProfileRouteRoute
     }
     '/products/$slug': {
       id: '/products/$slug'
@@ -343,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FooterOurPoliciesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/footer/metal-prices': {
+      id: '/footer/metal-prices'
+      path: '/footer/metal-prices'
+      fullPath: '/footer/metal-prices'
+      preLoaderRoute: typeof FooterMetalPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/footer/faq': {
       id: '/footer/faq'
       path: '/footer/faq'
@@ -376,14 +524,30 @@ declare module '@tanstack/react-router' {
 
 interface OrdersRouteRouteChildren {
   OrdersIdRoute: typeof OrdersIdRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
 }
 
 const OrdersRouteRouteChildren: OrdersRouteRouteChildren = {
   OrdersIdRoute: OrdersIdRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
 }
 
 const OrdersRouteRouteWithChildren = OrdersRouteRoute._addFileChildren(
   OrdersRouteRouteChildren,
+)
+
+interface ProfileRouteRouteChildren {
+  ProfileAddressesRoute: typeof ProfileAddressesRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
+}
+
+const ProfileRouteRouteChildren: ProfileRouteRouteChildren = {
+  ProfileAddressesRoute: ProfileAddressesRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
+}
+
+const ProfileRouteRouteWithChildren = ProfileRouteRoute._addFileChildren(
+  ProfileRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
@@ -391,13 +555,18 @@ const rootRouteChildren: RootRouteChildren = {
   CartRouteRoute: CartRouteRoute,
   CheckoutRouteRoute: CheckoutRouteRoute,
   OrdersRouteRoute: OrdersRouteRouteWithChildren,
-  ProfileRouteRoute: ProfileRouteRoute,
+  ProfileRouteRoute: ProfileRouteRouteWithChildren,
   StoresRouteRoute: StoresRouteRoute,
   WishlistRouteRoute: WishlistRouteRoute,
+  SplatRoute: SplatRoute,
+  _errorRoute: _errorRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   FooterAboutRoute: FooterAboutRoute,
   FooterCustomJewelleryRoute: FooterCustomJewelleryRoute,
   FooterFaqRoute: FooterFaqRoute,
+  FooterMetalPricesRoute: FooterMetalPricesRoute,
   FooterOurPoliciesRoute: FooterOurPoliciesRoute,
   FooterSizeGuideRoute: FooterSizeGuideRoute,
   FooterTrackOrderRoute: FooterTrackOrderRoute,

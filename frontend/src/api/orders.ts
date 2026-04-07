@@ -1,8 +1,30 @@
 /**
- * Orders API functions
+ * Orders API - Server Functions (token from HttpOnly cookie)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
+import { apiRequest } from './client'
+import type { ApiResponse } from './client'
+import { z } from 'zod'
+
+const createOrderSchema = z.object({
+  address_id: z.string().min(1, "Address is required"),
+  payment_method: z.string().min(1, "Payment method is required"),
+  is_gift: z.boolean().optional(),
+  gift_message: z.string().optional(),
+  hide_prices: z.boolean().optional(),
+  promo_code: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+const orderIdSchema = z.object({
+  orderId: z.string().min(1, "Order ID is required"),
+})
+
+const ordersListSchema = z.object({
+  limit: z.number().int().positive().optional(),
+  offset: z.number().int().min(0).optional(),
+}).optional()
 
 export interface OrderItem {
   id: string
@@ -11,10 +33,14 @@ export interface OrderItem {
   product_name: string
   product_image: string | null
   variant_sku: string
-  variant_info: string
+  metal_type: string | null
+  metal_purity: string | null
+  metal_color: string | null
+  size: string | null
   quantity: number
   unit_price: number
-  subtotal: number
+  line_total: number
+  net_weight: number | null
 }
 
 export interface OrderListItem {
@@ -35,6 +61,7 @@ export interface Order {
   pos_customer_name: string | null
   pos_customer_phone: string | null
   status: string
+  status_history: Array<{ status: string; timestamp: string; note: string }>
   payment_status: string
   payment_method: string
   payment_transaction_id: string | null
@@ -42,7 +69,7 @@ export interface Order {
   is_gift: boolean
   gift_message: string | null
   hide_prices: boolean
-  items: OrderItem[]
+  items: Array<OrderItem>
   subtotal: number
   discount_amount: number
   delivery_charge: number
@@ -78,37 +105,42 @@ export interface OrderCreatedResponse {
   message: string
 }
 
-/**
- * Create a new order from cart
- */
-export async function createOrder(data: CreateOrderRequest): Promise<APIResponse<OrderCreatedResponse>> {
-  return apiClient.post<OrderCreatedResponse>('/orders', data)
-}
+export const createOrder = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => createOrderSchema.parse(data))
+  .handler(async ({ data }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<OrderCreatedResponse>>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token)
+  })
 
-/**
- * Get order by ID
- */
-export async function getOrder(orderId: string): Promise<APIResponse<Order>> {
-  return apiClient.get<Order>(`/orders/${orderId}`)
-}
+export const getOrder = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) => orderIdSchema.parse(data))
+  .handler(async ({ data }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Order>>(`/orders/${data.orderId}`, {}, token)
+  })
 
-/**
- * Get list of orders (simpler response)
- */
-export async function getOrdersList(limit: number = 20, offset: number = 0): Promise<APIResponse<OrderListItem[]>> {
-  return apiClient.get<OrderListItem[]>(`/orders?limit=${limit}&offset=${offset}`)
-}
+export const getOrdersList = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) => ordersListSchema.parse(data))
+  .handler(async ({ data }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    const limit = data?.limit ?? 20
+    const offset = data?.offset ?? 0
+    return apiRequest<ApiResponse<Array<OrderListItem>>>(`/orders?limit=${limit}&offset=${offset}`, {}, token)
+  })
 
-/**
- * Get user's orders
- */
-export async function getMyOrders(limit: number = 20, offset: number = 0): Promise<APIResponse<Order[]>> {
-  return apiClient.get<Order[]>(`/orders?limit=${limit}&offset=${offset}`)
-}
-
-/**
- * Cancel an order
- */
-export async function cancelOrder(orderId: string): Promise<APIResponse<Order>> {
-  return apiClient.post<Order>(`/orders/${orderId}/cancel`, {})
-}
+export const cancelOrder = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => orderIdSchema.parse(data))
+  .handler(async ({ data }) => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Order>>(`/orders/${data.orderId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }, token)
+  })

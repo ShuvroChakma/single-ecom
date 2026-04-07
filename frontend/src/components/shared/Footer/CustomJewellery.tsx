@@ -1,8 +1,13 @@
 import { useState } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import type { ChangeEvent } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { submitCustomJewelleryRequest } from '@/api/inquiries'
+import { getSlides } from '@/api/slides'
+import { SLIDE_POSITIONS } from '@/api/slidePositions'
+import { getImageUrl } from '@/api/client'
+
+const FALLBACK_BANNER = ''
 
 interface FormData {
   name: string
@@ -13,12 +18,20 @@ interface FormData {
   designChoice: 'upload' | 'collection'
   comments: string
   captcha: string
+  website: string  // honeypot — must stay empty
   termsAccepted: boolean
   uploadedFile: File | null
 }
 
 const METAL_TYPES = ['Gold', 'Silver', 'Platinum', 'Diamond', 'White Gold', 'Rose Gold']
-const BUDGET_RANGES = ['Under ৳50,000', '৳50,000 - ৳1,00,000', '৳1,00,000 - ৳2,00,000', '৳2,00,000 - ৳5,00,000', 'Above ৳5,00,000']
+const BUDGET_RANGES = [
+  'Under ৳10,000',
+  '৳10,000 – ৳25,000',
+  '৳25,000 – ৳50,000',
+  '৳50,000 – ৳1,00,000',
+  '৳1,00,000 – ৳2,50,000',
+  'Above ৳2,50,000',
+]
 
 export default function CustomJewelleryForm() {
   const [formData, setFormData] = useState<FormData>({
@@ -30,9 +43,21 @@ export default function CustomJewelleryForm() {
     designChoice: 'upload',
     comments: '',
     captcha: '',
+    website: '',  // honeypot
     termsAccepted: false,
     uploadedFile: null,
   })
+
+  const { data: bannerData } = useQuery({
+    queryKey: ['slides', SLIDE_POSITIONS.CUSTOM_JEWELLERY_BANNER],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.CUSTOM_JEWELLERY_BANNER } }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const bannerImage =
+    bannerData?.success && bannerData.data.length > 0
+      ? getImageUrl(bannerData.data[0].image_url, FALLBACK_BANNER)
+      : FALLBACK_BANNER
 
   const [fileName, setFileName] = useState<string>('')
   const [captchaCode, setCaptchaCode] = useState<string>(generateCaptcha())
@@ -56,6 +81,7 @@ export default function CustomJewelleryForm() {
       metal_type: formData.metalType,
       budget_range: formData.budgetRange,
       message: formData.comments,
+      website: formData.website,
       design_image: formData.uploadedFile || undefined,
     }),
     onSuccess: (response) => {
@@ -71,6 +97,7 @@ export default function CustomJewelleryForm() {
           designChoice: 'upload',
           comments: '',
           captcha: '',
+          website: '',
           termsAccepted: false,
           uploadedFile: null,
         })
@@ -92,7 +119,7 @@ export default function CustomJewelleryForm() {
   ) => {
     const target = e.target as HTMLInputElement
     const { name, value, type } = target
-    const checked = type === 'checkbox' ? (target as HTMLInputElement).checked : false
+    const checked = type === 'checkbox' ? (target).checked : false
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -150,7 +177,7 @@ export default function CustomJewelleryForm() {
       {/* Header Image */}
       <div className="w-full h-[260px] md:h-[600px] overflow-hidden">
         <img
-          src="https://static.malabargoldanddiamonds.com/media/wysiwyg/Custom-jewellery-banner-web.jpg"
+          src={bannerImage}
           alt="Custom Jewellery"
           className="w-full h-full object-cover object-center"
         />
@@ -195,7 +222,7 @@ export default function CustomJewelleryForm() {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
 
@@ -208,7 +235,7 @@ export default function CustomJewelleryForm() {
                 name="mobile"
                 value={formData.mobile}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
 
@@ -221,7 +248,7 @@ export default function CustomJewelleryForm() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>
 
@@ -401,6 +428,18 @@ export default function CustomJewelleryForm() {
                   completely unique jewellery piece.
                 </span>
               </label>
+            </div>
+
+            {/* Honeypot — hidden from humans, bots fill it */}
+            <div style={{ display: 'none' }} aria-hidden="true">
+              <input
+                type="text"
+                name="website"
+                value={formData.website}
+                onChange={handleInputChange}
+                tabIndex={-1}
+                autoComplete="off"
+              />
             </div>
 
             {/* Required Fields Notice */}

@@ -2,8 +2,8 @@
  * Customers API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface Customer {
   id: string;
@@ -36,7 +36,7 @@ export interface CustomerUpdatePayload {
 }
 
 export interface PaginatedCustomers {
-  items: Customer[];
+  items: Array<Customer>;
   total: number;
   page: number;
   per_page: number;
@@ -54,11 +54,9 @@ export interface CustomerListParams {
 }
 
 // Admin: List customers with pagination
-export const getCustomers = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: CustomerListParams }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+export const getCustomers = createServerFn({ method: "GET" })
+  .inputValidator((data: CustomerListParams) => data)
+  .handler(async ({ data }) => {
     const params = new URLSearchParams();
     if (data.skip !== undefined) params.append("skip", data.skip.toString());
     if (data.limit !== undefined) params.append("limit", data.limit.toString());
@@ -69,69 +67,54 @@ export const getCustomers = createServerFn({ method: "POST" })
     if (data.first_name) params.append("first_name", data.first_name);
     if (data.is_active !== undefined) params.append("is_active", data.is_active.toString());
 
-    return apiRequest<ApiResponse<PaginatedCustomers>>(
-      `/admin/customers?${params.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<PaginatedCustomers>>(
+      `/admin/customers?${params.toString()}`
     );
   });
 
 // Admin: Get single customer
-export const getCustomer = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Customer>>(
-      `/admin/customers/${data.id}`,
-      {},
-      token
+export const getCustomer = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Customer>>(
+      `/admin/customers/${data.id}`
     );
   });
 
 // Admin: Create customer
 export const createCustomer = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: CustomerPayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Customer>>(
+  .inputValidator((data: CustomerPayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Customer>>(
       "/admin/customers",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update customer
 export const updateCustomer = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { customer: CustomerUpdatePayload; id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data: { customer: CustomerUpdatePayload; id: string }) => data)
+  .handler(async ({ data }) => {
     const { id, customer } = data;
 
-    return apiRequest<ApiResponse<Customer>>(
+    return authenticatedRequest<ApiResponse<Customer>>(
       `/admin/customers/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(customer),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete customer
 export const deleteCustomer = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<null>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<null>>(
       `/admin/customers/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });

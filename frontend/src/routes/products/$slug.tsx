@@ -1,58 +1,158 @@
-import { useState, useMemo, useEffect } from "react"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
+import { Link, createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Heart,
-  ShoppingCart,
-  Share2,
-  Truck,
-  Shield,
-  RotateCcw,
+  Loader2,
   Minus,
   Plus,
-  Check,
-  Loader2,
+  RotateCcw,
+  Share2,
+  Shield,
+  ShoppingCart,
+  Truck,
 } from "lucide-react"
+import {
+  FacebookIcon, FacebookShareButton,
+  TelegramIcon, TelegramShareButton,
+  TwitterShareButton, WhatsappIcon,
+  WhatsappShareButton, XIcon,
+} from "react-share"
+import type {Product, ProductVariant} from "@/api/categories";
+import type {PriceBreakdown} from "@/api/products";
 import Header from "@/components/shared/Header/Header"
 import Footer from "@/components/shared/Footer/Footer"
-import { getProductById, getProductBySlug, getProducts, type Product, type ProductVariant } from "@/api/categories"
+import {   getProductById, getProductBySlug, getProducts } from "@/api/categories"
+import {  getAttributeGroups, getProductAttributes, getProductPricing } from "@/api/products"
 import { getImageUrl } from "@/api/client"
 import { addToCart } from "@/api/cart"
-import { addToWishlist, removeFromWishlist, checkWishlist } from "@/api/wishlist"
+import { addToWishlist, checkWishlist, removeFromWishlist } from "@/api/wishlist"
+import { useAuth } from "@/hooks/useAuth"
+import { useLoginModal } from "@/contexts/LoginModalContext"
 
-export const Route = createFileRoute("/products/$slug")({
-  component: ProductPage,
-})
-
-// UUID regex pattern
+// UUID regex pattern — must be defined before Route (used in loader)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/**
- * Parse magic URL to extract product ID
- * URL pattern: /products/product-name-here-550e8400-e29b-41d4-a716-446655440000
- * The last 36 characters (UUID format) are the ID, rest is the slug for SEO
- */
 function parseProductUrl(urlSlug: string): { id: string | null; slugPart: string } {
-  // Check if the URL ends with a UUID (36 chars: 8-4-4-4-12)
   if (urlSlug.length > 37) {
     const possibleId = urlSlug.slice(-36)
     if (UUID_REGEX.test(possibleId)) {
-      // Extract slug part (everything before the UUID, minus the trailing hyphen)
-      const slugPart = urlSlug.slice(0, -37) // -36 for UUID, -1 for hyphen
-      return { id: possibleId, slugPart }
+      return { id: possibleId, slugPart: urlSlug.slice(0, -37) }
     }
   }
-
-  // Check if the whole thing is a UUID
-  if (UUID_REGEX.test(urlSlug)) {
-    return { id: urlSlug, slugPart: '' }
-  }
-
-  // No UUID found, treat as regular slug (backwards compatible)
+  if (UUID_REGEX.test(urlSlug)) return { id: urlSlug, slugPart: '' }
   return { id: null, slugPart: urlSlug }
 }
+
+function ProductPending() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="animate-spin h-8 w-8 text-gray-400" />
+    </div>
+  )
+}
+
+function ProductError() {
+  const router = useRouter()
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <p className="text-4xl font-bold text-red-400 mb-3">Oops</p>
+      <p className="text-gray-500 mb-6">We couldn't load this product. Please try again.</p>
+      <button
+        onClick={() => router.history.back()}
+        className="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+      >
+        Go Back
+      </button>
+    </div>
+  )
+}
+
+export const Route = createFileRoute("/products/$slug")({
+  loader: async ({ params, context: { queryClient } }) => {
+    const { id: productId } = parseProductUrl(params.slug)
+    const queryKey = ["product", productId || params.slug]
+    try {
+      await queryClient.ensureQueryData({
+        queryKey,
+        queryFn: () =>
+          productId
+            ? getProductById({ data: { id: productId } })
+            : getProductBySlug({ data: { slug: params.slug } }),
+        staleTime: 5 * 60 * 1000,
+      })
+    } catch {
+      // Non-fatal: component will show error state
+    }
+    const cached = queryClient.getQueryData<any>(queryKey)
+    const product = cached?.success ? cached.data : null
+    return { productId, slug: params.slug, product }
+  },
+  pendingComponent: ProductPending,
+  errorComponent: ProductError,
+  head: ({ loaderData }) => {
+    const product = loaderData?.product
+    const siteUrl = import.meta.env.VITE_SITE_URL || ''
+    if (!product) return { meta: [{ title: 'Product | Nazu Meah Jewellers' }] }
+    const title = product.meta_title || `${product.name} | Nazu Meah Jewellers`
+    const description = product.meta_description || product.description?.slice(0, 160) || `Buy ${product.name} at Nazu Meah Jewellers`
+    const image = product.images?.[0] ? getImageUrl(product.images[0]) : ''
+    const canonicalUrl = `${siteUrl}/products/${product.slug}-${product.id}`
+
+    const productSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description,
+      sku: product.sku_base,
+      url: canonicalUrl,
+      ...(image ? { image } : {}),
+      brand: { '@type': 'Brand', name: 'Nazu Meah Jewellers' },
+      offers: {
+        '@type': 'Offer',
+        availability: product.is_active ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        priceCurrency: 'BDT',
+        seller: { '@type': 'Organization', name: 'Nazu Meah Jewellers' },
+      },
+    }
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: 'Products', item: `${siteUrl}/products` },
+        { '@type': 'ListItem', position: 3, name: product.name, item: canonicalUrl },
+      ],
+    }
+
+    return {
+      meta: [
+        { title },
+        { name: 'description', content: description },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:url', content: canonicalUrl },
+        { property: 'og:type', content: 'product' },
+        ...(image ? [{ property: 'og:image', content: image }] : []),
+        { name: 'twitter:card', content: image ? 'summary_large_image' : 'summary' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        ...(image ? [{ name: 'twitter:image', content: image }] : []),
+      ],
+      links: [{ rel: 'canonical', href: canonicalUrl }],
+      scripts: [
+        { type: 'application/ld+json', children: JSON.stringify(productSchema) },
+        { type: 'application/ld+json', children: JSON.stringify(breadcrumbSchema) },
+      ],
+    }
+  },
+  component: ProductPage,
+})
 
 /**
  * Generate canonical URL for a product
@@ -63,35 +163,57 @@ function generateProductUrl(product: Product): string {
 
 function ProductPage() {
   const { slug: urlSlug } = Route.useParams()
+  const loaderData = Route.useLoaderData()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isAuthenticated } = useAuth()
+  const { showLoginModal } = useLoginModal()
 
   const [selectedImage, setSelectedImage] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [showShareMenu, setShowShareMenu] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const shareRef = useRef<HTMLDivElement>(null)
+  const shareButtonRef = useRef<HTMLButtonElement>(null)
+  const [shareMenuPos, setShareMenuPos] = useState({ top: 0, right: 0 })
 
-  // Parse URL to extract ID
-  const { id: productId, slugPart } = parseProductUrl(urlSlug)
+  // Parse URL to extract ID — loaderData provides these to avoid re-parsing
+  const productId = loaderData?.productId ?? parseProductUrl(urlSlug).id
 
-  // Fetch product data - by ID if available, otherwise by slug
+  // Loader already populated the cache via ensureQueryData — this read from cache only
   const { data: productResponse, isLoading, error } = useQuery({
     queryKey: ["product", productId || urlSlug],
-    queryFn: () => productId ? getProductById(productId) : getProductBySlug(urlSlug),
+    queryFn: () => productId ? getProductById({ data: { id: productId } }) : getProductBySlug({ data: { slug: urlSlug } }),
     staleTime: 5 * 60 * 1000,
   })
 
   const product = productResponse?.success ? productResponse.data : null
 
-  // Check if product is in wishlist
+  // Check if product is in wishlist (only when authenticated)
   const { data: wishlistCheck } = useQuery({
     queryKey: ["wishlist-check", product?.id],
-    queryFn: () => checkWishlist(product!.id),
+    queryFn: () => checkWishlist({ data: { productId: product!.id } }),
+    enabled: !!product?.id && isAuthenticated,
+  })
+
+  const isInWishlist = wishlistCheck?.success ? wishlistCheck.data?.in_wishlist ?? false : false
+  const wishlistItemId = wishlistCheck?.success ? wishlistCheck.data?.item_id ?? null : null
+
+  // Fetch real pricing for all variants
+  const { data: pricingResponse } = useQuery({
+    queryKey: ["product-pricing", product?.id],
+    queryFn: () => getProductPricing({ data: { productId: product!.id } }),
     enabled: !!product?.id,
   })
 
-  const isInWishlist = wishlistCheck?.success ? wishlistCheck.data.in_wishlist : false
+  const variantPricing: PriceBreakdown | null = useMemo(() => {
+    if (!pricingResponse?.success || !selectedVariant) return null
+    const match = pricingResponse.data.variants.find(v => v.variant_id === selectedVariant.id)
+    return match?.pricing ?? null
+  }, [pricingResponse, selectedVariant])
 
   // Redirect to canonical URL if slug doesn't match
   useEffect(() => {
@@ -104,18 +226,74 @@ function ProductPage() {
     }
   }, [product, productId, urlSlug, navigate])
 
-  // Set default variant when product loads
-  useMemo(() => {
-    if (product?.variants?.length && !selectedVariant) {
-      const defaultVariant = product.variants.find((v) => v.is_default) || product.variants[0]
+  // Set default variant when product loads or changes
+  useEffect(() => {
+    if (product?.variants?.length) {
+      const defaultVariant =
+        product.variants.find((v) => v.is_default && v.is_active) ||
+        product.variants.find((v) => v.is_active) ||
+        product.variants[0]
       setSelectedVariant(defaultVariant)
+    } else if (product) {
+      setSelectedVariant(null)
     }
-  }, [product, selectedVariant])
+  }, [product?.id])
+
+  // Close share menu on outside click
+  useEffect(() => {
+    if (!showShareMenu) return
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node
+      const inDropdown = shareRef.current?.contains(target)
+      const inButton = shareButtonRef.current?.contains(target)
+      if (!inDropdown && !inButton) setShowShareMenu(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showShareMenu])
+
+  // Fetch product attributes (EAV)
+  const { data: attributesResponse } = useQuery({
+    queryKey: ["product-attributes", product?.id],
+    queryFn: () => getProductAttributes({ data: { productId: product!.id } }),
+    enabled: !!product?.id,
+  })
+
+  const { data: attrGroupsResponse } = useQuery({
+    queryKey: ["attribute-groups"],
+    queryFn: () => getAttributeGroups(),
+    staleTime: 10 * 60 * 1000,
+    enabled: !!product?.id,
+  })
+
+  // Group attributes by group name
+  const attributeGroups = useMemo(() => {
+    const values = attributesResponse?.success ? attributesResponse.data : []
+    const groups = attrGroupsResponse?.success ? attrGroupsResponse.data : []
+    const groupMap: Record<string, string> = {}
+    for (const g of groups) groupMap[g.id] = g.name
+
+    const result: Array<{ groupName: string; sortOrder: number; items: Array<{ name: string; value: string }> }> = []
+    const seen: Record<string, number> = {}
+
+    for (const item of values) {
+      if (!item.attribute) continue
+      const groupId = item.attribute.group_id
+      const groupName = groupMap[groupId] || 'Details'
+      if (seen[groupId] === undefined) {
+        const g = groups.find(g => g.id === groupId)
+        seen[groupId] = result.length
+        result.push({ groupName, sortOrder: g?.sort_order ?? 0, items: [] })
+      }
+      result[seen[groupId]].items.push({ name: item.attribute.name, value: item.value })
+    }
+    return result.sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [attributesResponse, attrGroupsResponse])
 
   // Fetch related products
   const { data: relatedResponse } = useQuery({
     queryKey: ["related-products", product?.category_id],
-    queryFn: () => getProducts({ category_id: product?.category_id, per_page: 4 }),
+    queryFn: () => getProducts({ data: { category_id: product?.category_id, per_page: 4 } }),
     enabled: !!product?.category_id,
     staleTime: 5 * 60 * 1000,
   })
@@ -126,7 +304,7 @@ function ProductPage() {
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
-    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart(data),
+    mutationFn: (data: { variant_id: string; quantity: number }) => addToCart({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] })
     },
@@ -134,25 +312,25 @@ function ProductPage() {
 
   // Wishlist mutations
   const addWishlistMutation = useMutation({
-    mutationFn: (data: { product_id: string; variant_id?: string }) => addToWishlist(data.product_id, data.variant_id),
+    mutationFn: (data: { product_id: string; variant_id?: string }) => addToWishlist({ data: { product_id: data.product_id, variant_id: data.variant_id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist-check", product?.id] })
       queryClient.invalidateQueries({ queryKey: ["wishlist"] })
     },
   })
 
-  // Calculate price from variant
-  const calculatePrice = (variant: ProductVariant | null) => {
-    if (!variant) return 0
-    return variant.net_weight * 100
-  }
+  const removeWishlistMutation = useMutation({
+    mutationFn: (itemId: string) => removeFromWishlist({ data: { itemId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist-check", product?.id] })
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] })
+    },
+  })
 
-  const price = calculatePrice(selectedVariant)
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "BDT",
-    minimumFractionDigits: 0,
-  }).format(price)
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", minimumFractionDigits: 0 }).format(n)
+
+  const formattedPrice = variantPricing ? fmt(variantPricing.total_price) : "—"
 
   // Image navigation
   const images = product?.images || []
@@ -169,20 +347,42 @@ function ProductPage() {
 
   const handleAddToCart = () => {
     if (!selectedVariant) return
+    if (!isAuthenticated) {
+      showLoginModal('Please login to add items to your cart', () => {
+        addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
+      })
+      return
+    }
     addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
   }
 
   const handleBuyNow = () => {
+    if (!selectedVariant) return
+    if (!isAuthenticated) {
+      showLoginModal('Please login to purchase this item', () => {
+        addToCartMutation.mutate({ variant_id: selectedVariant.id, quantity })
+        navigate({ to: "/cart" })
+      })
+      return
+    }
     handleAddToCart()
     navigate({ to: "/cart" })
   }
 
   const handleToggleWishlist = () => {
     if (!product) return
-    addWishlistMutation.mutate({
-      product_id: product.id,
-      variant_id: selectedVariant?.id
-    })
+    if (!isAuthenticated) {
+      showLoginModal('Please login to save items to your wishlist')
+      return
+    }
+    if (isInWishlist && wishlistItemId) {
+      removeWishlistMutation.mutate(wishlistItemId)
+    } else {
+      addWishlistMutation.mutate({
+        product_id: product.id,
+        variant_id: selectedVariant?.id,
+      })
+    }
   }
 
   // Loading state
@@ -250,10 +450,10 @@ function ProductPage() {
                 {/* Wishlist button */}
                 <button
                   onClick={handleToggleWishlist}
-                  disabled={addWishlistMutation.isPending}
+                  disabled={addWishlistMutation.isPending || removeWishlistMutation.isPending}
                   className="absolute top-4 right-4 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform disabled:opacity-50"
                 >
-                  {addWishlistMutation.isPending ? (
+                  {(addWishlistMutation.isPending || removeWishlistMutation.isPending) ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <Heart
@@ -262,15 +462,102 @@ function ProductPage() {
                   )}
                 </button>
 
-                {/* Share button */}
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href)
-                  }}
-                  className="absolute top-4 right-16 z-10 p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
-                >
-                  <Share2 className="w-5 h-5 text-gray-600" />
-                </button>
+                {/* Share button + teleported popover */}
+                <div className="absolute top-4 right-16 z-10">
+                  <button
+                    ref={shareButtonRef}
+                    onClick={() => {
+                      if (!showShareMenu && shareButtonRef.current) {
+                        const rect = shareButtonRef.current.getBoundingClientRect()
+                        setShareMenuPos({
+                          top: rect.bottom + 8,
+                          right: window.innerWidth - rect.right,
+                        })
+                      }
+                      setShowShareMenu(v => !v)
+                    }}
+                    title="Share product"
+                    className="p-2.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
+                  >
+                    <Share2 className="w-5 h-5 text-gray-600" />
+                  </button>
+
+                  {showShareMenu && createPortal(
+                    <div ref={shareRef} className="fixed z-[9999] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex flex-col gap-2 w-44"
+                      style={{ top: shareMenuPos.top, right: shareMenuPos.right }}
+                    >
+                      <p className="text-xs font-semibold text-gray-500 px-1 pb-1">Share via</p>
+                      {[
+                        {
+                          Button: WhatsappShareButton, Icon: WhatsappIcon,
+                          label: 'WhatsApp',
+                          props: { title: product.name, separator: ' – ' },
+                        },
+                        {
+                          Button: FacebookShareButton, Icon: FacebookIcon,
+                          label: 'Facebook',
+                          props: {},
+                        },
+                        {
+                          Button: TelegramShareButton, Icon: TelegramIcon,
+                          label: 'Telegram',
+                          props: { title: product.name },
+                        },
+                        {
+                          Button: TwitterShareButton, Icon: XIcon,
+                          label: 'X (Twitter)',
+                          props: { title: product.name },
+                        },
+                      ].map(({ Button, Icon, label, props }) => (
+                        <Button
+                          key={label}
+                          url={window.location.href}
+                          {...(props as any)}
+                          className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <Icon size={28} round />
+                          <span className="text-sm text-gray-700">{label}</span>
+                        </Button>
+                      ))}
+
+                      <div className="border-t border-gray-100 mt-1 pt-1 flex flex-col gap-0.5">
+                        {'share' in navigator && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await navigator.share({
+                                  title: product.name,
+                                  text: product.description?.slice(0, 100) || product.name,
+                                  url: window.location.href,
+                                })
+                              } catch { /* user cancelled */ }
+                            }}
+                            className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-7 h-7 rounded-full bg-linear-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
+                              <Share2 className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <span className="text-sm text-gray-700">Instagram & more</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(window.location.href)
+                            setLinkCopied(true)
+                            setTimeout(() => setLinkCopied(false), 2000)
+                          }}
+                          className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          {linkCopied
+                            ? <Check className="w-7 h-7 text-green-500" />
+                            : <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"><Share2 className="w-3.5 h-3.5 text-gray-600" /></div>}
+                          <span className="text-sm text-gray-700">{linkCopied ? 'Copied!' : 'Copy link'}</span>
+                        </button>
+                      </div>
+                    </div>,
+                    document.body
+                  )}
+                </div>
 
                 {/* Navigation arrows */}
                 {images.length > 1 && (
@@ -300,6 +587,7 @@ function ProductPage() {
                   <img
                     src={getImageUrl(images[selectedImage], '/placeholder-product.jpg')}
                     alt={product.name}
+                    loading="eager"
                     className="w-full h-full object-contain p-8"
                     style={{
                       transform: isZoomed ? "scale(2)" : "scale(1)",
@@ -333,6 +621,7 @@ function ProductPage() {
                       <img
                         src={getImageUrl(img, '/placeholder-product.jpg')}
                         alt={`${product.name} ${idx + 1}`}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </button>
@@ -350,8 +639,21 @@ function ProductPage() {
               </div>
 
               {/* Price */}
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl lg:text-4xl font-bold text-header">{formattedPrice}</span>
+              <div className="space-y-1">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl lg:text-4xl font-bold text-header">{formattedPrice}</span>
+                </div>
+                {variantPricing && (
+                  <div className="text-sm text-gray-500 space-y-0.5">
+                    <div className="flex gap-4">
+                      <span>Metal cost: <span className="text-gray-700">{fmt(variantPricing.metal_cost)}</span></span>
+                      <span>Making charge: <span className="text-gray-700">{fmt(variantPricing.making_charge)}</span></span>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Incl. {variantPricing.tax_rate}% tax ({fmt(variantPricing.tax_amount)})
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Stock Status */}
@@ -360,7 +662,7 @@ function ProductPage() {
                   <>
                     <Check className="w-5 h-5 text-green-500" />
                     <span className="text-green-600 font-medium">
-                      In Stock ({selectedVariant.stock_quantity} available)
+                      In Stock
                     </span>
                   </>
                 ) : (
@@ -382,7 +684,7 @@ function ProductPage() {
                           variant.size ? `Size ${variant.size}` : null,
                         ]
                           .filter(Boolean)
-                          .join(" - ")
+                          .join(" · ")
 
                         return (
                           <button
@@ -401,6 +703,29 @@ function ProductPage() {
                   </div>
                 </div>
               )}
+
+              {/* Selected Variant Attributes */}
+              {selectedVariant && (() => {
+                const attrs = [
+                  { label: 'Metal', value: selectedVariant.metal_type },
+                  { label: 'Purity', value: selectedVariant.metal_purity },
+                  { label: 'Color', value: selectedVariant.metal_color },
+                  { label: 'Size', value: selectedVariant.size },
+                  { label: 'Gross Weight', value: selectedVariant.gross_weight ? `${selectedVariant.gross_weight}g` : null },
+                  { label: 'Net Weight', value: selectedVariant.net_weight ? `${selectedVariant.net_weight}g` : null },
+                ].filter(a => a.value)
+                if (!attrs.length) return null
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {attrs.map(({ label, value }) => (
+                      <div key={label} className="bg-gray-50 rounded-lg px-3 py-2">
+                        <p className="text-xs text-gray-400">{label}</p>
+                        <p className="text-sm font-medium text-gray-800 mt-0.5">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
 
               {/* Quantity */}
               <div className="flex items-center gap-4">
@@ -456,6 +781,13 @@ function ProductPage() {
                 </div>
               )}
 
+              {/* Error message */}
+              {addToCartMutation.isError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {(addToCartMutation.error as any)?.message || "Failed to add to cart. Please try again."}
+                </div>
+              )}
+
               {/* Features */}
               <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                 <div className="flex flex-col items-center text-center gap-2">
@@ -482,68 +814,56 @@ function ProductPage() {
             </div>
           </div>
 
-          {/* Product Specifications */}
-          {selectedVariant && (
-            <div className="border-t p-6 lg:p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Product Specifications</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Basic Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Basic Information</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">SKU</span>
-                      <span className="font-medium">{selectedVariant.sku}</span>
-                    </div>
-                    {product.gender && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Gender</span>
-                        <span className="font-medium">{product.gender}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          {/* Product Specifications & Attributes */}
+          {(selectedVariant || attributeGroups.length > 0) && (
+            <div className="border-t p-6 lg:p-8 space-y-8">
 
-                {/* Metal Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Metal Information</h3>
-                  <div className="space-y-2 text-sm">
-                    {selectedVariant.metal_type && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Metal Type</span>
-                        <span className="font-medium">{selectedVariant.metal_type}</span>
+              {/* Variant specs */}
+              {selectedVariant && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Product Specifications</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: 'SKU', value: selectedVariant.sku },
+                      { label: 'Gender', value: product.gender },
+                      { label: 'Metal Type', value: selectedVariant.metal_type },
+                      { label: 'Purity', value: selectedVariant.metal_purity },
+                      { label: 'Metal Color', value: selectedVariant.metal_color },
+                      { label: 'Size', value: selectedVariant.size },
+                      { label: 'Gross Weight', value: selectedVariant.gross_weight ? `${selectedVariant.gross_weight}g` : null },
+                      { label: 'Net Weight', value: selectedVariant.net_weight ? `${selectedVariant.net_weight}g` : null },
+                    ].filter(r => r.value).map(({ label, value }) => (
+                      <div key={label} className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                        <span className="text-gray-500">{label}</span>
+                        <span className="font-medium text-gray-900">{value}</span>
                       </div>
-                    )}
-                    {selectedVariant.metal_purity && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Purity</span>
-                        <span className="font-medium">{selectedVariant.metal_purity}</span>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
+              )}
 
-                {/* Weight Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Weight Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Gross Weight</span>
-                      <span className="font-medium">{selectedVariant.gross_weight}g</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Net Weight</span>
-                      <span className="font-medium">{selectedVariant.net_weight}g</span>
-                    </div>
-                    {selectedVariant.size && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Size</span>
-                        <span className="font-medium">{selectedVariant.size}</span>
+              {/* EAV Attributes grouped */}
+              {attributeGroups.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Additional Details</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {attributeGroups.map(({ groupName, items }) => (
+                      <div key={groupName} className="bg-gray-50 rounded-xl p-4">
+                        <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">{groupName}</h3>
+                        <div className="space-y-2">
+                          {items.map(({ name, value }) => (
+                            <div key={name} className="flex justify-between text-sm">
+                              <span className="text-gray-500">{name}</span>
+                              <span className="font-medium text-gray-900 text-right max-w-[60%]">{value}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
+
             </div>
           )}
         </div>

@@ -8,8 +8,11 @@ class CategoryBase(BaseModel):
     name: str
     slug: str
     is_active: bool = True
+    is_featured: bool = False
     icon: Optional[str] = None
     banner: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
 
 # Create Schema
 class CategoryCreate(CategoryBase):
@@ -20,9 +23,12 @@ class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     is_active: Optional[bool] = None
+    is_featured: Optional[bool] = None
     icon: Optional[str] = None
     banner: Optional[str] = None
     parent_id: Optional[UUID] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
 
 # Response Schema
 class CategoryResponse(CategoryBase):
@@ -32,7 +38,7 @@ class CategoryResponse(CategoryBase):
     path: str
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 # Tree Response Schema

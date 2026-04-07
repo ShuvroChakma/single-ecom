@@ -2,8 +2,8 @@
  * Categories API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface Category {
   id: string;
@@ -13,9 +13,12 @@ export interface Category {
   parent_id: string | null;
   image: string | null;
   is_active: boolean;
+  is_featured?: boolean;
+  meta_title?: string | null;
+  meta_description?: string | null;
   created_at: string;
   updated_at: string;
-  subcategories?: Category[];
+  subcategories?: Array<Category>;
 }
 
 export interface GetCategoryListRequest {
@@ -27,7 +30,7 @@ export interface GetCategoryListRequest {
 }
 
 export interface GetCategoriesResponse {
-  items: Category[];
+  items: Array<Category>;
   total: number;
   page: number;
   limit: number;
@@ -35,107 +38,88 @@ export interface GetCategoriesResponse {
 }
 
 export const getCategories = createServerFn({ method: "GET" })
-    .handler(async ({ data }: { data: GetCategoryListRequest }) => {
+    .inputValidator((data: GetCategoryListRequest) => data)
+    .handler(async ({ data }) => {
     const query = new URLSearchParams();
-    if (data?.page) query.set("page", data.page.toString());
-    if (data?.limit) query.set("limit", data.limit.toString());
-    if (data?.search) query.set("search", data.search);
-    if (data?.sort_by) query.set("sort_by", data.sort_by);
-    if (data?.sort_order) query.set("sort_order", data.sort_order);
+    if (data.page) query.set("page", data.page.toString());
+    if (data.limit) query.set("limit", data.limit.toString());
+    if (data.search) query.set("search", data.search);
+    if (data.sort_by) query.set("sort_by", data.sort_by);
+    if (data.sort_order) query.set("sort_order", data.sort_order);
 
-        const token = getCookie("access_token");
-        if (!token) {
-            throw new Error("Not authenticated");
-        }
-
-        return apiRequest<ApiResponse<GetCategoriesResponse>>(
-            `/catalog/admin/categories?${query.toString()}`,
-            {},
-            token
-        );
+    return authenticatedRequest<ApiResponse<GetCategoriesResponse>>(
+        `/catalog/admin/categories?${query.toString()}`
+    );
   });
 
 export const getCategory = createServerFn({ method: "GET" })
-    .handler(async ({ data }: { data: { id: string } }) => {
-        const token = getCookie("access_token");
-        if (!token) {
-            throw new Error("Not authenticated");
-        }
-
-        return apiRequest<ApiResponse<Category>>(
-            `/catalog/admin/categories/${data.id}`,
-            {},
-            token
-        );
+    .inputValidator((data: { id: string }) => data)
+    .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Category>>(
+        `/catalog/admin/categories/${data.id}`
+    );
   });
 
 export interface CategoryTreeResponse extends Category {
-  children?: CategoryTreeResponse[];
+  children?: Array<CategoryTreeResponse>;
 }
 
 export const getCategoryTree = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<CategoryTreeResponse[]>>(
-      "/catalog/categories/tree",
-      {},
-      token
-      );
-    });
+    return authenticatedRequest<ApiResponse<Array<CategoryTreeResponse>>>(
+      "/catalog/categories/tree"
+    );
+  });
 
 export const createCategory = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: Partial<Category> }) => {
-    console.log("createCategory Handler Received Data:", JSON.stringify(data, null, 2));
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Category>>(
+  .inputValidator((data: Partial<Category>) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Category>>(
         "/catalog/admin/categories",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 export const updateCategory = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { category: Partial<Category>, id: string } }) => {
-    console.log("updateCategory Handler Received:", data)
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data: { category: Partial<Category>, id: string }) => data)
+  .handler(async ({ data }) => {
     const { id, category } = data;
 
-    return apiRequest<ApiResponse<Category>>(
+    return authenticatedRequest<ApiResponse<Category>>(
       `/catalog/admin/categories/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(category),
-      },
-      token
+      }
     );
   });
 
 export const deleteCategory = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
         `/catalog/admin/categories/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });
 
-export const toggleCategoryActive = createServerFn({ method: "PATCH" })
-  .handler(async ({ data }: { data: { id: string; is_active: boolean; token: string } }) => {
-    return apiRequest<ApiResponse<Category>>(
-        `/catalog/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
-      { method: "PATCH" },
-      data.token
+export const toggleCategoryActive = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; is_active: boolean }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Category>>(
+      `/catalog/admin/categories/${data.id}/toggle?is_active=${data.is_active}`,
+      { method: "PATCH" }
+    );
+  });
+
+export const toggleCategoryFeatured = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; is_featured: boolean }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Category>>(
+      `/catalog/admin/categories/${data.id}/toggle-featured?is_featured=${data.is_featured}`,
+      { method: "PATCH" }
     );
   });

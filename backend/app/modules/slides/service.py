@@ -57,9 +57,9 @@ class SlideService:
             include_inactive=include_inactive
         )
     
-    async def list_active_slides(self) -> List[Slide]:
-        """List active slides for homepage (public)."""
-        return await self.repository.list_active()
+    async def list_active_slides(self, position: Optional[str] = None) -> List[Slide]:
+        """List active slides for homepage (public), optionally filtered by position."""
+        return await self.repository.list_active(position=position)
     
     async def list_slides_by_type(
         self, 

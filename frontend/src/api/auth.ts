@@ -5,6 +5,48 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie, setCookie } from "@tanstack/react-start/server";
 import { apiRequest, ApiResponse } from "./client";
+import { z } from "zod";
+
+const registerSchema = z.object({
+  title: z.string().optional(),
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(5, "Phone number is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+const verifyEmailSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().min(4, "OTP is required"),
+});
+
+const resendOTPSchema = z.object({
+  email: z.string().email(),
+  type: z.enum(["EMAIL_VERIFICATION", "PASSWORD_RESET"]).optional(),
+});
+
+const resetPasswordSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().min(4),
+  new_password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+const updateProfileSchema = z.object({
+  first_name: z.string().min(1).optional(),
+  last_name: z.string().min(1).optional(),
+  phone_number: z.string().optional(),
+});
+
+const changePasswordSchema = z.object({
+  current_password: z.string().min(1, "Current password is required"),
+  new_password: z.string().min(8, "New password must be at least 8 characters"),
+});
 
 export interface LoginResponse {
   access_token: string;
@@ -49,7 +91,8 @@ const getCookieOptions = (maxAge: number) => ({
 
 // Register new customer
 export const register = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: RegisterPayload }) => {
+  .inputValidator((data: unknown) => registerSchema.parse(data))
+  .handler(async ({ data }) => {
     return apiRequest<ApiResponse<{ message: string }>>("/auth/register", {
       method: "POST",
       body: JSON.stringify({
@@ -64,7 +107,8 @@ export const register = createServerFn({ method: "POST" })
 
 // Login customer
 export const loginCustomer = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { email: string; password: string } }) => {
+  .inputValidator((data: unknown) => loginSchema.parse(data))
+  .handler(async ({ data }) => {
     const response = await apiRequest<ApiResponse<LoginResponse>>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username: data.email, password: data.password }),
@@ -122,7 +166,8 @@ export const logout = createServerFn({ method: "POST" })
 
 // Verify email with OTP
 export const verifyEmail = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { email: string; otp: string } }) => {
+  .inputValidator((data: unknown) => verifyEmailSchema.parse(data))
+  .handler(async ({ data }) => {
     return apiRequest<ApiResponse<{ message: string }>>("/auth/verify-email", {
       method: "POST",
       body: JSON.stringify(data),
@@ -131,7 +176,8 @@ export const verifyEmail = createServerFn({ method: "POST" })
 
 // Resend OTP
 export const resendOTP = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { email: string; type?: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' } }) => {
+  .inputValidator((data: unknown) => resendOTPSchema.parse(data))
+  .handler(async ({ data }) => {
     return apiRequest<ApiResponse<{ message: string }>>("/auth/resend-otp", {
       method: "POST",
       body: JSON.stringify({
@@ -143,16 +189,30 @@ export const resendOTP = createServerFn({ method: "POST" })
 
 // Reset password with OTP (forgot password flow)
 export const resetPassword = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { email: string; otp: string; new_password: string } }) => {
+  .inputValidator((data: unknown) => resetPasswordSchema.parse(data))
+  .handler(async ({ data }) => {
     return apiRequest<ApiResponse<{ message: string }>>("/auth/reset-password", {
       method: "POST",
       body: JSON.stringify(data),
     });
   });
 
+// Update user profile
+export const updateProfile = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => updateProfileSchema.parse(data))
+  .handler(async ({ data }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+    return apiRequest<ApiResponse<null>>("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token);
+  });
+
 // Change password (when logged in)
 export const changePassword = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: ChangePasswordPayload }) => {
+  .inputValidator((data: unknown) => changePasswordSchema.parse(data))
+  .handler(async ({ data }) => {
     const token = getCookie("access_token");
     if (!token) {
       throw new Error("Not authenticated");

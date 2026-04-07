@@ -1,125 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-        .header .icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-        .content {
-            padding: 40px 30px;
-        }
-        .content p {
-            margin: 0 0 16px 0;
-            color: #555;
-        }
-        .button {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 14px 32px;
-            text-decoration: none;
-            border-radius: 6px;
-            margin: 25px 0;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-        .button:hover {
-            background: #5568d3;
-        }
-        .features {
-            margin: 30px 0;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .features h3 {
-            margin: 0 0 15px 0;
-            color: #333;
-            font-size: 18px;
-        }
-        .features ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        .features li {
-            margin: 8px 0;
-            color: #555;
-        }
-        .footer {
-            background: #f8f9fa;
-            padding: 20px 30px;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-            border-top: 1px solid #e9ecef;
-        }
-        .footer p {
-            margin: 5px 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Welcome to {{ app_name }}</title>
+  <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0 !important; padding: 0 !important; background-color: #F4F1E6; }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="icon">🎉</div>
-            <h1>Welcome to {{ app_name }}!</h1>
-        </div>
-        
-        <div class="content">
-            <p>Hi <strong>{{ name }}</strong>,</p>
-            <p>Welcome aboard! We're thrilled to have you join our community.</p>
-            <p>Your account has been successfully verified and is ready to use.</p>
-            
-            <div style="text-align: center;">
-                <a href="{{ frontend_url }}/login" class="button">Get Started</a>
-            </div>
-            
-            <div class="features">
-                <h3>What's Next?</h3>
-                <ul>
-                    <li>Complete your profile</li>
-                    <li>Explore our features</li>
-                    <li>Connect with the community</li>
-                </ul>
-            </div>
-            
-            <p>If you have any questions, feel free to reach out to our support team. We're here to help!</p>
-        </div>
-        
-        <div class="footer">
-            <p>© 2024 {{ app_name }}. All rights reserved.</p>
-            <p>You're receiving this email because you created an account.</p>
-        </div>
-    </div>
+<body style="margin:0;padding:0;background-color:#F4F1E6;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F4F1E6;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background-color:#ffffff;border-radius:3px;overflow:hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background-color:#9A0056;padding:36px 40px;">
+              <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">{{ app_name }}</p>
+            </td>
+          </tr>
+
+          <!-- Accent bar -->
+          <tr>
+            <td style="height:3px;background-color:#A38842;"></td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:48px 48px 0;">
+              <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9A0056;letter-spacing:2px;text-transform:uppercase;">Welcome</p>
+              <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#1a1a1a;font-weight:normal;">Dear {{ name }},</p>
+              <p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#4a4a4a;line-height:1.8;">
+                We are delighted to welcome you to {{ app_name }}. Your account has been successfully verified and you now have full access to our collection.
+              </p>
+              <p style="margin:0 0 36px;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#4a4a4a;line-height:1.8;">
+                Whether you are searching for a timeless gift or an everyday treasure, our team is here to help you find the perfect piece.
+              </p>
+
+              <!-- CTA Button -->
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color:#9A0056;border-radius:3px;">
+                    <a href="{{ frontend_url }}" style="display:inline-block;padding:13px 32px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Explore Collection</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:36px 48px 0;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr><td style="height:1px;background-color:#e8e0d0;"></td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- What's next -->
+          <tr>
+            <td style="padding:28px 48px 48px;">
+              <p style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:16px;color:#1a1a1a;font-weight:normal;">What you can do now</p>
+
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #f0e8e0;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
+                      <td width="22" style="font-family:Arial,sans-serif;font-size:12px;color:#A38842;font-weight:700;vertical-align:top;padding-top:2px;">&#8212;</td>
+                      <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#4a4a4a;">Browse our collections and save items to your wishlist</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #f0e8e0;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
+                      <td width="22" style="font-family:Arial,sans-serif;font-size:12px;color:#A38842;font-weight:700;vertical-align:top;padding-top:2px;">&#8212;</td>
+                      <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#4a4a4a;">Save your delivery address for faster checkout</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
+                      <td width="22" style="font-family:Arial,sans-serif;font-size:12px;color:#A38842;font-weight:700;vertical-align:top;padding-top:2px;">&#8212;</td>
+                      <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#4a4a4a;">Track your orders and view your purchase history</td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:28px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#888;line-height:1.7;">
+                Should you require any assistance, our team is always happy to help. Simply reply to this email or visit our contact page.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#830047;padding:22px 48px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#d4a0bb;line-height:1.8;">
+                &copy; {{ app_name }}. All rights reserved.<br>
+                You are receiving this email because you created an account with us.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

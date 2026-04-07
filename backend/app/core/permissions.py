@@ -227,22 +227,10 @@ async def get_user_permissions(user: User, db: AsyncSession) -> List[str]:
     current_version = await get_cache(f"role:version:{role.id}")
     current_version = int(current_version) if current_version else 0
 
-    # SUPER_ADMIN has all permissions
+    # SUPER_ADMIN has all permissions — return wildcard so new permissions
+    # are automatically granted without needing DB seeding
     if role.name == "SUPER_ADMIN":
-        # Fetch all permissions from database to be explicit (ACID/Consistency)
-        from app.modules.roles.repository import PermissionRepository
-        perm_repo = PermissionRepository(db)
-        all_perms = await perm_repo.list_all()
-        permissions = [p.code for p in all_perms]
-        
-        # Cache with version
-        to_cache = {
-            "role_id": str(role.id),
-            "role_version": current_version,
-            "permissions": permissions
-        }
-        await set_cache(cache_key, to_cache, expire=300)
-        return permissions
+        return ["*"]
     
     # Fetch role permissions using repository
     permissions = await role_repo.get_permissions(role.id)

@@ -10,7 +10,7 @@ export type { ApiErrorResponse, ApiResponse, PaginatedResponse } from "./client"
 
 // Auth
 export {
-    getMe, loginAdmin, logout, refreshToken,
+    changePassword, getMe, loginAdmin, logout, refreshToken, updateAdminProfile,
     type LoginResponse,
     type UserProfile
 } from "./auth";

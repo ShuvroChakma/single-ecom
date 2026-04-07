@@ -4,6 +4,8 @@ OTP service for email verification and password reset.
 from datetime import datetime, timedelta
 from typing import Optional
 
+from fastapi import BackgroundTasks
+
 from app.core.config import settings
 from app.core.security import generate_otp, hash_otp, verify_otp
 from app.core.cache import (
@@ -24,7 +26,7 @@ class OTPService:
     """Service for OTP generation and verification."""
     
     @staticmethod
-    async def generate_otp(email: str, otp_type: OTPType) -> str:
+    async def generate_otp(email: str, otp_type: OTPType, background_tasks: Optional[BackgroundTasks] = None) -> str:
         """
         Generate and store OTP for email verification or password reset.
         
@@ -99,7 +101,10 @@ class OTPService:
         }
         purpose = purpose_map.get(otp_type, "verification")
 
-        await EmailService.send_otp_email(email, otp_code, purpose)
+        if background_tasks:
+            background_tasks.add_task(EmailService.send_otp_email, email, otp_code, purpose)
+        else:
+            await EmailService.send_otp_email(email, otp_code, purpose)
         
         # Increment generation attempts (1 hour expiry)
         await increment_cache(lockout_key, 1)

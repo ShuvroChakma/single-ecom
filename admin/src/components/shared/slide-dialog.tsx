@@ -1,6 +1,11 @@
-"use client"
-
-import { createSlide, Slide, SlidePayload, SlideType, updateSlide, uploadSlideImage } from "@/api/slides"
+import { useForm } from "@tanstack/react-form"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { FolderOpen, ImagePlus, Loader2, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
+import type { Slide, SlidePayload, SlideType} from "@/api/slides";
+import { createSlide, updateSlide, uploadSlideImage } from "@/api/slides"
+import { getImageUrl } from "@/lib/utils"
 import { ImageGalleryDialog } from "@/components/shared/image-gallery-dialog"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,12 +26,6 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { useAuth } from "@/lib/auth"
-import { useForm } from "@tanstack/react-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { FolderOpen, ImagePlus, Loader2, X } from "lucide-react"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
 
 interface SlideDialogProps {
     slide?: Slide
@@ -34,7 +33,7 @@ interface SlideDialogProps {
     onOpenChange: (open: boolean) => void
 }
 
-const SLIDE_TYPES: { value: SlideType; label: string }[] = [
+const SLIDE_TYPES: Array<{ value: SlideType; label: string }> = [
     { value: "BANNER", label: "Banner" },
     { value: "PROMO", label: "Promo" },
     { value: "OFFER", label: "Offer" },
@@ -60,7 +59,6 @@ function FieldInfo({ field }: { field: any }) {
 }
 
 export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
-    const { token } = useAuth()
     const queryClient = useQueryClient()
     const isEdit = !!slide
     const [isUploading, setIsUploading] = useState(false)
@@ -81,6 +79,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
             overlay_color: "",
             sort_order: 0,
             is_active: true,
+            position: "",
         },
         onSubmit: async ({ value }) => {
             const payload: SlidePayload = {
@@ -96,9 +95,10 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                 overlay_color: value.overlay_color || undefined,
                 sort_order: value.sort_order,
                 is_active: value.is_active,
+                position: value.position || undefined,
             }
 
-            if (isEdit && slide) {
+            if (isEdit) {
                 await updateMutation.mutateAsync({ slide: payload, id: slide.id })
             } else {
                 await createMutation.mutateAsync(payload)
@@ -148,6 +148,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
             form.setFieldValue("overlay_color", slide.overlay_color || "")
             form.setFieldValue("sort_order", slide.sort_order)
             form.setFieldValue("is_active", slide.is_active)
+            form.setFieldValue("position", slide.position || "")
             setImageUrl(slide.image_url)
         } else if (open && !slide) {
             form.reset()
@@ -161,7 +162,9 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
 
         try {
             setIsUploading(true)
-            const result = await uploadSlideImage(file, token || undefined)
+            const formData = new FormData()
+            formData.append('file', file)
+            const result = await uploadSlideImage({ data: formData })
             setImageUrl(result.url)
             form.setFieldValue("image_url", result.url)
             toast.success("Image uploaded successfully")
@@ -278,7 +281,7 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                                     <X className="h-4 w-4" />
                                 </Button>
                                 <img
-                                    src={imageUrl.startsWith("http") ? imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${imageUrl}`}
+                                    src={getImageUrl(imageUrl)}
                                     alt="Slide preview"
                                     className="w-full h-48 object-cover"
                                 />
@@ -402,6 +405,65 @@ export function SlideDialog({ slide, open, onOpenChange }: SlideDialogProps) {
                             )}
                         />
                     </div>
+
+                    {/* Position */}
+                    <form.Field
+                        name="position"
+                        children={(field) => {
+                            const hints: Record<string, string> = {
+                                home_carousel: "Hero slider at the top of the homepage. Add multiple slides — they auto-rotate.",
+                                jewelry_offers: "4-banner grid below the hero. Upload exactly 4 slides for this section.",
+                                hand_picked: "3-image layout (1 large left + 2 stacked right). Upload exactly 3 slides.",
+                                silver_banner: "Top 2 wide banners in the Silver Collection section. Upload exactly 2 slides.",
+                                earring_collection: "4-banner row in the Silver Collection section. Upload exactly 4 slides.",
+                                gemstone: "4-banner grid in the Gemstone section. Upload exactly 4 slides.",
+                                platinum_collection: "2 side-by-side banners in the Platinum Collection section. Upload exactly 2 slides.",
+                                gold_jewellery: "6 circular images in the Gold Jewellery section. Upload exactly 6 slides.",
+                                our_collection: "3-banner row in the Our Collection section. Upload exactly 3 slides.",
+                                gifting: "6-image grid in the Gifting & More section. Upload exactly 6 slides.",
+                                about_showroom: "Single showroom photo in the About section. Only the first slide is used.",
+                                custom_jewellery_banner: "Full-width banner at the top of the Custom Jewellery page. Only the first slide is used.",
+                            }
+                            const hint = field.state.value ? hints[field.state.value] : null
+                            return (
+                                <div className="space-y-2">
+                                    <Label>Homepage Position</Label>
+                                    <Select
+                                        value={field.state.value}
+                                        onValueChange={(value) => field.handleChange(value === "__none__" ? "" : value)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select a homepage section" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">None / Not assigned</SelectItem>
+                                            <SelectItem value="home_carousel">Home Carousel (Hero Slider)</SelectItem>
+                                            <SelectItem value="jewelry_offers">Jewelry Offers (4 banners)</SelectItem>
+                                            <SelectItem value="hand_picked">Hand Picked (3 images)</SelectItem>
+                                            <SelectItem value="silver_banner">Silver Collection (top 2 banners)</SelectItem>
+                                            <SelectItem value="earring_collection">Earring Collection (4 banners)</SelectItem>
+                                            <SelectItem value="gemstone">Gemstone Jewellery (4 banners)</SelectItem>
+                                            <SelectItem value="platinum_collection">Platinum Collection (2 banners)</SelectItem>
+                                            <SelectItem value="gold_jewellery">Gold Jewellery (6 circles)</SelectItem>
+                                            <SelectItem value="our_collection">Our Collection (3 banners)</SelectItem>
+                                            <SelectItem value="gifting">Gifting & More (6 banners)</SelectItem>
+                                            <SelectItem value="about_showroom">About — Showroom Image</SelectItem>
+                                        <SelectItem value="custom_jewellery_banner">Custom Jewellery — Banner</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {hint ? (
+                                        <p className="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded px-2.5 py-1.5">
+                                            {hint}
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">
+                                            Select which section of the homepage this slide will appear in.
+                                        </p>
+                                    )}
+                                </div>
+                            )
+                        }}
+                    />
 
                     {/* Colors */}
                     <div className="grid grid-cols-2 gap-4">

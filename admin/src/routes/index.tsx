@@ -106,8 +106,11 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
               {
                 id: userResponse.data.id,
                 email: userResponse.data.email,
-                full_name: userResponse.data.full_name,
+                full_name: userResponse.data.username || userResponse.data.email,
+                username: userResponse.data.username,
                 user_type: userResponse.data.user_type,
+                role_name: userResponse.data.role_name,
+                permissions: userResponse.data.permissions,
               }
             );
 

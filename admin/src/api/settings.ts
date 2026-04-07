@@ -2,7 +2,9 @@
  * Settings API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface SettingsGrouped {
   general: Record<string, string>;
@@ -30,48 +32,51 @@ export const getSettings = createServerFn({ method: "GET" })
   });
 
 export const getAdminSettings = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    return apiRequest<ApiResponse<Setting[]>>("/settings/admin/all", {}, data.token);
+  .handler(async () => {
+    return authenticatedRequest<ApiResponse<Array<Setting>>>("/settings/admin/all");
+  });
+
+export const getAdminGroupedSettings = createServerFn({ method: "GET" })
+  .handler(async () => {
+    return authenticatedRequest<ApiResponse<SettingsGrouped>>("/settings/admin/grouped");
   });
 
 export const getSettingsByCategory = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { category: string; token: string } }) => {
-    return apiRequest<ApiResponse<Setting[]>>(
-      `/settings/admin/category/${data.category}`,
-      {},
-      data.token
+  .inputValidator((data: { category: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Array<Setting>>>(
+      `/settings/admin/category/${data.category}`
     );
   });
 
-export const updateSetting = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { key: string; value: string; token: string } }) => {
-    return apiRequest<ApiResponse<Setting>>(
+export const updateSetting = createServerFn({ method: "POST" })
+  .inputValidator((data: { key: string; value: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Setting>>(
       `/settings/admin/${data.key}`,
       {
         method: "PUT",
         body: JSON.stringify({ value: data.value }),
-      },
-      data.token
+      }
     );
   });
 
-export const bulkUpdateSettings = createServerFn({ method: "PUT" })
-  .handler(async ({ data }: { data: { settings: Record<string, string>; token: string } }) => {
-    return apiRequest<ApiResponse<{ updated_count: number }>>(
+export const bulkUpdateSettings = createServerFn({ method: "POST" })
+  .inputValidator((data: { settings: Record<string, string> }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ updated_count: number }>>(
       "/settings/admin/bulk",
       {
         method: "PUT",
         body: JSON.stringify({ settings: data.settings }),
-      },
-      data.token
+      }
     );
   });
 
 export const initializeSettings = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { token: string } }) => {
-    return apiRequest<ApiResponse<{ created_count: number }>>(
+  .handler(async () => {
+    return authenticatedRequest<ApiResponse<{ created_count: number }>>(
       "/settings/admin/initialize",
-      { method: "POST" },
-      data.token
+      { method: "POST" }
     );
   });

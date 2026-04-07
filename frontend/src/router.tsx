@@ -5,6 +5,8 @@ import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 import { AuthProvider } from './contexts/AuthContext'
+import { LoginModalProvider } from './contexts/LoginModalContext'
+import LoginModal from './components/shared/Auth/LoginModal'
 
 // Create a new router instance
 export const getRouter = () => {
@@ -14,13 +16,16 @@ export const getRouter = () => {
     routeTree,
     context: { ...rqContext },
     defaultPreload: 'intent',
+    scrollRestoration: true,
     Wrap: (props: { children: React.ReactNode }) => {
       return (
         <TanstackQuery.Provider {...rqContext}>
           <AuthProvider>
-            {props.children}
+            <LoginModalProvider>
+              {props.children}
+              <LoginModal />
+            </LoginModalProvider>
           </AuthProvider>
-          
         </TanstackQuery.Provider>
       )
     },

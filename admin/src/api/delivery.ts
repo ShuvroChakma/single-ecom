@@ -2,15 +2,16 @@
  * Delivery Zones API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export type ChargeType = "FIXED" | "WEIGHT_BASED";
 
 export interface DeliveryZone {
   id: string;
   name: string;
-  districts: string[];
+  districts: Array<string>;
   charge_type: ChargeType;
   base_charge: number;
   per_kg_charge: number | null;
@@ -25,7 +26,7 @@ export interface DeliveryZone {
 
 export interface DeliveryZonePayload {
   name: string;
-  districts: string[];
+  districts: Array<string>;
   charge_type: ChargeType;
   base_charge: number;
   per_kg_charge?: number | null;
@@ -49,7 +50,8 @@ export interface DeliveryChargeResult {
 
 // Public: Calculate delivery charge
 export const calculateDeliveryCharge = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { district: string; order_amount: number; weight_kg?: number } }) => {
+  .inputValidator((data: { district: string; order_amount: number; weight_kg?: number }) => data)
+  .handler(async ({ data }) => {
     const query = new URLSearchParams();
     query.set("district", data.district);
     query.set("order_amount", data.order_amount.toString());
@@ -63,57 +65,41 @@ export const calculateDeliveryCharge = createServerFn({ method: "GET" })
 // Admin: Get all delivery zones
 export const getDeliveryZones = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<DeliveryZone[]>>(
-      "/delivery/admin/zones",
-      {},
-      token
-    );
+    return authenticatedRequest<ApiResponse<Array<DeliveryZone>>>("/delivery/admin/zones");
   });
 
 // Admin: Create delivery zone
 export const createDeliveryZone = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: DeliveryZonePayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<DeliveryZone>>(
+  .inputValidator((data: DeliveryZonePayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<DeliveryZone>>(
       "/delivery/admin/zones",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update delivery zone
 export const updateDeliveryZone = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string; zone: Partial<DeliveryZonePayload> } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<DeliveryZone>>(
+  .inputValidator((data: { id: string; zone: Partial<DeliveryZonePayload> }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<DeliveryZone>>(
       `/delivery/admin/zones/${data.id}`,
       {
         method: "PUT",
         body: JSON.stringify(data.zone),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete delivery zone
 export const deleteDeliveryZone = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/delivery/admin/zones/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });

@@ -16,6 +16,16 @@ class CategoryRepository(BaseRepository[Category]):
         query = select(self.model).where(self.model.is_active == True).order_by(self.model.level, self.model.name)
         result = await self.db.execute(query)
         return result.scalars().all()
+
+    async def get_featured(self) -> List[Category]:
+        """Get all active featured categories."""
+        query = (
+            select(self.model)
+            .where(self.model.is_active == True, self.model.is_featured == True)
+            .order_by(self.model.level, self.model.name)
+        )
+        result = await self.db.execute(query)
+        return result.scalars().all()
         
     async def get_children(self, category_id: UUID) -> List[Category]:
         """Get immediate children of a category."""
@@ -58,6 +68,8 @@ class CategoryRepository(BaseRepository[Category]):
                 )
             if "is_active" in filters:
                 query = query.where(self.model.is_active == filters["is_active"])
+            if "is_featured" in filters:
+                query = query.where(self.model.is_featured == filters["is_featured"])
 
         # Count total
         count_query = select(func.count()).select_from(query.subquery())

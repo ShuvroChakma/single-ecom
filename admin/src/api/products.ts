@@ -2,8 +2,9 @@
  * Products API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 // ============ ENUMS ============
 
@@ -46,10 +47,10 @@ export interface Product {
   tax_code: string | null;
   is_active: boolean;
   is_featured: boolean;
-  images: string[];
+  images: Array<string>;
   created_at: string;
   updated_at: string;
-  variants?: ProductVariant[];
+  variants?: Array<ProductVariant>;
 }
 
 export interface ProductVariantPayload {
@@ -79,8 +80,10 @@ export interface ProductPayload {
   tax_code?: string | null;
   is_active?: boolean;
   is_featured?: boolean;
-  images?: string[];
-  variants?: ProductVariantPayload[];
+  meta_title?: string | null;
+  meta_description?: string | null;
+  images?: Array<string>;
+  variants?: Array<ProductVariantPayload>;
 }
 
 export interface ProductListParams {
@@ -97,7 +100,7 @@ export interface ProductListParams {
 }
 
 export interface ProductListResponse {
-  items: Product[];
+  items: Array<Product>;
   total: number;
   page: number;
   per_page: number;
@@ -108,7 +111,8 @@ export interface ProductListResponse {
 
 // Public: Get all products with filters
 export const getProducts = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data?: ProductListParams }) => {
+  .inputValidator((data?: ProductListParams) => data)
+  .handler(async ({ data }) => {
     const query = new URLSearchParams();
     if (data?.page) query.set("page", data.page.toString());
     if (data?.per_page) query.set("per_page", data.per_page.toString());
@@ -125,10 +129,8 @@ export const getProducts = createServerFn({ method: "GET" })
 
 // Admin: Get all products with filters (includes inactive)
 export const getAdminProducts = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data?: ProductListParams }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data?: ProductListParams) => data)
+  .handler(async ({ data }) => {
     const query = new URLSearchParams();
     if (data?.page) query.set("page", data.page.toString());
     if (data?.per_page) query.set("per_page", data.per_page.toString());
@@ -141,118 +143,93 @@ export const getAdminProducts = createServerFn({ method: "GET" })
     if (data?.is_featured !== undefined) query.set("is_featured", data.is_featured.toString());
     if (data?.is_active !== undefined) query.set("is_active", data.is_active.toString());
 
-    return apiRequest<ApiResponse<ProductListResponse>>(
-      `/products?${query.toString()}`,
-      {},
-      token
+    return authenticatedRequest<ApiResponse<ProductListResponse>>(
+      `/products?${query.toString()}`
     );
   });
 
 // Public: Get product by slug
 export const getProductBySlug = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { slug: string } }) => {
+  .inputValidator((data: { slug: string }) => data)
+  .handler(async ({ data }) => {
     return apiRequest<ApiResponse<Product>>(`/products/${data.slug}`);
   });
 
 // Admin: Get product by ID
 export const getProductById = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Product>>(
-      `/products/${data.id}`,
-      {},
-      token
-    );
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Product>>(`/products/${data.id}`);
   });
 
 // Admin: Create product
 export const createProduct = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: ProductPayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Product>>(
+  .inputValidator((data: ProductPayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Product>>(
       "/products/admin/products",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update product
 export const updateProduct = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string; product: Partial<ProductPayload> } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Product>>(
+  .inputValidator((data: { id: string; product: Partial<ProductPayload> }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Product>>(
       `/products/admin/products/${data.id}`,
       {
         method: "PUT",
         body: JSON.stringify(data.product),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete product
 export const deleteProduct = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/products/admin/products/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });
 
 // Admin: Create variant
 export const createVariant = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { productId: string; variant: ProductVariantPayload } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<ProductVariant>>(
+  .inputValidator((data: { productId: string; variant: ProductVariantPayload }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<ProductVariant>>(
       `/products/admin/products/${data.productId}/variants`,
       {
         method: "POST",
         body: JSON.stringify(data.variant),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update variant
 export const updateVariant = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { variantId: string; variant: Partial<ProductVariantPayload> } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<ProductVariant>>(
+  .inputValidator((data: { variantId: string; variant: Partial<ProductVariantPayload> }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<ProductVariant>>(
       `/products/admin/variants/${data.variantId}`,
       {
         method: "PUT",
         body: JSON.stringify(data.variant),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete variant
 export const deleteVariant = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { variantId: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+  .inputValidator((data: { variantId: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/products/admin/variants/${data.variantId}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });

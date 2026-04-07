@@ -29,7 +29,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { ColumnDef } from "@tanstack/react-table"
-import { format, isPast, isFuture } from "date-fns"
+import { isPast, isFuture } from "date-fns"
+import { fmtDateShort } from "@/lib/date"
 import {
   Loader2,
   MoreHorizontal,
@@ -177,9 +178,9 @@ function PromoCodesPage() {
         const promo = row.original
         return (
           <div className="flex flex-col text-xs">
-            <span>{format(new Date(promo.starts_at), "PP")}</span>
+            <span>{fmtDateShort(promo.starts_at)}</span>
             <span className="text-muted-foreground">
-              to {format(new Date(promo.expires_at), "PP")}
+              to {fmtDateShort(promo.expires_at)}
             </span>
           </div>
         )
@@ -228,7 +229,7 @@ function PromoCodesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Promo Codes</h1>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />

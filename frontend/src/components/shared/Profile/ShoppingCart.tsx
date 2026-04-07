@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Phone, Tag, X, Minus, Plus, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { useNavigate, Link } from '@tanstack/react-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCart, updateCartItem, removeFromCart, validatePromoCode, type Cart, type PromoValidationResult } from '@/api/cart';
+import { AlertCircle, ArrowLeftRight, BadgeCheck, CheckCircle, Eye, Gem, Loader2, Minus, Phone, Plus, RefreshCw, RotateCcw, Shield, Tag, TrendingUp, Wrench, X } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CartItem, PromoValidationResult } from '@/api/cart';
+import { getCart, removeFromCart, updateCartItem, validatePromoCode } from '@/api/cart';
+import { getImageUrl } from '@/api/client';
 
 export default function ShoppingCart() {
   const [showProductDetails, setShowProductDetails] = useState<string | null>(null);
@@ -13,23 +15,23 @@ export default function ShoppingCart() {
 
   const { data: cartResponse, isLoading } = useQuery({
     queryKey: ['cart'],
-    queryFn: getCart,
+    queryFn: () => getCart(),
     staleTime: 60 * 1000, // 1 minute
   });
 
   const updateItemMutation = useMutation({
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
-      updateCartItem(itemId, quantity),
+      updateCartItem({ data: { itemId, quantity } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: removeFromCart,
+    mutationFn: (itemId: string) => removeFromCart({ data: { itemId } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const validatePromoMutation = useMutation({
-    mutationFn: (code: string) => validatePromoCode(code, cart?.subtotal || 0),
+    mutationFn: (code: string) => validatePromoCode({ data: { code, order_amount: cart?.subtotal || 0 } }),
     onSuccess: (response) => {
       if (response.data) {
         setPromoResult(response.data);
@@ -42,64 +44,27 @@ export default function ShoppingCart() {
 
   const cart = cartResponse?.data;
   const cartItems = cart?.items || [];
-  const subtotal = cart?.subtotal || 0;
-  const taxAmount = cart?.tax_amount || 0;
-  const discount = promoResult?.valid ? promoResult.discount_amount : 0;
+  const subtotal = Number(cart?.subtotal || 0);
+  const taxAmount = Number(cart?.tax_amount || 0);
+  const discount = promoResult?.valid ? Number(promoResult.discount_amount) : 0;
   const total = subtotal + taxAmount - discount;
 
   const promiseFeatures = [
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Maintenance.png', 
-      title: 'Lifetime', 
-      subtitle: 'Maintenance' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_insurance.png', 
-      title: 'Your Jewellery', 
-      subtitle: 'is Insured' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_14%20days.png', 
-      title: '14 Days', 
-      subtitle: 'Return Policy' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Zero%20Deduction.png', 
-      title: 'Zero Deduction', 
-      subtitle: 'Gold Exchange' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_BIS%20916.png', 
-      title: 'BIS 916', 
-      subtitle: 'Hallmarked Pure Gold' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_buyback.png', 
-      title: 'Guaranteed', 
-      subtitle: 'Buyback' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Diamonds.png', 
-      title: 'Certified', 
-      subtitle: 'Diamonds' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Transparency.png', 
-      title: 'Complete', 
-      subtitle: 'Transparency' 
-    },
-    { 
-      icon: 'https://www.malabargoldanddiamonds.com/skin/frontend/malabar/default/images/malabar_promise/new_cart_image_Exchange.png', 
-      title: 'Easy', 
-      subtitle: 'Exchange' 
-    },
+    { icon: Wrench,       title: 'Lifetime',       subtitle: 'Maintenance' },
+    { icon: Shield,       title: 'Your Jewellery', subtitle: 'is Insured' },
+    { icon: RotateCcw,    title: '14 Days',        subtitle: 'Return Policy' },
+    { icon: ArrowLeftRight, title: 'Zero Deduction', subtitle: 'Gold Exchange' },
+    { icon: BadgeCheck,   title: 'BIS 916',        subtitle: 'Hallmarked Pure Gold' },
+    { icon: TrendingUp,   title: 'Guaranteed',     subtitle: 'Buyback' },
+    { icon: Gem,          title: 'Certified',      subtitle: 'Diamonds' },
+    { icon: Eye,          title: 'Complete',       subtitle: 'Transparency' },
+    { icon: RefreshCw,    title: 'Easy',           subtitle: 'Exchange' },
   ];
 
   const paymentLogos = [
     { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/320px-Visa_Inc._logo.svg.png", alt: "Visa", height: "h-6" },
     { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/320px-Mastercard-logo.svg.png", alt: "Mastercard", height: "h-8" },
-    { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/601px-American_Express_logo_%282018%29.svg.png", alt: "American Express", height: "h-6" },
-    { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/512px-UPI-Logo-vector.svg.png", alt: "UPI", height: "h-6" }
+    { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/601px-American_Express_logo_%282018%29.svg.png", alt: "American Express", height: "h-6" }
   ];
 
   const handlePlaceOrder = () => {
@@ -146,11 +111,11 @@ export default function ShoppingCart() {
 
               {/* Cart Items */}
               <div className="space-y-4">
-                {cartItems.map((item) => (
+                {cartItems.map((item: CartItem) => (
                   <div key={item.id} className="border rounded-lg p-4">
                     <div className="flex gap-4">
                       <img
-                        src={item.product.image || '/placeholder-product.jpg'}
+                        src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                         alt={item.product.name}
                         className="w-24 h-24 object-contain bg-white rounded"
                       />
@@ -195,7 +160,7 @@ export default function ShoppingCart() {
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            <span className="font-semibold text-lg">৳ {item.line_total.toLocaleString('en-BD')}</span>
+                            <span className="font-semibold text-lg">৳ {Number(item.line_total).toLocaleString('en-BD')}</span>
                             <button
                               onClick={() => removeItemMutation.mutate(item.id)}
                               disabled={removeItemMutation.isPending}
@@ -224,11 +189,7 @@ export default function ShoppingCart() {
                 {promiseFeatures.map((item, idx) => (
                   <div key={idx} className="flex flex-col items-center text-center">
                     <div className="w-16 h-16 rounded-full bg-pink-50 flex items-center justify-center mb-2 p-2">
-                      <img 
-                        src={item.icon} 
-                        alt={item.title}
-                        className="w-full h-full object-contain"
-                      />
+                      <item.icon className="w-7 h-7 text-header" />
                     </div>
                     <p className="font-medium text-sm">{item.title}</p>
                     <p className="text-xs text-gray-600">{item.subtitle}</p>
@@ -327,18 +288,18 @@ export default function ShoppingCart() {
         </div>
 
         {/* Mobile Cart Items */}
-        {cartItems.map((item) => (
+        {cartItems.map((item: CartItem) => (
           <div key={item.id} className="bg-white mt-2 p-4">
             <div className="flex gap-3 mb-3">
               <img
-                src={item.product.image || '/placeholder-product.jpg'}
+                src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                 alt={item.product.name}
                 className="w-24 h-24 object-contain rounded"
               />
               <div className="flex-1">
                 <h3 className="font-semibold mb-1">{item.product.name}</h3>
                 <p className="text-xs text-gray-500 mb-2">{item.variant.sku}</p>
-                <p className="text-lg font-semibold">৳ {item.line_total.toLocaleString('en-BD')}</p>
+                <p className="text-lg font-semibold">৳ {Number(item.line_total).toLocaleString('en-BD')}</p>
               </div>
             </div>
 
@@ -479,11 +440,7 @@ export default function ShoppingCart() {
             {promiseFeatures.slice(0, 3).map((item, idx) => (
               <div key={idx} className="flex flex-col items-center text-center">
                 <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center mb-2 p-1.5">
-                  <img 
-                    src={item.icon} 
-                    alt={item.title}
-                    className="w-full h-full object-contain"
-                  />
+                  <item.icon className="w-5 h-5 text-header" />
                 </div>
                 <p className="text-xs font-medium leading-tight">{item.title}</p>
               </div>

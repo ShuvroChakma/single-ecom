@@ -40,6 +40,7 @@ async def get_variant_service(
 
 @router.get("/", response_model=SuccessResponse[dict])
 async def list_products(
+    request: Request,
     service: ProductService = Depends(get_product_service),
     # Category filters
     category_id: Optional[UUID] = Query(default=None, description="Filter by single category ID"),
@@ -124,7 +125,17 @@ async def list_products(
         except ValueError:
             return None
 
+    # Parse EAV attribute filters: attr_{code}=value1,value2
+    attribute_filters: dict = {}
+    for key, value in request.query_params.items():
+        if key.startswith('attr_') and value:
+            code = key[5:]  # strip 'attr_' prefix
+            values = [v.strip() for v in value.split(',') if v.strip()]
+            if values:
+                attribute_filters[code] = values
+
     params = ProductListParams(
+        attribute_filters=attribute_filters if attribute_filters else None,
         category_id=category_id,
         category_ids=parse_uuids(category_ids),
         brand_id=brand_id,

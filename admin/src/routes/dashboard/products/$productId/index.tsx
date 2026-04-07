@@ -43,7 +43,6 @@ import {
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -53,8 +52,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeft, Pencil, Plus, Trash2, Loader2, Package } from "lucide-react"
-import { format } from "date-fns"
+import { ArrowLeft, Eye, EyeOff, Pencil, Plus, Trash2, Loader2, Package } from "lucide-react"
+import { fmtDateTimeFull } from "@/lib/date"
 import { toast } from "sonner"
 
 export const Route = createFileRoute("/dashboard/products/$productId/")({
@@ -99,6 +98,7 @@ function ProductDetailPage() {
   const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null)
   const [deletingVariant, setDeletingVariant] = useState<ProductVariant | null>(null)
   const [variantForm, setVariantForm] = useState<VariantFormData>(defaultVariantForm)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Fetch product
   const { data, isLoading } = useQuery({
@@ -160,11 +160,23 @@ function ProductDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["product", productId] })
         setDeleteDialogOpen(false)
         setDeletingVariant(null)
+        setDeleteError(null)
       } else {
-        toast.error(res.message || "Failed to delete variant")
+        setDeleteError(res.message || "Failed to delete variant")
       }
     },
-    onError: () => toast.error("Failed to delete variant"),
+    onError: (error: any) => setDeleteError(error.message || "Failed to delete variant"),
+  })
+
+  // Toggle variant active mutation
+  const toggleVariantActiveMutation = useMutation({
+    mutationFn: ({ variantId, is_active }: { variantId: string; is_active: boolean }) =>
+      updateVariant({ data: { variantId, variant: { is_active } } }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["product", productId] })
+      toast.success(vars.is_active ? "Variant activated" : "Variant deactivated")
+    },
+    onError: (error: any) => toast.error(error.message || "Failed to update variant status"),
   })
 
   const openAddVariant = () => {
@@ -195,6 +207,7 @@ function ProductDetailPage() {
 
   const openDeleteVariant = (variant: ProductVariant) => {
     setDeletingVariant(variant)
+    setDeleteError(null)
     setDeleteDialogOpen(true)
   }
 
@@ -227,7 +240,17 @@ function ProductDetailPage() {
 
   const handleDeleteVariant = () => {
     if (deletingVariant) {
+      setDeleteError(null)
       deleteVariantMutation.mutate(deletingVariant.id)
+    }
+  }
+
+  const handleDeactivateVariantAndClose = () => {
+    if (deletingVariant) {
+      toggleVariantActiveMutation.mutate({ variantId: deletingVariant.id, is_active: false })
+      setDeleteDialogOpen(false)
+      setDeletingVariant(null)
+      setDeleteError(null)
     }
   }
 
@@ -407,6 +430,15 @@ function ProductDetailPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => toggleVariantActiveMutation.mutate({ variantId: variant.id, is_active: !variant.is_active })}
+                                title={variant.is_active ? "Deactivate variant" : "Activate variant"}
+                                className={variant.is_active ? "text-muted-foreground hover:text-foreground" : "text-green-600 hover:text-green-700"}
+                              >
+                                {variant.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => openEditVariant(variant)}
                                 title="Edit variant"
                               >
@@ -539,14 +571,14 @@ function ProductDetailPage() {
               <div>
                 <span className="text-sm text-muted-foreground">Created</span>
                 <p className="font-medium">
-                  {format(new Date(product.created_at), "PPpp")}
+                  {fmtDateTimeFull(product.created_at)}
                 </p>
               </div>
               <Separator />
               <div>
                 <span className="text-sm text-muted-foreground">Updated</span>
                 <p className="font-medium">
-                  {format(new Date(product.updated_at), "PPpp")}
+                  {fmtDateTimeFull(product.updated_at)}
                 </p>
               </div>
             </CardContent>
@@ -762,7 +794,7 @@ function ProductDetailPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { if (!open) { setDeleteDialogOpen(false); setDeleteError(null) } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Variant?</AlertDialogTitle>
@@ -771,20 +803,36 @@ function ProductDetailPage() {
               <strong>{deletingVariant?.sku}</strong>? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          {deleteError && (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              <p className="font-medium mb-1">Cannot delete</p>
+              <p>{deleteError}</p>
+            </div>
+          )}
+          <AlertDialogFooter className="flex-wrap gap-2">
             <AlertDialogCancel disabled={deleteVariantMutation.isPending}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
+            {deleteError && deletingVariant?.is_active && (
+              <Button
+                variant="outline"
+                onClick={handleDeactivateVariantAndClose}
+                disabled={toggleVariantActiveMutation.isPending}
+              >
+                {toggleVariantActiveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Set Inactive Instead
+              </Button>
+            )}
+            <Button
+              variant="destructive"
               onClick={handleDeleteVariant}
               disabled={deleteVariantMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
             >
               {deleteVariantMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Delete
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

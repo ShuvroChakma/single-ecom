@@ -22,11 +22,12 @@ from app.modules.auth.schemas import (
     ResendOTPRequest,
     ResetPasswordRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UserRegisterRequest,
     UserResponse,
 )
 from app.modules.auth.service import AuthService
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 router = APIRouter(tags=["Authentication"])
@@ -47,17 +48,18 @@ router = APIRouter(tags=["Authentication"])
 async def register(
     request: UserRegisterRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Register a new customer user.
-    
+
     - Creates inactive account requiring email verification
     - Sends OTP to provided email
     - Returns success message
     """
     auth_service = AuthService(db)
-    
+
     # Register user
     user = await auth_service.register_customer(
         email=request.email,
@@ -67,9 +69,9 @@ async def register(
         phone_number=request.phone_number,
         request=http_request
     )
-    
+
     # Generate OTP for email verification
-    otp_code = await OTPService.generate_otp(user.email, OTPType.EMAIL_VERIFICATION)
+    otp_code = await OTPService.generate_otp(user.email, OTPType.EMAIL_VERIFICATION, background_tasks)
     
     # TODO: Send email with OTP
     # await send_verification_email(user.email, otp_code)
@@ -206,6 +208,7 @@ async def verify_email(
 async def resend_otp(
     request: ResendOTPRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)  # Injected for finding user
 ):
     """
@@ -219,7 +222,7 @@ async def resend_otp(
     from app.modules.users.repository import UserRepository
     
     otp_type = OTPType(request.type)
-    otp_code = await OTPService.generate_otp(request.email, otp_type)
+    otp_code = await OTPService.generate_otp(request.email, otp_type, background_tasks)
     
     # Send email (TODO)
     # await send_otp_email(request.email, otp_code, otp_type)
@@ -379,8 +382,19 @@ async def get_current_user_info(
     """
     user_data = UserResponse.model_validate(current_user)
 
-    # If user is admin, fetch role name and permissions
     from app.constants.enums import UserType
+
+    # If customer, fetch name and phone from Customer profile
+    if current_user.user_type == UserType.CUSTOMER:
+        from app.modules.users.repository import CustomerRepository
+        customer_repo = CustomerRepository(db)
+        customer = await customer_repo.get_by_user_id(current_user.id)
+        if customer:
+            user_data.first_name = customer.first_name
+            user_data.last_name = customer.last_name
+            user_data.phone_number = customer.phone_number
+
+    # If user is admin, fetch role name and permissions
     if current_user.user_type == UserType.ADMIN:
         # Get permissions
         from app.core.permissions import get_user_permissions
@@ -396,6 +410,7 @@ async def get_current_user_info(
 
         admin = await admin_repo.get_by_user_id(current_user.id)
         if admin:
+            user_data.username = admin.username
             role = await role_repo.get(admin.role_id)
             if role:
                 user_data.role_name = role.name
@@ -404,6 +419,52 @@ async def get_current_user_info(
         message="User retrieved successfully",
         data=user_data.model_dump(exclude_none=True)
     )
+
+
+@router.put(
+    "/me",
+    response_model=SuccessResponse[None],
+    summary="Update Profile",
+    responses=doc_responses(
+        success_message="Profile updated successfully",
+        errors=(400, 401, 422)
+    )
+)
+async def update_profile(
+    request: UpdateProfileRequest,
+    http_request: Request,
+    current_user=Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update current user profile.
+
+    - Customers: update first_name, last_name, phone_number
+    - Admins: update username
+    """
+    from app.modules.users.repository import AdminRepository, CustomerRepository
+
+    if current_user.user_type == UserType.CUSTOMER:
+        customer_repo = CustomerRepository(db)
+        customer = await customer_repo.get_by_user_id(current_user.id)
+        if customer:
+            updates = {}
+            if request.first_name is not None:
+                updates["first_name"] = request.first_name
+            if request.last_name is not None:
+                updates["last_name"] = request.last_name
+            if request.phone_number is not None:
+                updates["phone_number"] = request.phone_number
+            if updates:
+                await customer_repo.update(customer, updates)
+
+    elif current_user.user_type == UserType.ADMIN:
+        admin_repo = AdminRepository(db)
+        admin = await admin_repo.get_by_user_id(current_user.id)
+        if admin and request.username:
+            await admin_repo.update(admin, {"username": request.username})
+
+    return SuccessResponse(message="Profile updated successfully", data=None)
 
 
 @router.post(

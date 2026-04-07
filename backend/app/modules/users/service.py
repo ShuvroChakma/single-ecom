@@ -20,7 +20,7 @@ from app.modules.users.schemas import (
     AdminCreate, AdminUpdate, AdminDetailResponse,
     CustomerCreate, CustomerUpdate, CustomerDetailResponse
 )
-from app.core.exceptions import ConflictError, NotFoundError, PermissionDeniedError
+from app.core.exceptions import ConflictError, NotFoundError, PermissionDeniedError, ValidationError
 from app.constants import ErrorCode
 from app.modules.roles.models import Role
 
@@ -50,16 +50,21 @@ class UserManagementService:
         await self._check_email_exists(data.email)
 
         # 1. Resolve Role
-        if data.role_id:
-            role = await self.role_repo.get(data.role_id)
-            if not role:
-                 raise NotFoundError(error_code=ErrorCode.ROLE_NOT_FOUND, message="Role not found")
-        else:
-            role = await self.role_repo.get_by_name("ADMIN")
-            if not role:
-                 # Seed it if missing (simplifies testing too)
-                 role = Role(name="ADMIN", description="Administrator", is_system=True)
-                 role = await self.role_repo.create(role)
+        if not data.role_id:
+            raise ValidationError(
+                error_code=ErrorCode.FIELD_REQUIRED,
+                message="role_id is required",
+                field="role_id"
+            )
+        role = await self.role_repo.get(data.role_id)
+        if not role:
+            raise NotFoundError(error_code=ErrorCode.ROLE_NOT_FOUND, message="Role not found")
+        if role.name == "SUPER_ADMIN":
+            raise ValidationError(
+                error_code=ErrorCode.SUPER_ADMIN_ROLE_NOT_ASSIGNABLE,
+                message="The SUPER_ADMIN role cannot be assigned to users",
+                field="role_id"
+            )
 
         # 2. Create User
         user = User(
@@ -267,6 +272,12 @@ class UserManagementService:
             role = await self.role_repo.get(data.role_id)
             if not role:
                 raise NotFoundError(error_code=ErrorCode.ROLE_NOT_FOUND, message="Role not found")
+            if role.name == "SUPER_ADMIN":
+                raise ValidationError(
+                    error_code=ErrorCode.SUPER_ADMIN_ROLE_NOT_ASSIGNABLE,
+                    message="The SUPER_ADMIN role cannot be assigned to users",
+                    field="role_id"
+                )
             admin_updates["role_id"] = data.role_id
             
         if admin_updates:

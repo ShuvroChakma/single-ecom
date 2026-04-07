@@ -77,7 +77,22 @@ const Login = () => {
             onSuccess={handleVerificationSuccess}
             onBackToLogin={handleBackToLogin}
           />
-        ) : !showForgotPassword ? (
+        ) : showResetPassword ? (
+          <ResetPasswordForm
+            email={resetPasswordEmail}
+            onSuccess={handleResetPasswordSuccess}
+            onBackToForgotPassword={handleBackToForgotPassword}
+          />
+        ) : showForgotPassword ? (
+          <ForgotPasswordForm
+            onBackToLogin={handleBackToLogin}
+            onOTPSent={handleForgotPasswordOTPSent}
+            error={error}
+            setError={setError}
+            successMessage={successMessage}
+            setSuccessMessage={setSuccessMessage}
+          />
+        ) : (
           <>
             {/* Tab Headers */}
             <div className="flex relative">
@@ -133,25 +148,9 @@ const Login = () => {
                 onSuccess={setSuccessMessage}
                 error={error}
                 setError={setError}
-                successMessage={successMessage}
               />
             )}
           </>
-        ) : showResetPassword ? (
-          <ResetPasswordForm
-            email={resetPasswordEmail}
-            onSuccess={handleResetPasswordSuccess}
-            onBackToForgotPassword={handleBackToForgotPassword}
-          />
-        ) : (
-          <ForgotPasswordForm
-            onBackToLogin={handleBackToLogin}
-            onOTPSent={handleForgotPasswordOTPSent}
-            error={error}
-            setError={setError}
-            successMessage={successMessage}
-            setSuccessMessage={setSuccessMessage}
-          />
         )}
       </div>
     </div>

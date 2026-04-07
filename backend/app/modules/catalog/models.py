@@ -7,8 +7,11 @@ class CategoryBase(SQLModel):
     name: str = Field(index=True)
     slug: str = Field(unique=True, index=True)
     is_active: bool = Field(default=True)
+    is_featured: bool = Field(default=False)
     icon: Optional[str] = Field(default=None)
     banner: Optional[str] = Field(default=None)
+    meta_title: Optional[str] = Field(default=None, max_length=200)
+    meta_description: Optional[str] = Field(default=None, max_length=500)
     level: int = Field(default=0, description="Hierarchy level: 0=Root, 1=Sub, 2=Leaf")
     path: str = Field(index=True, description="Materialized path for efficiency, e.g. root_id/sub_id")
 

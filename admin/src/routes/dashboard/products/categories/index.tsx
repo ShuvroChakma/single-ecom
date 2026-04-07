@@ -1,12 +1,8 @@
-
-
-
-import { Category, deleteCategory, getCategories } from "@/api/categories"
+import { Category, deleteCategory, getCategories, toggleCategoryActive } from "@/api/categories"
 import { CategoryDialog } from "@/components/shared/create-category-dialog"
 import { DataTable } from "@/components/shared/data-table"
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -27,8 +23,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ColumnDef, SortingState } from "@tanstack/react-table"
-import { format } from "date-fns"
-import { Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
+import { fmtDateLong } from "@/lib/date"
+import { EyeOff, Eye, Loader2, MoreHorizontal, Pencil, Plus, Trash } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { z } from 'zod'
@@ -53,6 +49,7 @@ function CategoriesPage() {
     const [selectedCategory, setSelectedCategory] = useState<Category | undefined>()
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
+    const [deleteError, setDeleteError] = useState<string | null>(null)
 
     const [pagination, setPagination] = useState({
         pageIndex: page - 1,
@@ -79,11 +76,33 @@ function CategoriesPage() {
             queryClient.invalidateQueries({ queryKey: ["category-tree"] })
             toast.success("Category deleted successfully")
             setCategoryToDelete(null)
+            setDeleteError(null)
         },
         onError: (error: any) => {
-            toast.error(error.message || "Failed to delete category")
+            setDeleteError(error.message || "Failed to delete category")
         },
     })
+
+    const toggleActiveMutation = useMutation({
+        mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
+            toggleCategoryActive({ data: { id, is_active } }),
+        onSuccess: (_, vars) => {
+            queryClient.invalidateQueries({ queryKey: ["categories"] })
+            queryClient.invalidateQueries({ queryKey: ["category-tree"] })
+            toast.success(vars.is_active ? "Category activated" : "Category deactivated")
+        },
+        onError: (error: any) => {
+            toast.error(error.message || "Failed to update category status")
+        },
+    })
+
+    const handleDeactivateAndClose = () => {
+        if (categoryToDelete) {
+            toggleActiveMutation.mutate({ id: categoryToDelete.id, is_active: false })
+            setCategoryToDelete(null)
+            setDeleteError(null)
+        }
+    }
 
     const handleEdit = (category: Category) => {
         setSelectedCategory(category)
@@ -101,6 +120,7 @@ function CategoriesPage() {
 
     const confirmDelete = () => {
         if (categoryToDelete) {
+            setDeleteError(null)
             deleteMutation.mutate(categoryToDelete.id)
         }
     }
@@ -132,7 +152,7 @@ function CategoriesPage() {
             accessorKey: "created_at",
             header: "Created At",
             cell: ({ row }) => {
-                return format(new Date(row.getValue("created_at")), "PPP")
+                return fmtDateLong(row.getValue("created_at"))
             },
         },
         {
@@ -159,6 +179,14 @@ function CategoriesPage() {
                             <DropdownMenuItem onClick={() => handleEdit(category)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => toggleActiveMutation.mutate({ id: category.id, is_active: !category.is_active })}
+                            >
+                                {category.is_active
+                                    ? <><EyeOff className="mr-2 h-4 w-4" />Deactivate</>
+                                    : <><Eye className="mr-2 h-4 w-4" />Activate</>
+                                }
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-red-600 focus:text-red-600"
@@ -212,7 +240,7 @@ function CategoriesPage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
                 <Button onClick={handleCreate}>
                     <Plus className="mr-2 h-4 w-4" />
@@ -231,6 +259,7 @@ function CategoriesPage() {
                 onGlobalFilterChange={handleSearchChange}
                 globalFilter={search}
                 isLoading={isLoading}
+                manualPagination={true}
             />
 
             <CategoryDialog
@@ -239,29 +268,40 @@ function CategoriesPage() {
                 category={selectedCategory}
             />
 
-            <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => !open && setCategoryToDelete(null)}>
+            <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => { if (!open) { setCategoryToDelete(null); setDeleteError(null) } }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Category</AlertDialogTitle>
                         <AlertDialogDescription>
                             Are you sure you want to delete "{categoryToDelete?.name}"? This action cannot be undone.
-                            {categoryToDelete?.subcategories && categoryToDelete.subcategories.length > 0 && (
-                                <span className="block mt-2 text-destructive font-medium">
-                                    Warning: This category has subcategories that will also be affected.
-                                </span>
-                            )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+                    {deleteError && (
+                        <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                            <p className="font-medium mb-1">Cannot delete</p>
+                            <p>{deleteError}</p>
+                        </div>
+                    )}
+                    <AlertDialogFooter className="flex-wrap gap-2">
                         <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
+                        {deleteError && categoryToDelete?.is_active && (
+                            <Button
+                                variant="outline"
+                                onClick={handleDeactivateAndClose}
+                                disabled={toggleActiveMutation.isPending}
+                            >
+                                {toggleActiveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Deactivate Instead
+                            </Button>
+                        )}
+                        <Button
+                            variant="destructive"
                             onClick={confirmDelete}
                             disabled={deleteMutation.isPending}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Delete
-                        </AlertDialogAction>
+                        </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

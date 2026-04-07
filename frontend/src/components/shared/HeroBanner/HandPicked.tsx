@@ -3,6 +3,10 @@
 // React + TypeScript + TailwindCSS (CMS-driven images)
 
 import React from "react"
+import { useQuery } from '@tanstack/react-query'
+import { getSlides } from '@/api/slides'
+import { SLIDE_POSITIONS } from '@/api/slidePositions'
+import { getImageUrl } from '@/api/client'
 
 export type HandpickedImage = {
   src: string
@@ -15,27 +19,11 @@ export type HandpickedImage = {
 export interface HandPickedProps {
   heading?: string
   description?: string
-  left?: HandpickedImage
-  topRight?: HandpickedImage
-  bottomRight?: HandpickedImage
 }
 
-// Default images (from backend CDN for now)
-const FALLBACK_IMAGE: HandpickedImage = {
-  src: "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Necklace-new.jpg",
-  alt: "Gold necklace jewellery",
-  title: "",
-}
-
-const DEFAULT_TOP_RIGHT: HandpickedImage = {
-  src: "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/light-jewellery.jpg",
-  alt: "Lightweight diamond jewellery",
-  title: "",
-}
-
-const DEFAULT_BOTTOM_RIGHT: HandpickedImage = {
-  src: "https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Earring.jpg",
-  alt: "Stylish earrings",
+const EMPTY_IMAGE: HandpickedImage = {
+  src: "",
+  alt: "",
   title: "",
 }
 
@@ -66,10 +54,29 @@ const ImageTile: React.FC<{
 export const HandPicked: React.FC<HandPickedProps> = ({
   heading = "Handpicked Just For You!",
   description = "Our lightweight collection keeps you stylish and comfortable from dawn to dusk.",
-  left = FALLBACK_IMAGE,
-  topRight = DEFAULT_TOP_RIGHT,
-  bottomRight = DEFAULT_BOTTOM_RIGHT,
 }) => {
+  const { data } = useQuery({
+    queryKey: ['slides', SLIDE_POSITIONS.HAND_PICKED],
+    queryFn: () => getSlides({ data: { position: SLIDE_POSITIONS.HAND_PICKED } }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const slides = data?.success ? data.data : []
+
+  if (!slides.length) return null
+
+  const left: HandpickedImage = slides[0]
+    ? { src: getImageUrl(slides[0].image_url, ''), alt: slides[0].title, title: slides[0].title }
+    : EMPTY_IMAGE
+
+  const topRight: HandpickedImage = slides[1]
+    ? { src: getImageUrl(slides[1].image_url, ''), alt: slides[1].title, title: slides[1].title }
+    : EMPTY_IMAGE
+
+  const bottomRight: HandpickedImage = slides[2]
+    ? { src: getImageUrl(slides[2].image_url, ''), alt: slides[2].title, title: slides[2].title }
+    : EMPTY_IMAGE
+
   return (
     <section className="mx-auto max-w-7xl px-2 md:px-2 lg:px-2 py-6 md:py-8">
       {/* Header */}
@@ -111,4 +118,4 @@ export const HandPicked: React.FC<HandPickedProps> = ({
 
 // <HandPicked />
 // CMS driven example:
-// <HandPicked left={data.left} topRight={data.topRight} bottomRight={data.bottomRight} />
+// <HandPicked heading="Custom heading" description="Custom description" />

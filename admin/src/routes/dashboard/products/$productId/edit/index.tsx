@@ -1,6 +1,7 @@
 import {
   getProductBySlug,
   updateProduct,
+  updateVariant,
   Product,
   ProductPayload,
   ProductVariantPayload,
@@ -62,6 +63,67 @@ const MAKING_CHARGE_OPTIONS: { value: MakingChargeType; label: string }[] = [
 ]
 
 const METAL_COLORS = ["yellow", "white", "rose"]
+
+function VariantStockRow({
+  variant,
+  onChange,
+}: {
+  variant: VariantFormData
+  onChange: (stock: string) => void
+}) {
+  const [stock, setStock] = useState(variant.stock_quantity)
+  const [saving, setSaving] = useState(false)
+  const originalId = variant.originalId
+
+  const handleSave = async () => {
+    if (!originalId) return
+    setSaving(true)
+    try {
+      const res = await updateVariant({ data: { variantId: originalId, variant: { stock_quantity: parseInt(stock) || 0 } } })
+      if (res.success) {
+        toast.success(`Stock updated for ${variant.sku}`)
+        onChange(stock)
+      } else {
+        toast.error("Failed to update stock")
+      }
+    } catch {
+      toast.error("Failed to update stock")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const stockNum = parseInt(stock) || 0
+
+  return (
+    <tr className="hover:bg-muted/30">
+      <td className="px-3 py-2 font-medium font-mono text-xs">
+        {variant.sku}
+        {variant.is_default && (
+          <span className="ml-1 text-xs bg-primary/10 text-primary px-1 rounded">Default</span>
+        )}
+      </td>
+      <td className="px-3 py-2 text-muted-foreground text-xs">
+        {variant.metal_type} {variant.metal_purity} · <span className="capitalize">{variant.metal_color}</span>
+      </td>
+      <td className="px-3 py-2 text-muted-foreground text-xs">{variant.size || "—"}</td>
+      <td className="px-3 py-2">
+        <Input
+          type="number"
+          min="0"
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
+          className={`h-8 w-24 text-center mx-auto ${stockNum <= 0 ? "border-red-400 text-red-600" : stockNum <= 5 ? "border-yellow-400 text-yellow-700" : ""}`}
+        />
+      </td>
+      <td className="px-3 py-2 text-center">
+        <Button size="sm" variant="outline" onClick={handleSave} disabled={saving || !originalId} className="h-8 px-2">
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
+        </Button>
+      </td>
+    </tr>
+  )
+}
 
 interface VariantFormData {
   id: string
@@ -234,6 +296,8 @@ function EditProductPage() {
       tax_code: "",
       is_active: true,
       is_featured: false,
+      meta_title: "",
+      meta_description: "",
     },
     onSubmit: async ({ value }) => {
       if (!product) return
@@ -251,6 +315,8 @@ function EditProductPage() {
         tax_code: value.tax_code || null,
         is_active: value.is_active,
         is_featured: value.is_featured,
+        meta_title: value.meta_title || null,
+        meta_description: value.meta_description || null,
         images: images,
       }
 
@@ -279,6 +345,8 @@ function EditProductPage() {
       form.setFieldValue("tax_code", product.tax_code || "")
       form.setFieldValue("is_active", product.is_active ?? true)
       form.setFieldValue("is_featured", product.is_featured ?? false)
+      form.setFieldValue("meta_title", product.meta_title || "")
+      form.setFieldValue("meta_description", product.meta_description || "")
 
       setImages(product.images || [])
 
@@ -667,45 +735,41 @@ function EditProductPage() {
             </CardContent>
           </Card>
 
-          {/* Variants Info */}
+          {/* Variants Stock Management */}
           <Card>
             <CardHeader>
-              <CardTitle>Variants</CardTitle>
+              <CardTitle>Variants & Stock</CardTitle>
               <CardDescription>
-                Product has {variants.length} variant(s). Manage variants separately after saving.
+                Update stock quantities inline. For full variant management (add/delete), go to the product detail page.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {variants.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No variants configured.</p>
               ) : (
-                <div className="space-y-2">
-                  {variants.map((variant, index) => (
-                    <div
-                      key={variant.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{variant.sku}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {variant.metal_type} {variant.metal_purity} - {variant.metal_color}
-                          {variant.size && ` - Size: ${variant.size}`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {variant.is_default && (
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                            Default
-                          </span>
-                        )}
-                        {!variant.is_active && (
-                          <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div className="rounded-md border overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium">SKU</th>
+                        <th className="text-left px-3 py-2 font-medium">Metal / Purity</th>
+                        <th className="text-left px-3 py-2 font-medium">Size</th>
+                        <th className="text-center px-3 py-2 font-medium w-32">Stock</th>
+                        <th className="text-center px-3 py-2 font-medium w-20">Save</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {variants.map((variant, index) => (
+                        <VariantStockRow
+                          key={variant.id}
+                          variant={variant}
+                          onChange={(stock) =>
+                            handleVariantChange(variant.id, "stock_quantity", stock)
+                          }
+                        />
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>
@@ -920,6 +984,50 @@ function EditProductPage() {
                       checked={field.state.value}
                       onCheckedChange={field.handleChange}
                     />
+                  </div>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* SEO */}
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form.Field
+                name="meta_title"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="meta_title">Meta Title</Label>
+                    <Input
+                      id="meta_title"
+                      placeholder="SEO title (max 200 chars)"
+                      maxLength={200}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">{field.state.value.length}/200</p>
+                  </div>
+                )}
+              />
+              <form.Field
+                name="meta_description"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="meta_description">Meta Description</Label>
+                    <Textarea
+                      id="meta_description"
+                      placeholder="SEO description (max 500 chars)"
+                      maxLength={500}
+                      rows={3}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">{field.state.value.length}/500</p>
                   </div>
                 )}
               />

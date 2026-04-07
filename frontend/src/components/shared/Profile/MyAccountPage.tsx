@@ -1,11 +1,12 @@
 import { useState, useContext } from 'react'
+import { formatDate } from '@/lib/date'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Share2, X, Loader2, Package, Heart, ShoppingBag, MapPin, Plus, Trash2, Star, ChevronRight, Edit2 } from 'lucide-react'
+import { Share2, X, Loader2, Package, Heart, ShoppingBag, MapPin, Plus, Trash2, Star, ChevronRight, Edit2, Save } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { AuthContext } from '@/contexts/AuthContext'
 import { getWishlist, removeFromWishlist, moveToCart, type WishlistItem } from '@/api/wishlist'
 import { getOrdersList, type OrderListItem } from '@/api/orders'
-import { changePassword } from '@/api/auth'
+import { changePassword, updateProfile } from '@/api/auth'
 import {
   getAddresses,
   createAddress,
@@ -17,6 +18,9 @@ import {
   type AddressUpdateRequest
 } from '@/api/addresses'
 import { getImageUrl } from '@/api/client'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Combobox } from '@/components/ui/combobox'
 
 // Bangladesh districts
 const BD_DISTRICTS = [
@@ -25,11 +29,25 @@ const BD_DISTRICTS = [
   'Brahmanbaria', 'Narsingdi', 'Savar', 'Tongi', 'Jamalpur', 'Rangamati', 'Pabna', 'Noakhali'
 ].sort()
 
-export default function MyAccountPage() {
+interface MyAccountPageProps {
+  initialSection?: string
+}
+
+export default function MyAccountPage({ initialSection = 'profile' }: MyAccountPageProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const authContext = useContext(AuthContext)
-  const [activeSection, setActiveSection] = useState('profile')
+  const [activeSection, setActiveSection] = useState(initialSection)
+
+  // Profile edit state
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [profileForm, setProfileForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+  })
+  const [profileSuccess, setProfileSuccess] = useState('')
+  const [profileError, setProfileError] = useState('')
 
   // Form states
   const [passwordForm, setPasswordForm] = useState({
@@ -75,27 +93,27 @@ export default function MyAccountPage() {
   // Fetch wishlist
   const { data: wishlistData, isLoading: wishlistLoading } = useQuery({
     queryKey: ['wishlist'],
-    queryFn: getWishlist,
+    queryFn: () => getWishlist(),
     enabled: !!user,
   })
 
   // Fetch orders
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ['my-orders'],
-    queryFn: () => getOrdersList(10, 0),
+    queryFn: () => getOrdersList({ data: { limit: 10, offset: 0 } }),
     enabled: !!user,
   })
 
   // Fetch addresses
   const { data: addressesData, isLoading: addressesLoading } = useQuery({
     queryKey: ['addresses'],
-    queryFn: getAddresses,
+    queryFn: () => getAddresses(),
     enabled: !!user,
   })
 
   // Remove from wishlist mutation
   const removeFromWishlistMutation = useMutation({
-    mutationFn: (itemId: string) => removeFromWishlist(itemId),
+    mutationFn: (itemId: string) => removeFromWishlist({ data: { itemId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] })
     },
@@ -103,10 +121,27 @@ export default function MyAccountPage() {
 
   // Move to cart mutation
   const moveToCartMutation = useMutation({
-    mutationFn: (itemId: string) => moveToCart(itemId),
+    mutationFn: (itemId: string) => moveToCart({ data: { itemId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] })
       queryClient.invalidateQueries({ queryKey: ['cart'] })
+    },
+  })
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: { first_name?: string; last_name?: string; phone_number?: string }) =>
+      updateProfile({ data }),
+    onSuccess: () => {
+      setProfileSuccess('Profile updated successfully!')
+      setProfileError('')
+      setIsEditingProfile(false)
+      // Refresh user context
+      authContext?.refetchUser?.()
+    },
+    onError: (error: any) => {
+      setProfileError(error.message || 'Failed to update profile')
+      setProfileSuccess('')
     },
   })
 
@@ -127,7 +162,7 @@ export default function MyAccountPage() {
 
   // Address mutations
   const createAddressMutation = useMutation({
-    mutationFn: createAddress,
+    mutationFn: (data: AddressCreateRequest) => createAddress({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
       resetAddressForm()
@@ -135,7 +170,7 @@ export default function MyAccountPage() {
   })
 
   const updateAddressMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: AddressUpdateRequest }) => updateAddress(id, data),
+    mutationFn: ({ id, data }: { id: string; data: AddressUpdateRequest }) => updateAddress({ data: { addressId: id, updates: data } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
       resetAddressForm()
@@ -143,18 +178,38 @@ export default function MyAccountPage() {
   })
 
   const deleteAddressMutation = useMutation({
-    mutationFn: deleteAddress,
+    mutationFn: (addressId: string) => deleteAddress({ data: { addressId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
     },
   })
 
   const setDefaultMutation = useMutation({
-    mutationFn: setDefaultAddress,
+    mutationFn: (addressId: string) => setDefaultAddress({ data: { addressId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['addresses'] })
     },
   })
+
+  const handleStartEditProfile = () => {
+    setProfileForm({
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      phone_number: user?.phone_number || '',
+    })
+    setProfileError('')
+    setProfileSuccess('')
+    setIsEditingProfile(true)
+  }
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateProfileMutation.mutate({
+      first_name: profileForm.first_name,
+      last_name: profileForm.last_name,
+      phone_number: profileForm.phone_number || undefined,
+    })
+  }
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault()
@@ -360,47 +415,135 @@ export default function MyAccountPage() {
             {/* Profile Section */}
             {activeSection === 'profile' && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-semibold mb-6">Profile details</h2>
-
-                <div className="space-y-4 mb-6">
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Name :</span>
-                    <span className="font-medium">{user?.first_name} {user?.last_name}</span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Email ID :</span>
-                    <span className="font-medium">{user?.email}</span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Mobile :</span>
-                    <span className="font-medium">{user?.phone_number || '-'}</span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Verified :</span>
-                    <span className={`font-medium ${user?.is_verified ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {user?.is_verified ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-
-                  <div className="flex border-b pb-4">
-                    <span className="text-gray-600 w-32">Member Since :</span>
-                    <span className="font-medium">
-                      {user?.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-semibold">Profile details</h2>
+                  {!isEditingProfile && (
+                    <button
+                      onClick={handleStartEditProfile}
+                      className="flex items-center gap-2 text-sm text-header hover:underline"
+                    >
+                      <Edit2 size={14} />
+                      Edit
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setActiveSection('changePassword')}
-                    className="bg-header text-white px-8 py-3 rounded font-medium hover:opacity-90"
-                  >
-                    Change Password
-                  </button>
-                </div>
+                {profileSuccess && !isEditingProfile && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-600 text-sm">
+                    {profileSuccess}
+                  </div>
+                )}
+
+                {isEditingProfile ? (
+                  <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-md">
+                    {profileError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                        {profileError}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label>First Name <span className="text-red-500">*</span></Label>
+                        <Input
+                          value={profileForm.first_name}
+                          onChange={(e) => setProfileForm({ ...profileForm, first_name: e.target.value })}
+                          required
+                          minLength={1}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Last Name <span className="text-red-500">*</span></Label>
+                        <Input
+                          value={profileForm.last_name}
+                          onChange={(e) => setProfileForm({ ...profileForm, last_name: e.target.value })}
+                          required
+                          minLength={1}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Phone Number</Label>
+                      <Input
+                        type="tel"
+                        value={profileForm.phone_number}
+                        onChange={(e) => setProfileForm({ ...profileForm, phone_number: e.target.value })}
+                        placeholder="e.g. 01XXXXXXXXX"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Email</Label>
+                      <Input value={user?.email || ''} disabled className="bg-gray-50 text-gray-500" />
+                      <p className="text-xs text-gray-400">Email cannot be changed</p>
+                    </div>
+
+                    <div className="flex gap-4 pt-2">
+                      <button
+                        type="submit"
+                        disabled={updateProfileMutation.isPending}
+                        className="flex items-center gap-2 bg-header text-white px-8 py-3 rounded font-medium hover:opacity-90 disabled:opacity-50"
+                      >
+                        {updateProfileMutation.isPending ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Save size={16} />
+                        )}
+                        Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingProfile(false)}
+                        className="border-2 border-header text-header px-8 py-3 rounded font-medium hover:bg-pink-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="space-y-4 mb-6">
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Name :</span>
+                        <span className="font-medium">{user?.first_name} {user?.last_name}</span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Email ID :</span>
+                        <span className="font-medium">{user?.email}</span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Mobile :</span>
+                        <span className="font-medium">{user?.phone_number || '-'}</span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Verified :</span>
+                        <span className={`font-medium ${user?.is_verified ? 'text-green-600' : 'text-yellow-600'}`}>
+                          {user?.is_verified ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+
+                      <div className="flex border-b pb-4">
+                        <span className="text-gray-600 w-32">Member Since :</span>
+                        <span className="font-medium">
+                          {user?.created_at ? formatDate(user.created_at) : '-'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setActiveSection('changePassword')}
+                        className="bg-header text-white px-8 py-3 rounded font-medium hover:opacity-90"
+                      >
+                        Change Password
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -424,99 +567,97 @@ export default function MyAccountPage() {
                     </h3>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Label</label>
-                        <select
+                      <div className="space-y-1.5">
+                        <Label>Label</Label>
+                        <Combobox
+                          options={[
+                            { value: 'Home', label: 'Home' },
+                            { value: 'Office', label: 'Office' },
+                            { value: 'Other', label: 'Other' },
+                          ]}
                           value={addressForm.label}
-                          onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
-                        >
-                          <option value="Home">Home</option>
-                          <option value="Office">Office</option>
-                          <option value="Other">Other</option>
-                        </select>
+                          onChange={(v) => setAddressForm({ ...addressForm, label: v || 'Home' })}
+                          placeholder="Select label"
+                          searchPlaceholder="Search..."
+                        />
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Full Name *</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>Full Name <span className="text-red-500">*</span></Label>
+                        <Input
                           type="text"
                           value={addressForm.full_name}
                           onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })}
                           required
-                          className="w-full border rounded px-3 py-2"
+                          placeholder="Enter full name"
                         />
                       </div>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Phone *</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>Phone <span className="text-red-500">*</span></Label>
+                        <Input
                           type="tel"
                           value={addressForm.phone}
                           onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
                           required
-                          className="w-full border rounded px-3 py-2"
                           placeholder="01XXXXXXXXX"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">District *</label>
-                        <select
+                      <div className="space-y-1.5">
+                        <Label>District <span className="text-red-500">*</span></Label>
+                        <Combobox
+                          options={BD_DISTRICTS.map(d => ({ value: d, label: d }))}
                           value={addressForm.district}
-                          onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
-                          required
-                          className="w-full border rounded px-3 py-2"
-                        >
-                          <option value="">Select District</option>
-                          {BD_DISTRICTS.map(d => (
-                            <option key={d} value={d}>{d}</option>
-                          ))}
-                        </select>
+                          onChange={(v) => setAddressForm({ ...addressForm, district: v })}
+                          placeholder="Select district"
+                          searchPlaceholder="Search district..."
+                        />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Address *</label>
+                    <div className="space-y-1.5">
+                      <Label>Address <span className="text-red-500">*</span></Label>
                       <textarea
                         value={addressForm.address_line1}
                         onChange={(e) => setAddressForm({ ...addressForm, address_line1: e.target.value })}
                         required
                         rows={2}
-                        className="w-full border rounded px-3 py-2"
                         placeholder="House/Flat No., Street, Area"
+                        className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-header/20 focus:border-header transition-colors resize-none"
                       />
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">City *</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>City <span className="text-red-500">*</span></Label>
+                        <Input
                           type="text"
                           value={addressForm.city}
                           onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                           required
-                          className="w-full border rounded px-3 py-2"
+                          placeholder="Enter city"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Postal Code</label>
-                        <input
+                      <div className="space-y-1.5">
+                        <Label>Postal Code</Label>
+                        <Input
                           type="text"
                           value={addressForm.postal_code}
                           onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          placeholder="e.g. 1200"
                         />
                       </div>
                     </div>
 
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={addressForm.is_default}
                         onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
+                        className="rounded border-gray-300 text-header focus:ring-header/20"
                       />
-                      <span className="text-sm">Set as default address</span>
+                      <span className="text-sm text-gray-700">Set as default address</span>
                     </label>
 
                     <div className="flex gap-4 pt-4">
@@ -633,7 +774,7 @@ export default function MyAccountPage() {
 
             {/* Wishlist Section */}
             {activeSection === 'wishlist' && (
-              <div className="bg-white rounded-lg shadow-sm p-3">
+              <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-semibold mb-6">Your Wishlist</h2>
 
                 {wishlistLoading ? (
@@ -651,71 +792,63 @@ export default function MyAccountPage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                     {wishlistItems.map((item) => (
-                      <div key={item.id} className="border rounded-lg p-2 relative">
-                        {/* Share and Remove Icons */}
-                        <div className="absolute top-4 left-4 right-4 flex justify-between">
-                          <button className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50">
-                            <Share2 className="w-4 h-4 text-header"/>
-                          </button>
-                          <button
-                            onClick={() => removeFromWishlistMutation.mutate(item.id)}
-                            disabled={removeFromWishlistMutation.isPending}
-                            className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50"
-                          >
-                            {removeFromWishlistMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <X className="w-4 h-4 text-gray-600" />
-                            )}
-                          </button>
-                        </div>
-
+                      <div key={item.id} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                         {/* Product Image */}
-                        <Link to={`/products/${item.product.slug}-${item.product.id}`}>
-                          <div className="mb-4 flex items-center justify-center py-8">
+                        <Link to={`/products/${item.product.slug}-${item.product.id}`} className="block relative">
+                          <div className="h-48 bg-gray-50 overflow-hidden">
                             <img
                               src={getImageUrl(item.product.image, '/placeholder-product.jpg')}
                               alt={item.product.name}
-                              className="w-full h-48 object-contain"
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             />
                           </div>
+                          {/* Remove button */}
+                          <button
+                            onClick={(e) => { e.preventDefault(); removeFromWishlistMutation.mutate(item.id) }}
+                            disabled={removeFromWishlistMutation.isPending}
+                            className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50 transition-colors"
+                          >
+                            {removeFromWishlistMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            ) : (
+                              <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
+                            )}
+                          </button>
                         </Link>
 
-                        {/* Price and Details */}
-                        <div className="mb-3">
-                          <h3 className="font-medium text-gray-900 line-clamp-1">{item.product.name}</h3>
+                        {/* Details */}
+                        <div className="p-4">
+                          <h3 className="font-medium text-gray-900 line-clamp-2 mb-1 leading-snug">{item.product.name}</h3>
                           {item.variant && (
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-lg font-semibold">
-                                {item.variant.calculated_price
-                                  ? `৳ ${item.variant.calculated_price.toLocaleString('en-IN')}`
-                                  : 'Price on request'
-                                }
-                              </span>
-                            </div>
-                          )}
-                          <p className="text-sm text-gray-600">SKU: {item.variant?.sku || item.product.slug}</p>
-                          {item.variant && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-400 mb-1">
                               {item.variant.metal_type} {item.variant.metal_purity}
-                              {item.variant.size && ` - Size ${item.variant.size}`}
+                              {item.variant.size && ` · Size ${item.variant.size}`}
                             </p>
                           )}
-                        </div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-base font-semibold text-gray-900">
+                              {item.variant?.calculated_price
+                                ? `৳${item.variant.calculated_price.toLocaleString('en-IN')}`
+                                : 'Price on request'
+                              }
+                            </span>
+                          </div>
 
-                        {/* Move to Cart Button */}
-                        <button
-                          onClick={() => moveToCartMutation.mutate(item.id)}
-                          disabled={moveToCartMutation.isPending}
-                          className="w-full border-2 text-center py-2 rounded font-medium hover:bg-pink-50 transition-colors disabled:opacity-50"
-                          style={{borderColor: '#a61e5a', color: '#a61e5a'}}
-                        >
-                          {moveToCartMutation.isPending ? (
-                            <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                          ) : (
-                            'MOVE TO CART'
-                          )}
-                        </button>
+                          <button
+                            onClick={() => moveToCartMutation.mutate(item.id)}
+                            disabled={moveToCartMutation.isPending}
+                            className="w-full border-2 border-header text-header text-sm text-center py-2 rounded-lg font-medium hover:bg-header hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {moveToCartMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <ShoppingBag size={14} />
+                                Move to Cart
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -741,42 +874,33 @@ export default function MyAccountPage() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Current Password<span className="text-red-500">*</span>
-                    </label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label>Current Password <span className="text-red-500">*</span></Label>
+                    <Input
                       type="password"
                       value={passwordForm.current_password}
                       onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:border-header"
                       required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      New Password<span className="text-red-500">*</span>
-                    </label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label>New Password <span className="text-red-500">*</span></Label>
+                    <Input
                       type="password"
                       value={passwordForm.new_password}
                       onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:border-header"
                       required
                       minLength={8}
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Confirm New Password<span className="text-red-500">*</span>
-                    </label>
-                    <input
+                  <div className="space-y-1.5">
+                    <Label>Confirm New Password <span className="text-red-500">*</span></Label>
+                    <Input
                       type="password"
                       value={passwordForm.confirm_password}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
-                      className="w-full border rounded px-3 py-2 focus:outline-none focus:border-header"
                       required
                     />
                   </div>
@@ -841,7 +965,7 @@ export default function MyAccountPage() {
                           <div>
                             <p className="font-semibold">Order #{order.order_number}</p>
                             <p className="text-sm text-gray-500">
-                              Placed on {new Date(order.created_at).toLocaleDateString()}
+                              Placed on {formatDate(order.created_at)}
                             </p>
                             <p className="text-sm text-gray-500">{order.item_count} item(s)</p>
                           </div>

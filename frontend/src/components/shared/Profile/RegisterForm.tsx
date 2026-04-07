@@ -15,7 +15,6 @@ interface RegisterFormProps {
   onSuccess: (message: string) => void
   error: string | null
   setError: (error: string | null) => void
-  successMessage: string | null
 }
 
 export function RegisterForm({
@@ -24,7 +23,6 @@ export function RegisterForm({
   onSuccess,
   error,
   setError,
-  successMessage,
 }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -92,12 +90,6 @@ export function RegisterForm({
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-green-600 text-sm">{successMessage}</p>
         </div>
       )}
 

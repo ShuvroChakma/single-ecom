@@ -124,6 +124,9 @@ RATE_LIMITS = {
     # OAuth
     "oauth:login": {"limit": 10, "window": 60},
     
+    # Public form submissions - strict to prevent spam
+    "inquiries:submit": {"limit": 3, "window": 3600},  # 3 per hour per IP
+
     # Default fallback
     "default": {"limit": 60, "window": 60},
 }
@@ -238,6 +241,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         # Skip health check and docs
         if request.url.path in ["/health", "/docs", "/redoc", "/openapi.json"]:
+            return await call_next(request)
+
+        # Skip high-frequency public read endpoints (fetched on every page load)
+        _PUBLIC_PASSTHROUGH = (
+            "/api/v1/settings",
+            "/api/v1/products/rates/current",
+        )
+        if request.url.path in _PUBLIC_PASSTHROUGH:
             return await call_next(request)
         
         identifier = get_client_ip(request)

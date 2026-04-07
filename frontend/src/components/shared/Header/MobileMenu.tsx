@@ -1,16 +1,28 @@
 import { getCategoryTree, type Category } from '@/api/categories'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
-import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { ChevronDown, ChevronRight, Loader2, LogOut, Package, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
+import { useSettings } from '@/contexts/SettingsContext'
 
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
+  headerHeight?: number
 }
 
-const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+const MobileMenu = ({ isOpen, onClose, headerHeight = 68 }: MobileMenuProps) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const { isAuthenticated, user, logout } = useAuth()
+  const { contact_phone } = useSettings()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    onClose()
+    await logout()
+    navigate({ to: '/' })
+  }
 
   // Fetch categories from API
   const { data: categories, isLoading } = useQuery({
@@ -140,7 +152,10 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       />
 
       {/* Menu Panel - positioned below header */}
-      <div className="absolute left-0 top-20 h-full w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+      <div
+        className="absolute left-0 bottom-0 w-full max-w-[280px] sm:max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300"
+        style={{ top: headerHeight }}
+      >
         {/* Categories List */}
         <div className="flex-1 bg-white overflow-y-auto">
           <nav className="py-2">
@@ -162,36 +177,80 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
         {/* Bottom Section */}
         <div className="bg-footer px-4 py-5 shrink-0 border-t border-gray-200">
-          {/* Auth Buttons */}
-          <div className="flex gap-3 mb-5">
-            <Link
-              to="/profile"
-              onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-header active:bg-header transition-colors shadow-sm"
-            >
-              Login
-            </Link>
-            <Link
-              to="/profile"
-              onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold hover:bg-header active:bg-header transition-colors shadow-sm"
-            >
-              Sign Up
-            </Link>
-          </div>
+          {isAuthenticated && user ? (
+            <>
+              {/* User info */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-header flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {user.first_name?.[0] ?? ""}{user.last_name?.[0] ?? ""}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {user.first_name} {user.last_name}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                </div>
+              </div>
+              {/* Account links */}
+              <div className="flex flex-col gap-1 mb-4">
+                <Link
+                  to="/profile"
+                  onClick={onClose}
+                  className="flex items-center gap-3 py-2.5 px-3 rounded-md text-sm text-gray-700 hover:bg-white/60 transition-colors"
+                >
+                  <User className="w-4 h-4 text-header" />
+                  My Account
+                </Link>
+                <Link
+                  to="/orders"
+                  onClick={onClose}
+                  className="flex items-center gap-3 py-2.5 px-3 rounded-md text-sm text-gray-700 hover:bg-white/60 transition-colors"
+                >
+                  <Package className="w-4 h-4 text-header" />
+                  My Orders
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 py-2.5 px-3 rounded-md text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex gap-3 mb-5">
+              <Link
+                to="/profile"
+                onClick={onClose}
+                className="flex-1 py-2.5 px-4 bg-header text-white rounded-md text-center text-sm font-semibold transition-colors shadow-sm"
+              >
+                Login
+              </Link>
+              <Link
+                to="/profile"
+                onClick={onClose}
+                className="flex-1 py-2.5 px-4 border border-header text-header rounded-md text-center text-sm font-semibold transition-colors"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
 
           {/* Help Section */}
-          <div className="text-left">
-            <p className="text-xs text-gray-700 leading-relaxed">
-              NEED HELP? CALL{' '}
-              <a
-                href="tel:+912262300916"
-                className="font-semibold text-gray-900 hover:underline"
-              >
-                +91 22 62300916
-              </a>
-            </p>
-          </div>
+          {contact_phone && (
+            <div className="text-left">
+              <p className="text-xs text-gray-700 leading-relaxed">
+                NEED HELP? CALL{' '}
+                <a
+                  href={`tel:${contact_phone}`}
+                  className="font-semibold text-gray-900 hover:underline"
+                >
+                  {contact_phone}
+                </a>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

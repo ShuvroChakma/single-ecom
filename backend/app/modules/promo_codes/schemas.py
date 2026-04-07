@@ -27,6 +27,14 @@ class PromoCodeCreate(BaseModel):
     first_order_only: bool = Field(default=False)
     is_active: bool = Field(default=True)
     
+    @field_validator("starts_at", "expires_at", mode="after")
+    @classmethod
+    def strip_timezone(cls, v: datetime) -> datetime:
+        """Strip timezone info — DB columns are TIMESTAMP WITHOUT TIME ZONE."""
+        if v is not None and v.tzinfo is not None:
+            return v.replace(tzinfo=None)
+        return v
+
     @field_validator("code")
     @classmethod
     def uppercase_code(cls, v: str) -> str:
@@ -55,6 +63,14 @@ class PromoCodeUpdate(BaseModel):
     expires_at: Optional[datetime] = None
     first_order_only: Optional[bool] = None
     is_active: Optional[bool] = None
+
+    @field_validator("starts_at", "expires_at", mode="after")
+    @classmethod
+    def strip_timezone(cls, v: datetime) -> datetime:
+        """Strip timezone info — DB columns are TIMESTAMP WITHOUT TIME ZONE."""
+        if v is not None and v.tzinfo is not None:
+            return v.replace(tzinfo=None)
+        return v
 
 
 class ValidatePromoRequest(BaseModel):

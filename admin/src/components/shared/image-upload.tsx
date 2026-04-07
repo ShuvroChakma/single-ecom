@@ -1,4 +1,5 @@
 import { uploadCategoryImage } from "@/api/uploads"
+import { getImageUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
@@ -62,7 +63,7 @@ export function ImageUpload({
                     </Button>
                 </div>
                 <img
-                    src={value.startsWith("http") ? value : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${value}`}
+                    src={getImageUrl(value)}
                     alt="Upload"
                     className="h-full w-full object-cover"
                 />

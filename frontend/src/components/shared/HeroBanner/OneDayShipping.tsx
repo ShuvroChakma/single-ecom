@@ -14,7 +14,7 @@ const OneDayShipping: React.FC = () => {
 
   const { data: productsResponse, isLoading } = useQuery({
     queryKey: ['featured-products'],
-    queryFn: () => getFeaturedProducts(12),
+    queryFn: () => getFeaturedProducts({ data: { limit: 12 } }),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -26,9 +26,17 @@ const OneDayShipping: React.FC = () => {
       name: product.name,
       slug: product.slug,
       code: product.variants?.[0]?.sku || product.id.substring(0, 10),
-      price: product.variants?.[0]?.calculated_price
-        ? `৳ ${product.variants[0].calculated_price.toLocaleString('en-BD')}`
-        : 'Price on request',
+      price: (() => {
+        const prices = (product.variants || [])
+          .map(v => v.calculated_price)
+          .filter((p): p is number => p != null && p > 0)
+        if (!prices.length) return null
+        const min = Math.min(...prices)
+        const max = Math.max(...prices)
+        return min === max
+          ? `৳ ${min.toLocaleString('en-BD')}`
+          : `৳ ${min.toLocaleString('en-BD')} – ৳ ${max.toLocaleString('en-BD')}`
+      })(),
       image: getImageUrl(product.images?.[0], '/placeholder-product.jpg'),
     }));
   }, [productsResponse]);
@@ -187,7 +195,7 @@ const OneDayShipping: React.FC = () => {
                               {product.name}
                             </h3>
                             <p className="text-xs text-gray-500 mb-1">{product.code}</p>
-                            <p className="text-lg font-semibold text-top_bar">{product.price}</p>
+                            {product.price && <p className="text-lg font-semibold text-top_bar">{product.price}</p>}
                           </div>
                         </Link>
                       ))}

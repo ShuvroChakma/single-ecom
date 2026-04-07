@@ -12,6 +12,7 @@ from datetime import datetime
 
 from app.modules.products.models import Product, ProductVariant, MetalType
 from app.modules.products.schemas import ProductListParams
+from app.modules.attributes.models import Attribute, ProductAttributeValue
 
 
 class ProductRepository:
@@ -141,6 +142,21 @@ class ProductRepository:
             variant_filters.append(ProductVariant.net_weight >= params.min_weight)
         if params.max_weight is not None:
             variant_filters.append(ProductVariant.net_weight <= params.max_weight)
+
+        # ===== EAV ATTRIBUTE FILTERS =====
+        if params.attribute_filters:
+            for attr_code, values in params.attribute_filters.items():
+                if values:
+                    attr_subquery = (
+                        select(ProductAttributeValue.product_id)
+                        .join(Attribute, ProductAttributeValue.attribute_id == Attribute.id)
+                        .where(
+                            ProductAttributeValue.product_id == Product.id,
+                            Attribute.code == attr_code,
+                            ProductAttributeValue.value.in_(values)
+                        )
+                    )
+                    filters.append(exists(attr_subquery))
 
         # If we have variant filters, add EXISTS subquery
         if variant_filters:

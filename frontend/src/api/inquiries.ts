@@ -1,8 +1,11 @@
 /**
- * Inquiries API functions
+ * Inquiries API - Server Functions (public + auth)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
+import { z } from 'zod'
+import { API_BASE, apiRequest  } from './client'
+import type { ApiResponse  } from './client';
 
 export interface InquiryCreateData {
   type?: 'CUSTOM_JEWELLERY' | 'GENERAL' | 'SUPPORT' | 'FEEDBACK'
@@ -22,6 +25,7 @@ export interface CustomJewelleryData {
   metal_type: string
   budget_range: string
   message: string
+  website?: string  // honeypot
   design_image?: File
 }
 
@@ -46,17 +50,31 @@ export interface InquiryResponse {
   updated_at: string
 }
 
-/**
- * Submit a general inquiry
- */
-export async function submitInquiry(data: InquiryCreateData): Promise<APIResponse<InquiryCreatedResponse>> {
-  return apiClient.post<InquiryCreatedResponse>('/inquiries', data)
-}
+const inquirySchema = z.object({
+  type: z.enum(['CUSTOM_JEWELLERY', 'GENERAL', 'SUPPORT', 'FEEDBACK']).optional(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().optional(),
+  subject: z.string(),
+  message: z.string(),
+  metal_type: z.string().optional(),
+  budget_range: z.string().optional(),
+})
+
+export const submitInquiry = createServerFn({ method: 'POST' })
+  .inputValidator(inquirySchema)
+  .handler(async ({ data }) => {
+    return apiRequest<ApiResponse<InquiryCreatedResponse>>('/inquiries', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  })
 
 /**
  * Submit a custom jewellery request (with file upload support)
+ * Uses client-side fetch due to multipart form data
  */
-export async function submitCustomJewelleryRequest(data: CustomJewelleryData): Promise<APIResponse<InquiryCreatedResponse>> {
+export async function submitCustomJewelleryRequest(data: CustomJewelleryData): Promise<{ success: boolean; message?: string; data: InquiryCreatedResponse | null }> {
   const formData = new FormData()
   formData.append('name', data.name)
   formData.append('email', data.email)
@@ -64,13 +82,13 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
   formData.append('metal_type', data.metal_type)
   formData.append('budget_range', data.budget_range)
   formData.append('message', data.message)
+  formData.append('website', data.website || '')
 
   if (data.design_image) {
     formData.append('design_image', data.design_image)
   }
 
-  // Use fetch directly for multipart form data
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/inquiries/custom-jewellery`, {
+  const response = await fetch(`${API_BASE}/inquiries/custom-jewellery`, {
     method: 'POST',
     body: formData,
     credentials: 'include',
@@ -82,7 +100,7 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
     return {
       success: false,
       message: result.message || 'Failed to submit request',
-      data: null as any,
+      data: null,
     }
   }
 
@@ -93,9 +111,9 @@ export async function submitCustomJewelleryRequest(data: CustomJewelleryData): P
   }
 }
 
-/**
- * Get my inquiries (logged in users)
- */
-export async function getMyInquiries(): Promise<APIResponse<InquiryResponse[]>> {
-  return apiClient.get<InquiryResponse[]>('/inquiries/my')
-}
+export const getMyInquiries = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    const token = getCookie('access_token')
+    if (!token) return { success: false, message: 'Not authenticated', data: null } as any
+    return apiRequest<ApiResponse<Array<InquiryResponse>>>('/inquiries/my', {}, token)
+  })

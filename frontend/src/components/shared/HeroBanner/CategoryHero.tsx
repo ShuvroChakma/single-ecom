@@ -1,69 +1,21 @@
-import { getCategoryTree, type Category } from '@/api/categories'
+import { getFeaturedCategories, type Category } from '@/api/categories'
 import { getImageUrl } from '@/api/client'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
 
-// Default category images as fallback
-const DEFAULT_IMAGES: Record<string, string> = {
-  diamond: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/diamond-offer.jpg',
-  gold: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Gold-offer.jpg',
-  silver: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/10_oct/diwali24/homepage/silver-bars-coins-focus.jpg',
-  platinum: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/02_feb/ind-homepage/category-slider/solitare.jpg',
-  gemstone: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2025/12-dec/homepage/Gemstone-offer.jpg',
-  ring: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/02_feb/ind-homepage/category-slider/solitare.jpg',
-  necklace: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/02_feb/ind-homepage/category-slider/Mangalsutra.jpg',
-  earring: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Offer.jpg',
-  bangle: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Bangle-1.jpg',
-  bracelet: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Bangle-1.jpg',
-  chain: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2022/04_april/mobilesubcategory/new/Chain-1.jpg',
-  pendant: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/10_oct/diwali24/homepage/gold-coin-pendant-focus.jpg',
-  default: 'https://static.malabargoldanddiamonds.com/media/wysiwyg/offer_page/2024/05_may/india-homepage/focus-block/best-seller.jpg',
-}
-
-// Get fallback image based on category name
-const getFallbackImage = (name: string): string => {
-  const key = name.toLowerCase()
-  for (const [keyword, url] of Object.entries(DEFAULT_IMAGES)) {
-    if (key.includes(keyword)) {
-      return url
-    }
-  }
-  return DEFAULT_IMAGES.default
-}
-
-// Flatten category tree to get all categories
-const flattenCategories = (categories: Category[]): Category[] => {
-  if (!Array.isArray(categories)) return []
-  const result: Category[] = []
-  for (const cat of categories) {
-    if (cat.is_active) {
-      result.push(cat)
-      if (cat.children?.length > 0) {
-        result.push(...flattenCategories(cat.children))
-      }
-    }
-  }
-  return result
-}
-
 export default function CategoryHero() {
   const { data, isLoading } = useQuery({
-    queryKey: ['category-tree-hero'],
+    queryKey: ['categories-featured'],
     queryFn: async () => {
-      const result = await getCategoryTree()
-      if (result.success && Array.isArray(result.data)) {
-        return result.data
-      }
-      return []
+      const result = await getFeaturedCategories()
+      return result.success && Array.isArray(result.data) ? result.data : []
     },
     staleTime: 5 * 60 * 1000,
-    refetchOnMount: true,
     refetchOnWindowFocus: false,
   })
 
-  // Get all active categories (flattened, limited to 14 for display)
-  const categories = Array.isArray(data) ? flattenCategories(data).slice(0, 14) : []
+  const categories: Category[] = data ?? []
 
   if (isLoading) {
     return (
@@ -100,7 +52,7 @@ export default function CategoryHero() {
           }}
         >
           {categories.map((category) => {
-            const imageUrl = getImageUrl(category.icon) || getImageUrl(category.banner) || getFallbackImage(category.name)
+            const imageUrl = getImageUrl(category.icon) || getImageUrl(category.banner) || ''
 
             return (
               <Link

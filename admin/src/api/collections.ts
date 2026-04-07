@@ -2,8 +2,9 @@
  * Collections API Server Functions
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import { apiRequest, ApiResponse } from "./client";
+import { apiRequest } from "./client";
+import { authenticatedRequest } from "./server-utils";
+import type { ApiResponse } from "./client";
 
 export interface Collection {
   id: string;
@@ -27,78 +28,58 @@ export interface CollectionPayload {
 // Public: Get all collections
 export const getPublicCollections = createServerFn({ method: "GET" })
   .handler(async () => {
-    return apiRequest<ApiResponse<Collection[]>>("/products/collections");
+    return apiRequest<ApiResponse<Array<Collection>>>("/products/collections");
   });
 
 // Admin: Get all collections
 export const getCollections = createServerFn({ method: "GET" })
   .handler(async () => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Collection[]>>(
-      "/products/collections",
-      {},
-      token
-    );
+    return authenticatedRequest<ApiResponse<Array<Collection>>>("/products/collections");
   });
 
 // Admin: Get collection by ID
-export const getCollection = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Collection>>(
-      `/products/collections/${data.id}`,
-      {},
-      token
+export const getCollection = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Collection>>(
+      `/products/collections/${data.id}`
     );
   });
 
 // Admin: Create collection
 export const createCollection = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: CollectionPayload }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<Collection>>(
+  .inputValidator((data: CollectionPayload) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<Collection>>(
       "/products/admin/collections",
       {
         method: "POST",
         body: JSON.stringify(data),
-      },
-      token
+      }
     );
   });
 
 // Admin: Update collection
 export const updateCollection = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { collection: Partial<CollectionPayload>; id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
+  .inputValidator((data: { collection: Partial<CollectionPayload>; id: string }) => data)
+  .handler(async ({ data }) => {
     const { id, collection } = data;
 
-    return apiRequest<ApiResponse<Collection>>(
+    return authenticatedRequest<ApiResponse<Collection>>(
       `/products/admin/collections/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(collection),
-      },
-      token
+      }
     );
   });
 
 // Admin: Delete collection
 export const deleteCollection = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: { id: string } }) => {
-    const token = getCookie("access_token");
-    if (!token) throw new Error("Not authenticated");
-
-    return apiRequest<ApiResponse<{ deleted: boolean }>>(
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    return authenticatedRequest<ApiResponse<{ deleted: boolean }>>(
       `/products/admin/collections/${data.id}`,
-      { method: "DELETE" },
-      token
+      { method: "DELETE" }
     );
   });

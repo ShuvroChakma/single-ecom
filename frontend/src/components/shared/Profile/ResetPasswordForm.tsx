@@ -1,6 +1,5 @@
 /**
  * Reset Password Form Component
- * Allows user to enter OTP and new password to reset their password
  */
 import { useState, useRef, useEffect } from 'react'
 import * as authApi from '@/api/auth'
@@ -28,7 +27,10 @@ export function ResetPasswordForm({
   const [resendCooldown, setResendCooldown] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // Countdown timer for resend
+  useEffect(() => {
+    inputRefs.current[0]?.focus()
+  }, [])
+
   useEffect(() => {
     if (resendCooldown > 0) {
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
@@ -70,17 +72,15 @@ export function ResetPasswordForm({
 
     const otpCode = otp.join('')
     if (otpCode.length !== 6) {
-      setError('Please enter the complete 6-digit code')
+      setError('Please enter all 6 digits of the code.')
       return
     }
-
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError('Password must be at least 8 characters.')
       return
     }
-
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match')
+      setError('Passwords do not match.')
       return
     }
 
@@ -93,10 +93,8 @@ export function ResetPasswordForm({
       })
 
       if (response.success) {
-        setSuccessMessage('Password reset successfully! Redirecting to login...')
-        setTimeout(() => {
-          onSuccess()
-        }, 1500)
+        setSuccessMessage('Password reset successfully! Redirecting…')
+        setTimeout(() => onSuccess(), 1500)
       }
     } catch (err) {
       setError(getErrorMessage(err))
@@ -120,7 +118,7 @@ export function ResetPasswordForm({
       })
 
       if (response.success) {
-        setSuccessMessage('A new OTP has been sent to your email')
+        setSuccessMessage('A new code has been sent to your email.')
         setResendCooldown(60)
         setOtp(['', '', '', '', '', ''])
         inputRefs.current[0]?.focus()
@@ -132,38 +130,52 @@ export function ResetPasswordForm({
     }
   }
 
+  const isOtpComplete = otp.every((d) => d !== '')
+
   return (
-    <form onSubmit={handleSubmit} className="p-8 md:p-12 min-h-[500px]">
-      <h2 className="text-2xl font-bold mb-2">Reset Your Password</h2>
-      <p className="text-gray-600 mb-6">
-        Enter the 6-digit code sent to{' '}
-        <span className="font-medium text-gray-800">{email}</span> and your new password.
-      </p>
+    <div className="p-4 sm:p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-center">
+    <form onSubmit={handleSubmit} className="w-full max-w-md">
+      {/* Back */}
+      <button
+        type="button"
+        onClick={onBackToForgotPassword}
+        className="flex items-center gap-1 text-sm text-gray-500 hover:text-header mb-8 transition-colors"
+      >
+        <span>&#8592;</span> Back
+      </button>
 
+      {/* Heading */}
+      <div className="mb-8">
+        <p className="text-xs text-header font-semibold tracking-widest uppercase mb-2">
+          Password Reset
+        </p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">Set new password</h2>
+        <p className="text-sm text-gray-500 leading-relaxed">
+          Enter the 6-digit code sent to{' '}
+          <span className="font-semibold text-gray-800">{email}</span>, then choose a new password.
+        </p>
+      </div>
+
+      {/* Alerts */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-600 text-sm">{error}</p>
+        <div className="mb-6 px-4 py-3 bg-red-50 border-l-4 border-red-500 rounded">
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
-
       {successMessage && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-green-600 text-sm">{successMessage}</p>
+        <div className="mb-6 px-4 py-3 bg-green-50 border-l-4 border-green-500 rounded">
+          <p className="text-green-700 text-sm">{successMessage}</p>
         </div>
       )}
 
-      {/* OTP Input */}
+      {/* OTP inputs */}
       <div className="mb-6">
-        <label className="block text-gray-700 font-medium mb-4">
-          Verification Code<span className="text-header">*</span>
-        </label>
-        <div className="flex gap-3 justify-center md:justify-start">
+        <label className="block text-sm font-medium text-gray-700 mb-3">Verification code</label>
+        <div className="flex justify-center gap-2 sm:gap-3 mb-3">
           {otp.map((digit, index) => (
             <input
               key={index}
-              ref={(el) => {
-                inputRefs.current[index] = el
-              }}
+              ref={(el) => { inputRefs.current[index] = el }}
               type="text"
               inputMode="numeric"
               maxLength={1}
@@ -171,31 +183,49 @@ export function ResetPasswordForm({
               onChange={(e) => handleOtpChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
-              className="w-12 h-14 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:border-header focus:ring-1 focus:ring-header disabled:bg-gray-100"
               disabled={isSubmitting}
+              className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold border-2 rounded transition-colors focus:outline-none
+                ${digit ? 'border-header text-header' : 'border-gray-200 text-gray-900'}
+                focus:border-header disabled:bg-gray-50 disabled:cursor-not-allowed`}
             />
           ))}
         </div>
+        <p className="text-xs text-gray-400">
+          Didn't receive the code?{' '}
+          {resendCooldown > 0 ? (
+            <span className="text-gray-400">Resend in {resendCooldown}s</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResendOTP}
+              disabled={isResending}
+              className="text-header font-medium hover:underline disabled:opacity-50"
+            >
+              {isResending ? 'Sending…' : 'Resend code'}
+            </button>
+          )}
+        </p>
       </div>
+
+      {/* Divider */}
+      <div className="border-t border-gray-100 my-6" />
 
       {/* New Password */}
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2">
-          New Password<span className="text-header">*</span>
-        </label>
-        <div className="relative max-w-md">
+        <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+        <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
+            className="w-full px-4 py-3 border border-gray-200 rounded focus:outline-none focus:border-header"
             placeholder="At least 8 characters"
             disabled={isSubmitting}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium hover:text-gray-700"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 hover:text-gray-700 tracking-wider"
           >
             {showPassword ? 'HIDE' : 'SHOW'}
           </button>
@@ -203,60 +233,29 @@ export function ResetPasswordForm({
       </div>
 
       {/* Confirm Password */}
-      <div className="mb-6">
-        <label className="block text-gray-700 font-medium mb-2">
-          Confirm Password<span className="text-header">*</span>
-        </label>
-        <div className="relative max-w-md">
+      <div className="mb-8">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+        <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:border-header"
+            className="w-full px-4 py-3 border border-gray-200 rounded focus:outline-none focus:border-header"
             placeholder="Repeat your new password"
             disabled={isSubmitting}
           />
         </div>
       </div>
 
-      {/* Submit Button */}
-      <div className="mb-6">
-        <button
-          type="submit"
-          disabled={isSubmitting || otp.some((digit) => !digit) || !newPassword || !confirmPassword}
-          className="bg-linear-to-r from-header to-header/80 text-white font-semibold py-3 px-12 rounded shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Resetting...' : 'Reset Password'}
-        </button>
-      </div>
-
-      {/* Resend OTP */}
-      <div className="mb-6">
-        <p className="text-gray-600 mb-2">Didn't receive the code?</p>
-        <button
-          type="button"
-          onClick={handleResendOTP}
-          disabled={isResending || resendCooldown > 0}
-          className="text-header font-medium hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
-        >
-          {isResending
-            ? 'Sending...'
-            : resendCooldown > 0
-              ? `Resend OTP in ${resendCooldown}s`
-              : 'Resend OTP'}
-        </button>
-      </div>
-
-      {/* Back Link */}
-      <div>
-        <button
-          type="button"
-          onClick={onBackToForgotPassword}
-          className="text-gray-700 hover:text-header font-medium"
-        >
-          &lt; Back
-        </button>
-      </div>
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={isSubmitting || !isOtpComplete || !newPassword || !confirmPassword}
+        className="w-full bg-header text-white font-semibold py-3 px-6 rounded transition-opacity disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
+      >
+        {isSubmitting ? 'Resetting…' : 'Reset Password'}
+      </button>
     </form>
+    </div>
   )
 }

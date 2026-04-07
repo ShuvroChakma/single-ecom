@@ -1,8 +1,10 @@
 /**
- * Slides/Banners API functions
+ * Slides/Banners API - Server Functions (public, no auth needed)
  */
-import { apiClient } from '@/utils/api-client'
-import type { APIResponse } from '@/types/api.types'
+import { createServerFn } from '@tanstack/react-start'
+import { z } from 'zod'
+import { apiRequest } from './client'
+import type { ApiResponse } from './client';
 
 export interface Slide {
   id: string
@@ -12,8 +14,8 @@ export interface Slide {
   mobile_image_url: string | null
   link_url: string | null
   link_text: string | null
-  position: string
-  display_order: number
+  position: string | null
+  sort_order: number
   is_active: boolean
   start_date: string | null
   end_date: string | null
@@ -21,36 +23,24 @@ export interface Slide {
   updated_at: string
 }
 
-export interface SlideListResponse {
-  items: Slide[]
-  total: number
-}
+export const getHomeCarouselSlides = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    return apiRequest<ApiResponse<Array<Slide>>>('/slides?position=home_carousel')
+  })
 
-/**
- * Get slides by position (public endpoint)
- */
-export async function getSlides(position?: string): Promise<APIResponse<Slide[]>> {
-  const url = position ? `/slides?position=${position}` : '/slides'
-  return apiClient.get<Slide[]>(url)
-}
+export const getHomeBannerSlides = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    return apiRequest<ApiResponse<Array<Slide>>>('/slides?position=home_banner')
+  })
 
-/**
- * Get homepage carousel slides
- */
-export async function getHomeCarouselSlides(): Promise<APIResponse<Slide[]>> {
-  return apiClient.get<Slide[]>('/slides?position=home_carousel')
-}
+export const getPromoSlides = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    return apiRequest<ApiResponse<Array<Slide>>>('/slides?position=promo')
+  })
 
-/**
- * Get homepage banner slides
- */
-export async function getHomeBannerSlides(): Promise<APIResponse<Slide[]>> {
-  return apiClient.get<Slide[]>('/slides?position=home_banner')
-}
-
-/**
- * Get promotional slides
- */
-export async function getPromoSlides(): Promise<APIResponse<Slide[]>> {
-  return apiClient.get<Slide[]>('/slides?position=promo')
-}
+export const getSlides = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ position: z.string().optional() }).optional())
+  .handler(async ({ data }) => {
+    const url = data?.position ? `/slides?position=${data.position}` : '/slides'
+    return apiRequest<ApiResponse<Array<Slide>>>(url)
+  })

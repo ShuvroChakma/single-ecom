@@ -15,7 +15,10 @@ export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
+  username?: string;
   user_type: string;
+  role_name?: string;
+  permissions?: string[];
 }
 
 export const loginAdmin = createServerFn({ method: "POST" })
@@ -82,6 +85,26 @@ export const logout = createServerFn({ method: "POST" })
     }
 
     return { success: true, message: "Logged out", data: null };
+  });
+
+export const changePassword = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { current_password: string; new_password: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+    return apiRequest<ApiResponse<null>>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, token);
+  });
+
+export const updateAdminProfile = createServerFn({ method: "POST" })
+  .handler(async ({ data }: { data: { username: string } }) => {
+    const token = getCookie("access_token");
+    if (!token) throw new Error("Not authenticated");
+    return apiRequest<ApiResponse<null>>("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }, token);
   });
 
 export const refreshToken = createServerFn({ method: "POST" })
