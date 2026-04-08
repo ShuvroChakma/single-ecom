@@ -11,10 +11,10 @@ import PlatinumCollection from '@/components/shared/HeroBanner/PlatinumCollectio
 import GoldJewellery from '@/components/shared/HeroBanner/GoldJewellery'
 import OurCollection from '@/components/shared/HeroBanner/OurCollection'
 import OneDayShipping from '@/components/shared/HeroBanner/OneDayShipping'
-import ShopByGender from '@/components/shared/HeroBanner/TrendyCollections'
 import NewArrivals from '@/components/shared/HeroBanner/NewArrivals'
 import GiftingPage from '@/components/shared/HeroBanner/GiftingPage'
 import AboutPage from '@/components/shared/HeroBanner/AboutPage'
+import TrendyCollections from '@/components/shared/HeroBanner/TrendyCollections'
 
 
 
@@ -39,7 +39,7 @@ function App() {
     <div>
       <Header />
       <Carousel />
-      <CategoryHero />
+      {/* <CategoryHero /> */}
       <JewelryOffers />
       <HandPicked />
       <SilverCollection />
@@ -49,8 +49,7 @@ function App() {
       <OurCollection />
       <NewArrivals />
       <OneDayShipping />
-      <ShopByGender />
-      
+      <TrendyCollections />
       <GiftingPage />
       <AboutPage />
       <Footer />

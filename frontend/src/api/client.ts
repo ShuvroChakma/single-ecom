@@ -6,8 +6,8 @@
 // API_BASE is server-only — uses process.env (no VITE_ prefix, never in browser bundle)
 export const API_BASE = process.env.API_URL || "http://localhost:8000/api/v1";
 
-// SERVER_URL is empty — image paths are relative, nginx proxies /static/ to the backend
-export const SERVER_URL = process.env.VITE_MEDIA_URL || "";
+// VITE_MEDIA_URL must use import.meta.env so Vite injects it on both client and SSR
+export const SERVER_URL = import.meta.env.VITE_MEDIA_URL || "";
 
 // API Response types
 export interface ApiResponse<T> {

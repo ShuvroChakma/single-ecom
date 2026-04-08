@@ -2,7 +2,8 @@
  * Products API - Server Functions (public, no auth needed)
  */
 import { createServerFn } from '@tanstack/react-start'
-import { apiRequest, ApiResponse } from './client'
+import { apiRequest } from './client'
+import type { ApiResponse } from './client';
 import type { Product, ProductListResponse } from './categories'
 
 // Re-export types from categories
@@ -21,18 +22,21 @@ export const getNewArrivals = createServerFn({ method: 'GET' })
   })
 
 export const getProductsByGender = createServerFn({ method: 'GET' })
+  .inputValidator((data: { gender: string; limit?: number }) => data)
   .handler(async ({ data }: { data: { gender: string; limit?: number } }) => {
     const { gender, limit = 4 } = data
     return apiRequest<ApiResponse<ProductListResponse>>(`/products?gender=${gender}&per_page=${limit}`)
   })
 
 export const getProductsByCategory = createServerFn({ method: 'GET' })
-  .handler(async ({ data }: { data: { categoryId: string; limit?: number } }) => {
+  .inputValidator((data: { categoryId: string; limit?: number }) => data)
+  .handler(async ({ data }) => {
     const { categoryId, limit = 8 } = data
     return apiRequest<ApiResponse<ProductListResponse>>(`/products?category_id=${categoryId}&per_page=${limit}`)
   })
 
 export const getProductBySlug = createServerFn({ method: 'GET' })
+  .inputValidator((data: { slug: string }) => data)
   .handler(async ({ data }: { data: { slug: string } }) => {
     return apiRequest<ApiResponse<Product>>(`/products/${data.slug}`)
   })
@@ -56,6 +60,7 @@ export interface ProductPricing {
 }
 
 export const getProductPricing = createServerFn({ method: 'GET' })
+  .inputValidator((data: { productId: string }) => data)
   .handler(async ({ data }: { data: { productId: string } }) =>
     apiRequest<ApiResponse<ProductPricing>>(`/products/products/${data.productId}/pricing`)
   )
@@ -73,32 +78,33 @@ export interface ProductAttributeValue {
 }
 
 export const getProductAttributes = createServerFn({ method: 'GET' })
+  .inputValidator((data: { productId: string }) => data)
   .handler(async ({ data }: { data: { productId: string } }) =>
-    apiRequest<ApiResponse<ProductAttributeValue[]>>(`/products/products/${data.productId}/attributes`)
+    apiRequest<ApiResponse<Array<ProductAttributeValue>>>(`/products/products/${data.productId}/attributes`)
   )
 
 export interface AttributeGroup {
   id: string
   name: string
   sort_order: number
-  attributes: { id: string; code: string; name: string; type: string }[]
+  attributes: Array<{ id: string; code: string; name: string; type: string }>
 }
 
 export const getAttributeGroups = createServerFn({ method: 'GET' })
   .handler(async () =>
-    apiRequest<ApiResponse<AttributeGroup[]>>(`/products/attribute-groups`)
+    apiRequest<ApiResponse<Array<AttributeGroup>>>(`/products/attribute-groups`)
   )
 
 export interface Metal {
   id: string
   name: string
   code: string
-  purities?: { id: string; label: string; value: string }[]
+  purities?: Array<{ id: string; label: string; value: string }>
 }
 
 export const getMetals = createServerFn({ method: 'GET' })
   .handler(async () =>
-    apiRequest<ApiResponse<Metal[]>>(`/products/metals`)
+    apiRequest<ApiResponse<Array<Metal>>>(`/products/metals`)
   )
 
 export interface FilterableAttribute {
@@ -106,16 +112,17 @@ export interface FilterableAttribute {
   code: string
   name: string
   type: string
-  options: string[] | null
+  options: Array<string> | null
   group_id: string
 }
 
 export const getFilterableAttributes = createServerFn({ method: 'GET' })
   .handler(async () =>
-    apiRequest<ApiResponse<FilterableAttribute[]>>(`/products/attributes/filterable`)
+    apiRequest<ApiResponse<Array<FilterableAttribute>>>(`/products/attributes/filterable`)
   )
 
 export const searchProducts = createServerFn({ method: 'GET' })
+  .inputValidator((data: { query: string; limit?: number }) => data)
   .handler(async ({ data }: { data: { query: string; limit?: number } }) => {
     const { query, limit = 20 } = data
     return apiRequest<ApiResponse<ProductListResponse>>(`/products?search=${encodeURIComponent(query)}&per_page=${limit}`)

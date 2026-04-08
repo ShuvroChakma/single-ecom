@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import {  getHomeCarouselSlides } from '@/api/slides'
+import { getHomeCarouselSlides } from '@/api/slides'
+import { getImageUrl } from '@/api/client'
 
 export default function Carousel() {
   const { data: slidesResponse, isLoading } = useQuery({
@@ -136,7 +137,7 @@ export default function Carousel() {
           {slides.map((slide) => (
             <div key={slide.id} className="w-screen h-full shrink-0">
               <img
-                src={slide.image_url}
+                src={getImageUrl(slide.image_url)}
                 alt={slide.title}
                 draggable={false}
                 className="w-full h-full object-fill select-none"

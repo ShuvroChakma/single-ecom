@@ -37,7 +37,10 @@ export default function MetalPricesPage({ data }: MetalPricesPageProps) {
   const rates = data?.rates ?? []
   const lastUpdated = data?.last_updated
   const grouped = groupByMetal(rates)
-  const metalTypes = Object.keys(grouped)
+  const METAL_ORDER = ['GOLD', 'SILVER', 'PLATINUM', 'PALLADIUM']
+  const metalTypes = Object.keys(grouped).sort(
+    (a, b) => (METAL_ORDER.indexOf(a) + 1 || 99) - (METAL_ORDER.indexOf(b) + 1 || 99)
+  )
 
   const jsonLd = rates.length > 0 ? {
     '@context': 'https://schema.org',

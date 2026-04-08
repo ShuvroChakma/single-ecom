@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { ColumnDef } from "@tanstack/react-table"
-import { fmtDateTime, fmtDateTimeLong } from "@/lib/date"
 import { ArrowDown, ArrowUp, CalendarIcon, ChevronLeft, ChevronRight, Download, History, Loader2, Minus, Plus, RefreshCw, TrendingUp, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import type { ColumnDef } from "@tanstack/react-table"
+import type { DailyRate, RateHistoryPage} from "@/api/rates";
+import { fmtDateTime, fmtDateTimeLong } from "@/lib/date"
 
-import { DailyRate, getCurrentRates, getRateHistory, RateHistoryPage, syncBajusRates } from "@/api/rates"
+import { getCurrentRates, getRateHistory, syncBajusRates } from "@/api/rates"
 import { DataTable } from "@/components/shared/data-table"
 import { RateDialog } from "@/components/shared/rate-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -69,7 +70,7 @@ function RatesPage() {
         },
     })
 
-    const columns: ColumnDef<DailyRate>[] = [
+    const columns: Array<ColumnDef<DailyRate>> = [
         {
             accessorKey: "metal_type",
             header: "Metal Type",
@@ -108,9 +109,9 @@ function RatesPage() {
             accessorKey: "source",
             header: "Source",
             cell: ({ row }) => {
-                const source = row.getValue("source") as string
+                const source = row.getValue("source")
                 const variant = source === "BAJUS" ? "default" : source === "API" ? "secondary" : "outline"
-                return <Badge variant={variant}>{source}</Badge>
+                return <Badge variant={variant}>{source as string}</Badge>
             },
         },
         {
@@ -129,7 +130,12 @@ function RatesPage() {
         },
     ]
 
-    const rates = data?.success ? data.data.rates : []
+    const METAL_ORDER = ['GOLD', 'SILVER', 'PLATINUM', 'PALLADIUM']
+    const rates = data?.success
+        ? [...data.data.rates].sort(
+            (a, b) => (METAL_ORDER.indexOf(a.metal_type) + 1 || 99) - (METAL_ORDER.indexOf(b.metal_type) + 1 || 99)
+          )
+        : []
     const lastUpdated = data?.success ? data.data.last_updated : null
 
     return (
