@@ -108,11 +108,11 @@ export default function Footer() {
               }}
             />
           </Link>
-          {store_name && (
+          {/* {store_name && (
             <p className="text-sm font-bold tracking-widest uppercase text-header">
               {store_name}
             </p>
-          )}
+          )} */}
           {store_tagline && (
             <p className="text-xs italic text-gray-500">{store_tagline}</p>
           )}
